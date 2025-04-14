@@ -1,0 +1,23 @@
+.level1{
+    margin-left: 0;
+}
+
+.level2{
+    margin-left: 50px;
+}
+
+.level3{
+    margin-left: 100px;
+}
+
+.section{
+    background-color: #A7AABC;
+    color:#001739;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 15px;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px 0 0 15px;
+    width: 98%;
+}

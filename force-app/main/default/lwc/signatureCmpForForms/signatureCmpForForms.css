@@ -1,0 +1,15 @@
+@font-face {
+    font-family: 'GreatVibes-Regular'; 
+    src: url('../../resource/signature/GreatVibes-Regular.ttf');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.thecanvas{
+    margin-bottom: 10px;
+}
+
+.disablecanvas {
+    cursor: not-allowed;
+    pointer-events: none;
+}

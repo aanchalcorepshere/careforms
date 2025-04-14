@@ -1,0 +1,87 @@
+<template>
+    <!-- SPINNER STARTS -->
+    <template if:true={isLoading}>
+        <lightning-spinner size="medium"> </lightning-spinner>
+    </template>
+    <template if:true={dataLoading}>
+        <lightning-spinner size="medium"> </lightning-spinner>
+    </template>
+    <!-- SPINNER ENDS -->
+
+    <!-- HEADER AND NAVIAGATION BUTTONS STARTS -->
+    <div class="headerBox">
+        <div class="slds-grid slds-gutters slds-clearfix">
+            <div class="slds-col slds-size_3-of-12">
+                <template if:false={formSaved}>
+                    <template if:false={hideBack}>
+                        <i class="arrow left slds-float_right" onclick={handleNavBackward}>
+                        </i>
+                        <span class="nav-previous" onclick={handleNavBackward}>
+                            Previous
+                        </span>           
+                                 </template>
+                </template>
+            </div>
+            <div class="slds-col slds-size_6-of-12">
+                <div class="vertical-center">
+                    Form Wizard
+                </div>
+            </div>
+            <div class="slds-col slds-size_3-of-12">
+                <template if:false={formSaved}>
+                    <template if:false={hideForward}>
+                        <i class="arrow right" onclick={handleNavForward}></i>
+                         <span class="nav-next" onclick={handleNavForward}>
+                            Next
+                        </span>
+                    </template>
+                </template>
+            </div>
+        </div>
+    </div>
+    <!-- HEADER AND NAVIAGATION BUTTONS ENDS -->
+
+    <!-- SAVE FORM BUTTON STARTS -->
+    <div if:true={hideForward} style="position: absolute; display:inline-block;right:10px;top:10px;">
+        <lightning-button variant="brand-outline" label="Save Form" title="saveform" onclick={handleSaveForm}></lightning-button>
+    </div>
+    <!-- SAVE FORM BUTTON ENDS -->
+
+    <!-- CHILD COMPONENTS STARTS -->
+    <div if:true={error} class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small" role="alert">
+        <b>{error}</b>
+    </div>
+    <!-- OBJECT STRUCTURE COMPONENT STARTS -->
+    <template if:true={isObjectStructure}>
+        <template if:true={objectListAll}>
+            <div class="slds-m-top_medium">
+                <c-forms-object-structure-screen primary-obj-list={objectListAll} onobjectstructure={handleObjectStructure} onformname={handleFormName} existing-data={objectStructureData} existing-form-name={formName} existing-confirmation-message={confirmationMessage} existing-requires-signature={requiresSignature} existing-requires-text-on-signature-page={requiresTextOnSignaturePage} existing-signature-page-text={signaturePageText} existing-requires-doc-upload={requiresDocUpload} existing-show-summary={showSummary} existing-generate-pdf={generatePDF} existing-prefill-fields={prefillFields} existing-create-pdf-only={createPDFOnly} is-edit={isEdit}></c-forms-object-structure-screen>
+            </div>
+        </template>
+    </template>
+    <!-- OBJECT STRUCTURE COMPONENT ENDS -->
+
+    <!-- FORM STRUCTURE COMPONENT STARTS -->
+    <template if:true={isFormStructure}>
+        <c-forms-create-form-screen form-name={formName} object-structure={objectStructureData} onpagesdata={handlePagesData} existing-data={pageData} existing-fields={filteredFields}  prefill-fields={prefillFields}></c-forms-create-form-screen>
+    </template>
+    <!-- FORM STRUCTURE COMPONENT ENDS -->
+
+    <!-- RULES COMPONENT STARTS -->
+    <template if:true={isRulesScreen}>
+        <div class="slds-m-top_medium">
+            <c-forms-create-rules-screen page-data={pageData} onrulesupdate={handleRules} existing-rules={rules}></c-forms-create-rules-screen>
+        </div>
+    </template>
+    <!-- RULES COMPONENT ENDS -->
+
+    <!-- FORM SAVED SCREEN - STARTS -->
+    <template if:true={formSaved}>
+        <div class="slds-box slds-m-around_medium slds-text-heading_medium slds-text-title_caps">
+            form <b><a href={formLink}>{formName}</a></b> has been successfully saved.
+        </div>
+    </template>
+    <!-- FORM SAVED SCREEN - ENDS -->
+    
+    <!-- CHILD COMPONENTS ENDS -->
+</template>

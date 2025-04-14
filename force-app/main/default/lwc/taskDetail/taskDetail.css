@@ -1,0 +1,31 @@
+.taskarea{
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.indexarea{
+    width: 70px;
+    size: 12px;
+    /* font-weight: bold; */
+    font-style: italic;
+    color: #7C7C7C;
+    margin-left: 20px;
+    margin-top: 6px;
+}
+
+.delete-icnpage{
+    --sds-c-icon-color-foreground-default: gray;
+    --sds-c-icon-color-foreground: gray;
+    cursor:pointer;
+}
+
+.delete-icnpage:hover{
+    --sds-c-icon-color-foreground-default: rgb(200, 0, 0);
+    --sds-c-icon-color-foreground: rgb(200, 0, 0);
+    cursor:pointer;
+}
+
+.taskdelete{
+    margin-left: 50px;
+    margin-top: 5px;
+}

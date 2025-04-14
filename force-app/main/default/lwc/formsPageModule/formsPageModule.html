@@ -1,0 +1,31 @@
+<template>
+    <div class="page">
+        <div class="theline"></div>
+        <div class="pagedelete">
+            <lightning-icon size="small" icon-name="utility:delete" alternative-text="delete" title="delete" class="delete-icnpage" onclick={handlePageDelete}>
+            </lightning-icon>
+        </div>
+        <div class="page-head">
+            <template if:false={page.isLabelEdit}>
+                <b>{page.pageName}</b>
+                <div class="editpage">
+                    <lightning-icon size="xx-small" icon-name="utility:edit" alternative-text="edit" title="edit"
+                        class="edit-icnpage" onclick={handlePageLabelEdit}></lightning-icon>
+                </div>
+            </template>
+            <template if:true={page.isLabelEdit}>
+                <div style="display:inline-block">
+                    <input class="slds-input labelinput" type="text" label="" name={page.pageIndex} onblur={handlePageLabelDone} value={page.pageName}></input>
+                </div>
+            </template>
+        </div>
+        <template if:true={page.sections} for:each={page.sections} for:item="section">
+            <div onmousedown={handleSectionMouseDown} ondrop={handleSectionDrop} ondragenter={handleSectionDragEnter} ondragover={handleSectionDragOver} ondragleave={handleSectionDragLeave} draggable={isSectionDrag} ondragstart={handleSectionDragStart} data-id={section.sectionIndex} key={section.sectionIndex}>
+                <c-forms-section-module is-section-drag={isSectionDrag} section={section} page-index={page.pageIndex} onfielddragstarted={handleFieldDragStarted}></c-forms-section-module>
+            </div>
+        </template>
+        <div class="slds-align_absolute-center">
+            <a href="#" class="addsection" onclick={addSection}>Add Section</a>
+        </div>
+    </div>
+</template>

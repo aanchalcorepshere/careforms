@@ -1,0 +1,19 @@
+<aura:component implements="force:lightningQuickActionWithoutHeader,force:hasSObjectName,force:hasRecordId">
+
+    <aura:attribute name="sObjectName" type="String" />
+    <aura:attribute name="recordId" type="String" />
+    <aura:html tag="style">
+        .slds-modal__container
+        { 
+            width: 150vh !important;         
+            max-width: 600vh !important; 
+        } 
+        .modal-body, .slds-modal__content
+        { 
+            height : 80vh !important; 
+            max-height: 150vh !important; 
+        }
+    </aura:html>
+    <c:assessmentSectionHandler recordId="{!v.recordId}" objectName="{!v.sObjectName}" oncancelclick="{!c.handleCancel}"></c:assessmentSectionHandler>
+
+</aura:component>

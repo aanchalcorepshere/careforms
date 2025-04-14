@@ -1,0 +1,91 @@
+<template>
+    <template if:false={question.fieldData.hide}>
+        {primaryReason}
+        <div class="questext">
+            {question.fieldData.fieldName}<span if:true={question.fieldData.required} style="color:red">*</span>
+        </div>
+        <div if:true={question.fieldData.helpText} class="helptext">
+            {question.fieldData.helpText}
+        </div>
+        <template if:true={gotOptions}>
+            <template if:true={isCombobox}>
+                <lightning-combobox 
+                options={options} 
+                variant="label-hidden"
+                value={question.fieldData.inputValue}
+                placeholder="Select Value" 
+                disabled={isSummary}
+                onchange={handleResponse}></lightning-combobox>
+            </template>
+            <template if:true={isCheckbox}>
+                <lightning-checkbox-group name="Checkbox Group"
+                    varient="label-hidden"
+                    options={options}
+                    value={question.fieldData.inputValue}
+                    disabled={isSummary}
+                    onchange={handleResponse}></lightning-checkbox-group>
+            </template>
+            <template if:true={isRadiobox}>
+                <lightning-radio-group name="radioGroup"
+                    variant="label-hidden"
+                    options={options}
+                    type="radio"
+                    value={question.fieldData.inputValue}
+                    disabled={isSummary}
+                    onchange={handleResponse}></lightning-radio-group>
+            </template>
+        </template>
+        <template if:true={isText}>
+            <lightning-input 
+                type="text" 
+                variant="label-hidden"
+                value={question.fieldData.inputValue}
+                disabled={isSummary} 
+                onchange={handleResponse}></lightning-input>
+        </template>
+        <template if:true={isCurrency}>
+            <lightning-input 
+                type="number" 
+                step=".01" 
+                formatter="currency"
+                variant="label-hidden"
+                value={question.fieldData.inputValue}
+                disabled={isSummary} 
+                onchange={handleResponse}></lightning-input>
+        </template>
+        <template if:true={isDate}>
+            <lightning-input 
+                type="Date"
+                variant="label-hidden"
+                value={question.fieldData.inputValue}
+                disabled={isSummary} 
+                onchange={handleResponse}></lightning-input>
+        </template>
+        <template if:true={isTextArea}>
+            <lightning-textarea 
+                type="text" 
+                variant="label-hidden"
+                value={question.fieldData.inputValue}
+                disabled={isSummary} 
+                onchange={handleResponse}></lightning-textarea>
+        </template>
+        <template if:true={isNumber}>
+            <lightning-input 
+                type="number" 
+                variant="label-hidden"
+                value={question.fieldData.inputValue} 
+                disabled={isSummary} 
+                onchange={handleResponse}></lightning-input>
+        </template>
+        <template if:true={isPhone}>
+            <lightning-input 
+                type="tel"
+                variant="label-hidden"
+                placeholder="123-456-7890"
+                value={question.fieldData.inputValue}
+                pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                disabled={isSummary} 
+                onchange={handleResponse}></lightning-input>
+        </template>
+    </template>
+</template>

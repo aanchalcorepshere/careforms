@@ -1,0 +1,48 @@
+<template>
+    <template if:true={renderCmp}>
+        <div class="slds-theme_default slds-box" style="height: 100vh;">
+            <div class="slds-clearfix">
+                <div class="slds-float_right">
+                    <!-- <lightning-button-icon variant="brand" icon-name="action:close"  alternative-text="Cancel" title="Cancel" onclick={handleClose}></lightning-button-icon> -->
+                    <!-- <button class="slds-button slds-button_neutral" style=" border: none;background-color: #df0202; width:40px;" onclick={handleClose}>
+                        <lightning-button-icon icon-name="utility:close"  variant="bare-inverse" alternative-text="Close" title="Close" ></lightning-button-icon>
+                    </button> -->
+                    <button class="slds-button slds-button_neutral" style=" border: none;background-color: #df0202;color:white; width:40px;" onclick={handleClose}>
+                        X
+                    </button>
+                </div>
+            </div>
+            <div class="slds-text-heading_medium slds-align_absolute-center slds-m-around_medium"><strong>Assessment
+                    Wizard</strong></div>
+            <ul class="progress-indicator">
+                <template if:true={modules} for:each={modules} for:item="module" for:index="index">
+                    <template if:true={module.flag}>
+                        <li key={module} class={module.class}>
+                            <span class="bubble"></span>
+                            {module.name}
+                        </li>
+                    </template>
+                </template>
+            </ul>
+            <div class="slds-box slds-m-around_medium slds-scrollable" style="height: 70%; background-color: white;">
+                <div if:true={error} class="slds-text-color_error slds-align_absolute-center">
+                    {error}
+                </div>
+                <c-assessment-wizard-module-handler is-edit={isEdit} edit-assessment-data={editAssessmentData}
+                    selected-sections={sections} selected-questions={selectedQuestions} onstepdata={handleStepData}
+                    oneditdata={handleEditStep} is-submit={isSubmit}></c-assessment-wizard-module-handler>
+            </div>
+            <div class="slds-align_absolute-center">
+                <lightning-button disabled={firstPage} class="slds-m-right_medium" name="previous" variant="neutral" label="Previous"
+                    onclick={handleNav}></lightning-button>
+                <template if:false={isSubmit}>
+                    <lightning-button name="next" variant="brand" label="Next" onclick={handleNav}></lightning-button>
+                </template>
+                <template if:true={isSubmit}>
+                    <lightning-button name="submit" variant="brand" label="Submit" onclick={handleSubmit}>
+                    </lightning-button>
+                </template>
+            </div>
+        </div>
+    </template>
+</template>

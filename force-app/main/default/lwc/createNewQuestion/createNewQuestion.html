@@ -1,0 +1,86 @@
+<template>
+    <template if:true={showLoadingSpinner}>
+        <lightning-spinner class="spins" size="medium" alternative-text="Saving Question..." variant="brand"></lightning-spinner>
+    </template>
+    <template if:true={isEdit}>
+        <div class="slds-theme_warning slds-text-title_bold slds-m-bottom_x-small slds-align_absolute-center">
+            {editWarning}
+        </div>
+    </template>
+
+    <template if:false={showEditError}>
+        <div class="slds-box slds-m-around_large">
+            <div class="slds-text-heading_medium slds-align_absolute-center">
+                <strong><template if:true={ifEdit}>EDIT</template><template if:false={ifEdit}>NEW</template> QUESTION ANSWER OPTIONS</strong>
+            </div>
+            <div class="slds-align_absolute-center">
+                <div if:true={error} class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small" role="alert" style="width:70%;">
+                    {error}
+                </div>
+            </div>
+            <div class="slds-grid slds-gutters_x-small slds-m-vertical_medium slds-wrap">
+                <div class="slds-col slds-size_1-of-2">
+                    <!-- <lightning-textarea name="questionText" label="Question Text" onblur={handleBlur} value={questionText}></lightning-textarea> -->
+                   <!--  <lightning-record-edit-form
+                        object-api-name="Question_Bank__c"
+                        onsuccess={handleSuccess}
+                        density="comfy" >
+                        <lightning-messages> </lightning-messages>
+                        <lightning-input-field field-name="Question_Text__c" value={qbId} onchange={handleQuesText}> </lightning-input-field>
+                        <div if:true={showButton} class="slds-var-m-top_medium">
+                            <lightning-button variant="brand" type="submit" label="Save" >
+                            </lightning-button>
+                        </div>
+                    </lightning-record-edit-form> -->
+                    <template if:true={showLookup}>
+                        <c-custom-lookup-lwc icon-name="standard:account"
+                             s-object-api-name="caresp__Question_Bank__c"
+                             label="Existing Questions"
+                             field-name="caresp__Question_Text__c"
+                             onlookupupdate={lookupRecord}
+                             is-edit={isEdit}
+                             edit-question-data={editQuestionData}
+                             placeholder="Search Questions here..."></c-custom-lookup-lwc>
+                    </template>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <template if:true={DataTypeValues.data}>
+                        <lightning-combobox name="datatype" label="Data Type" value={selectedDataType} placeholder="-Select-"
+                            options={DataTypeValues.data.values} required onchange={handleChange}>
+                        </lightning-combobox>
+                    </template>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <template if:true={QuestionCategoryValues.data}>
+                        <!-- <lightning-combobox name="questioncategory" label="Question Category" value={selectedQuestionCategory} placeholder="-Select-"
+                            options={QuestionCategoryValues.data.values} onchange={handleChange}>
+                        </lightning-combobox> -->
+                        <lightning-dual-listbox name="questioncategory"
+                            label="Question Category"
+                            source-label="Available"
+                            selected-label="Selected"
+                            required
+                            value={selectedQuestionCategory}
+                            options={QuestionCategoryValues.data.values}
+                            onchange={handleChange}></lightning-dual-listbox>
+                    </template>
+                    <!-- <div>
+                        <lightning-input name="isdependent" type="checkbox" label="Is Dependent?" onchange={handleChange} checked={isDependent}></lightning-input>
+                    </div> -->
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <template if:true={quesWithAns}>
+                        <!-- <c-answer-selection onanswerselected={handleAnswersSelection} existing-answers={existingAnswers} selected-data-type ={selectedDataType}></c-answer-selection> -->
+                        <c-answer-selection-new-version onanswerselected={handleAnswersSelection} existing-answers={existingAnswers} selected-data-type ={selectedDataType} is-edit={isEdit}></c-answer-selection-new-version>
+                    </template>
+                </div>
+            </div>
+            
+            <div class="slds-align_absolute-center">
+                <lightning-button name="cancel" label="Cancel" variant="neutral" onclick={handleCancel}></lightning-button>
+                <lightning-button class="slds-m-left_medium" name="save" label="Save" variant="brand" onclick={handleSave}></lightning-button>
+            </div>
+            
+        </div>
+    </template>
+</template>

@@ -1,0 +1,173 @@
+<template>
+    <div if:true={isLoading}>
+        <lightning-spinner variant="brand" 
+                           alternative-text="Loading"     
+                           size="medium">
+        </lightning-spinner>
+    </div>
+    <template if:true={listClients}>
+        <lightning-accordion allow-multiple-sections-open active-section-name={activeSections}>
+            <!-- Iterate on List of Clients -->
+            <template for:each={listClients} for:item="rec">
+                <lightning-accordion-section key={rec.attributes.clientId} name={rec.attributes.clientName} label={rec.attributes.cDisplayName} >
+                    <template if:false={planActive}>
+                        <template if:false={forPrint}><!--template if:false={rec.attributes.isDischarged}--><lightning-button class="button slds-no-print" variant="brand" label="+ Add Individual Goal" name={rec.attributes.Id}  onclick={openGoalsModal}></lightning-button><!--/template--></template>
+                        <!--template if:true={rec.attributes.isDischarged}>&nbsp;<b>{rec.attributes.clientName} is Discharged.</b></template-->
+                        <br/>
+                    </template>
+                    <!-- Iterate on List of Goals -->
+                    <template for:each={rec.attributes.listGoals} for:item="goal">
+                        <div key={goal.goalId} class={rec.attributes.style}>
+                            <template if:true={goal.isDeleteGoal}>
+                                <div class="sectionHeader slds-text-title_bold slds-m-bottom_x-small slds-align_absolute-center">
+                                    Are you sure you want to delete this Goal?
+                                    <lightning-button class="slds-m-left_x-small slds-m-right_x-small slds-no-print" variant="base" label="Yes" name={goal.goalId} disabled={rec.isDischarged} onclick={handleDeleteGoalYes} ></lightning-button>
+                                    <lightning-button class="slds-no-print" variant="base" label="No" name={goal.clientGoalId} disabled={rec.isDischarged} onclick={handleDeleteGoalNo} ></lightning-button>
+                                </div>
+                            </template>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-col slds-size_1-of-12">
+                                    <template if:false={forPrint}>
+                                        <template if:false={planActive}>
+                                            <lightning-button class="button slds-no-print" variant="brand" label="+ Add Step" name={goal.clientGoalId} disabled={rec.isDischarged} onclick={handleEditGoal}></lightning-button>
+                                        </template>
+                                    </template>
+                                </div>
+                                <div class="slds-col slds-size_1-of-12">
+                                    <b>Goal #</b><br/>
+                                    {goal.goalName}
+                                </div>
+                                <div class="slds-col slds-size_4-of-12">
+                                    <b>Goal Description</b><br/>
+                                    {goal.description}
+                                </div>
+                                <div class="slds-col slds-size_1-of-12">
+                                    <b>Start Date</b><br/>
+                                    {goal.startDate}
+                                </div>
+                                <div class="slds-col slds-size_1-of-12">
+                                    <b>Target Date</b><br/>
+                                    {goal.targetDate}
+                                </div>
+                                <div class="slds-col slds-size_1-of-12">
+                                    <b>Status</b><br/>
+                                    {goal.status}
+                                </div>
+                                <div class="slds-col slds-size_1-of-12">
+                                    <b>Goal Type</b><br/>
+                                    {goal.goalType}
+                                </div>
+                                <div class="slds-col slds-size_1-of-12">
+                                    <b>Domain</b><br/>
+                                    {goal.domain}
+                                </div>
+                                <div class="slds-col slds-size_1-of-12">
+                                    <template if:false={forPrint}>
+                                        <template if:false={planActive}>
+                                            <lightning-button-icon class="slds-m-right_x-small slds-no-print" variant="brand" icon-name="utility:edit" alternative-text="Edit" name={goal.clientGoalId} disabled={rec.isDischarged} onclick={handleEditGoal}></lightning-button-icon>
+                                            <lightning-button-icon class="slds-no-print" variant="brand" icon-name="utility:delete" alternative-text="Delete" name={goal.clientGoalId} disabled={rec.isDischarged} onclick={handleDeleteGoal} ></lightning-button-icon>
+                                        </template>
+                                    </template>
+                                </div>
+                            </div>
+                            <!-- Iterate on List of Steps -->
+                            <template for:each={goal.listSteps} for:item="step">
+                                <div key={step.stepId} class="slds-p-top_x-small slds-p-bottom_x-small slds-m-top_x-small" style="background:#D4E0F7; border-radius:5px;">
+                                    <template if:true={step.isDeleteStep}>
+                                        <div class="sectionHeader slds-text-title_bold slds-m-bottom_x-small slds-align_absolute-center">
+                                            Are you sure you want to delete this Step?
+                                            <lightning-button class="slds-m-left_x-small slds-m-right_x-small slds-no-print" variant="base" label="Yes" name={step.stepId} disabled={rec.isDischarged} onclick={handleDeleteStepYes} ></lightning-button>
+                                            <lightning-button class="slds-no-print" variant="base" label="No" name={step.clientGoalStepId} disabled={rec.isDischarged} onclick={handleDeleteStepNo} ></lightning-button>
+                                        </div>
+                                    </template>
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-12"></div>
+                                        <div class="slds-col slds-size_1-of-12">
+                                            <b>Step #</b><br/>
+                                            {step.stepName}
+                                        </div>
+                                        <div class="slds-col slds-size_4-of-12">
+                                            <b>Step Description</b><br/>
+                                            {step.description}
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-12">
+                                            <b>Start Date</b><br/>
+                                            {step.startDate}
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-12">
+                                            <b>Target Date</b><br/>
+                                            {step.targetDate}
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-12">
+                                            <b>Status</b><br/>
+                                            {step.status}
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-12">
+                                            <b>Assigned To</b><br/>
+                                            {step.assignedTo}
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-12">
+                                            <b>Type</b><br/>
+                                            {step.typeOfAction}
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-12">
+                                            <template if:false={forPrint}>
+                                                <template if:false={planActive}>
+                                                    <template if:false = {step.isActionableStep}>
+                                                     <lightning-button-icon class="slds-m-right_x-small slds-no-print" variant="brand" icon-name="utility:edit" alternative-text="Edit" name={goal.clientGoalId} disabled={rec.isDischarged} onclick={handleEditGoal} ></lightning-button-icon>
+                                                    </template>
+                                                     <template if:true = {step.isActionableStep}>
+                                                    <lightning-button-icon class="slds-m-right_x-small slds-no-print" variant="brand" icon-name="utility:breadcrumbs" alternative-text="Go To Action" name={step.clientGoalStepId} disabled={rec.isDischarged} onclick={handleAtionnableTaskStep} ></lightning-button-icon> 
+                                                    </template>
+                                                    <!-- //End -->
+                                                    <lightning-button-icon class="slds-no-print" variant="brand" icon-name="utility:delete" alternative-text="Delete" name={step.clientGoalStepId} disabled={rec.isDischarged} onclick={handleDeleteStep} ></lightning-button-icon>
+                                                </template>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </lightning-accordion-section>
+            </template>
+        </lightning-accordion>
+        <!--template if:false={forPrint}>
+            <template if:false={planActive}>
+                <lightning-button class="button slds-no-print" variant="brand" label="+ Add Household Goal" onclick={handleHHGoal} ></lightning-button>
+            </template>
+        </template-->
+
+        <!-- Individual Goal Modal LWC starts here -->
+        <template if:true={isModalOpen}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <div class="slds-modal__content slds-p-around_large" id="modal-content-id-1">
+                        <c-plan-wiz-add-goals client-id={activeClientId} record-id={recordId} goal-id={activeGoalId} plan-id={planId} is-household={openHHGoalModal} plan-start-date={planStartDate} onclosegoalsmodal={closeGoalsModal} object-api-name={objectApiName} child-id-goal-modal={childId}></c-plan-wiz-add-goals>
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <!-- Household Goal Modal LWC starts here -->
+        <!--template if:true={openHHGoalModal}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container"-->
+                    <!-- Modal/Popup Box LWC body starts here -->
+                    <!--div class="slds-modal__content slds-p-around_large" id="modal-content-id-2">
+                        <c-plan-wiz-h-h-goal-container as-id={recordId} plan-id={planId} plan-start-date={planStartDate} onclosehhgoalsmodal={closeHHGoalsModal}></c-plan-wiz-h-h-goal-container>
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template-->
+
+    </template>
+    <template if:false={listClients}>
+        <lightning-spinner variant="brand" 
+                           alternative-text="Loading"     
+                           size="medium">
+        </lightning-spinner>
+    </template>
+</template>

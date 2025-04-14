@@ -1,0 +1,66 @@
+<template>
+    <div if:true={isLoading}>
+        <lightning-spinner variant="brand" alternative-text="Loading..." size="medium">
+        </lightning-spinner>
+    </div>
+    <div class="slds-grid slds-gutters">
+        <div class="slds-col">
+            <div class="slds-text-heading_medium slds-m-bottom_medium">
+                <b>Details</b>
+            </div>
+            <lightning-input disabled={isSubmit} required label="Assessment Name"
+                value={assessmentDetail.assessmentName} name="assessmentname" variant="brand" onblur={handleChange} max-length="72">
+            </lightning-input>
+
+            <lightning-textarea disabled={isSubmit} label="Assessment Description"
+                value={assessmentDetail.assessmentDescription} name="assessmentdescription" variant="brand" onblur={handleChange}>
+            </lightning-textarea>
+
+            <lightning-combobox name="objectname" disabled={isSubmit} class="slds-m-top_medium"
+                    label="Object Name" value={assessmentDetail.objectName} placeholder="Select Object"
+                    options={objectList} onchange={handleChange}></lightning-combobox>
+            
+            <!-- <template if:false={assessmentDetail.isTemplate}>
+
+                <lightning-combobox required name="questionsource" disabled={isSubmit} class="slds-m-top_medium"
+                    label="Select Question Source" value={assessmentDetail.selectedQuestionSource}
+                    placeholder="Select Question Source" options={questionSource} onchange={handleChange}>
+                </lightning-combobox>
+                <template if:true={assessmentDetail.isSourceTemplate}>
+                    <lightning-combobox name="templatename" disabled={isSubmit} class="slds-m-top_medium"
+                        label="Select Template" value={assessmentDetail.templateName} placeholder="Select Template"
+                        options={templateList} onchange={handleChange}></lightning-combobox>
+                </template>
+            </template> -->
+        </div>
+        <div class="slds-col">
+            <div class="slds-text-heading_medium slds-m-bottom_x-large">
+                <div class="slds-grid slds-gutters">
+                    <div class="slds-col">
+                        <b>Configuration</b>
+                    </div>
+                    <!-- <div class="slds-col" style="margin-top: -15px;">
+                        <lightning-input class="slds-m-top_medium" disabled={isSubmit} type="checkbox"
+                            label="Is Template?" name="istemplate" checked={assessmentDetail.isTemplate}
+                            onchange={handleChange}></lightning-input>
+                    </div> -->
+                </div>
+            </div>
+            <lightning-input class="slds-m-top_medium" disabled={isSubmit} type="checkbox" label="Need Sections?"
+                name="needsections" checked={assessmentDetail.needSections} onchange={handleChange}></lightning-input>
+            <template if:false={assessmentDetail.isTemplate}>
+                <!-- <lightning-input class="slds-m-top_medium" disabled={isSubmit} type="checkbox"
+                    label="Need on completion field update?" name="fieldupdate" checked={assessmentDetail.fieldUpdate}
+                    onchange={handleChange}></lightning-input> -->
+
+                <lightning-input class="slds-m-top_medium" disabled={isSubmit} type="checkbox" label="Need Scoring?"
+                    name="scoring" checked={assessmentDetail.needScoring} onchange={handleChange}></lightning-input>
+            </template>
+            <template if:false={assessmentDetail.isTemplate}>
+
+                <lightning-input class="slds-m-top_medium" disabled={isSubmit} type="checkbox" label="Active?"
+                    name="active" checked={assessmentDetail.active} onchange={handleChange}></lightning-input>
+            </template>
+        </div>
+    </div>
+</template>

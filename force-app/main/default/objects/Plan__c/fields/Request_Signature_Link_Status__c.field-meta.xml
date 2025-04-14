@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Request_Signature_Link_Status__c</fullName>
+    <deprecated>false</deprecated>
+    <label>Request Signature Link Status</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Not Triggered</fullName>
+                <default>false</default>
+                <label>Not Triggered</label>
+            </value>
+            <value>
+                <fullName>Sent</fullName>
+                <default>false</default>
+                <label>Sent</label>
+            </value>
+            <value>
+                <fullName>Expired</fullName>
+                <default>false</default>
+                <label>Expired</label>
+            </value>
+            <value>
+                <fullName>Signed</fullName>
+                <default>false</default>
+                <label>Signed</label>
+            </value>
+            <value>
+                <fullName>Link 1 Expired</fullName>
+                <default>false</default>
+                <label>Link 1 Expired</label>
+            </value>
+            <value>
+                <fullName>Link 2 Expired</fullName>
+                <default>false</default>
+                <label>Link 2 Expired</label>
+            </value>
+            <value>
+                <fullName>Link 3 Expired</fullName>
+                <default>false</default>
+                <label>Link 3 Expired</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

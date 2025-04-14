@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Outcome__c</fullName>
+    <deprecated>false</deprecated>
+    <label>Outcome</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Attended group health education classes</fullName>
+                <default>false</default>
+                <label>Attended group health education classes</label>
+            </value>
+            <value>
+                <fullName>Demonstrated increased knowledge due to attending health education classes</fullName>
+                <default>false</default>
+                <label>Demonstrated increased knowledge due to attending health education classes</label>
+            </value>
+            <value>
+                <fullName>Received individual targeted health outreach services</fullName>
+                <default>false</default>
+                <label>Received individual targeted health outreach services</label>
+            </value>
+            <value>
+                <fullName>Received medical/navigation support services</fullName>
+                <default>false</default>
+                <label>Received medical/navigation support services</label>
+            </value>
+            <value>
+                <fullName>Completed their plan of care due to receiving medical/navigation support services</fullName>
+                <default>false</default>
+                <label>Completed their plan of care due to receiving medical/navigation support services</label>
+            </value>
+            <value>
+                <fullName>Received mental health/navigation support services</fullName>
+                <default>false</default>
+                <label>Received mental health/navigation support services</label>
+            </value>
+            <value>
+                <fullName>Completed their plan of care due to receiving mental health/navigation support services</fullName>
+                <default>false</default>
+                <label>Completed their plan of care due to receiving mental health/navigation support services</label>
+            </value>
+            <value>
+                <fullName>Attended wellness group</fullName>
+                <default>false</default>
+                <label>Attended wellness group</label>
+            </value>
+            <value>
+                <fullName>Demonstrated improvement in their well-being due to attending wellness group</fullName>
+                <default>false</default>
+                <label>Demonstrated improvement in their well-being due to attending wellness group</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

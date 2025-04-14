@@ -1,0 +1,28 @@
+.head{
+   border-radius: 10px;
+    height: 35px;
+    border: 2px solid #122a3f;
+    background-color: #122a3f;
+    margin-top: 10px;
+    margin-right: 22px;
+    margin-left: 22px;
+    padding: 2px;
+    color: white;
+}
+.custom-input {
+	margin-right:22px;
+	margin-left:22px;
+}
+
+.field-label{
+	font-size: 14px;
+    margin-left: 16px;
+    padding-left: 10px;
+    margin-top: 14px;
+    margin-bottom: -10px;
+}
+
+.custom-buttons
+{
+    gap: 10px;
+}

@@ -1,0 +1,27 @@
+<template>
+    <div class="resultpage">
+        <div class="slds-theme_default">
+            <div class="headerBox">
+                <div class="vertical-center">
+                    Assessment Outcome
+                </div>
+                <div class="slds-float_right slds-m-right_medium slds-m-top_x-small slds-no-print">
+                    <lightning-button variant="brand" label="Print" onclick={seeContent}></lightning-button>
+                </div>
+            </div>
+            <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-size_1-of-1">
+                    <c-outcome-details outcome-id={outcomeId} object-name={objectName}></c-outcome-details>
+                </div>
+                <div class="headerBox">
+                    <div class="vertical-center">
+                        Questionnaire
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-1">
+                    <c-outcome-questionnaire outcome-id={outcomeId} object-name={objectName}></c-outcome-questionnaire>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

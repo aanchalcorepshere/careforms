@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Restrict_Edit</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(!ISNEW(),Bypass_Validation__c == false,$Profile.Name &lt;&gt; &apos;System Administrator&apos;, $Profile.Name &lt;&gt; &apos;Internal Super User&apos;)</errorConditionFormula>
+    <errorMessage>Response records cannot be edited.</errorMessage>
+</ValidationRule>

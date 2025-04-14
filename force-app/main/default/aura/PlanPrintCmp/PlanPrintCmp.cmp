@@ -1,0 +1,11 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable" access="global">
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" description=""/>
+    
+    <aura:attribute name="recId" type="String"/>
+    <aura:attribute name="objName" type="String"/>
+    <aura:attribute name="print" type="Boolean" default="true"/>
+    
+    <!--<c:servicePlanWizContainer recordId="{!v.recId}" objectApiName="{!v.objName}" forPrint="{!v.print}"></c:servicePlanWizContainer>-->
+    <c:planWizContainer recordId="{!v.recId}" objectApiName="{!v.objName}" forPrint="{!v.print}"></c:planWizContainer>
+</aura:component>

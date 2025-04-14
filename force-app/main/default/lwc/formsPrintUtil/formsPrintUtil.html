@@ -1,0 +1,50 @@
+<template>
+  <div class="slds-clearfix">
+    <div
+      class="slds-float_right slds-no-print slds-m-right_medium slds-m-top_small"
+    >
+      <lightning-button
+        name="print"
+        title="Print"
+        label="Print"
+        variant="brand"
+        onclick={handlePrint}
+      ></lightning-button>
+    </div>
+  </div>
+  <div class="slds-theme_default">
+    <div
+      if:true={error}
+      class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small"
+      role="alert"
+    >
+      <b>{error}</b>
+    </div>
+    <template if:true={isLoading}>
+      <lightning-spinner
+        class="spins"
+        size="medium"
+        alternative-text="Saving New Client..."
+        variant="brand"
+      ></lightning-spinner>
+    </template>
+    <c-custom-form-input-summary-page page-data={pageData} for-print={forPrint}></c-custom-form-input-summary-page>
+    <div class="slds-m-left_large" if:true={signatureText}>
+      <lightning-formatted-rich-text
+        value={signatureText}
+      ></lightning-formatted-rich-text>
+    </div>
+    <template if:true={signatureImgSrc}>
+      <div class="slds-box slds-m-around_medium slds-size_1-of-3">
+        <div class="slds-text-body_regular">
+          <b>Signature:</b>
+        </div>
+        <img src={signatureImgSrc} width="150" />
+      </div>
+    </template>
+	<!-- <div class="printmetadata slds-m-left_medium slds-m-bottom_medium">
+		<b>IP Address :</b> 122.161.49.157 <br />
+		<b>Date Time :</b> 03/04/2024 09:55:44 AM
+	</div> -->
+  </div>
+</template>

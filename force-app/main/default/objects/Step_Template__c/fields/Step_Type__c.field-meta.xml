@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Step_Type__c</fullName>
+    <deprecated>false</deprecated>
+    <label>Type of Step</label>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Actionable Task</fullName>
+                <default>false</default>
+                <label>Actionable Task</label>
+            </value>
+            <value>
+                <fullName>Step</fullName>
+                <default>false</default>
+                <label>Step</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,62 @@
+<template>
+	<div class="custom-multiselect-picklist">
+		<div class="available-options" ondrop={handleDropAvailable} ondragover={handleDragOver}>
+			<h3>Available Options</h3>
+			<ul>
+				<template for:each={availableOptions} for:item="option">
+					<li key={option.value} draggable="true" data-value={option.value} ondragstart={handleDragStart}>
+						<span>{option.label}</span>
+					</li>
+				</template>
+			</ul>
+		</div>
+		<div class="selected-options" ondrop={handleDropSelected} ondragover={handleDragOver} onscroll={handleScroll}>
+			<h3>Selected Options</h3>
+			<ul>
+				<template for:each={selectedOptions} for:item="option">
+					<li key={option.value} draggable="true" data-value={option.value} ondragstart={handleDragStart}>
+						<span>{option.label}</span>
+					</li>
+				</template>
+			</ul>
+		</div>
+
+		<template if:true={showMandatory}>
+			<div class="mark-mandatory">
+				<h3 class="slds-align_absolute-center">*</h3>
+				<ul>
+					<template for:each={selectedOptions} for:item="option">
+						<li key={option.value} data-value={option.value}>
+							<lightning-input type="checkbox" checked={option.isMandatory}
+								onchange={handleCheckboxChange} data-id={option.value} disabled = {option.isReqDisabled} data-name='mandatoryCheckbox'
+								class="slds-align_absolute-center"></lightning-input>
+
+						</li>
+					</template>
+				</ul>
+			</div>
+		</template>
+
+
+		<template if:true={showEditable}>
+			<div class="mark-editable">
+				<h3 class="slds-align_absolute-center">
+					<lightning-icon icon-name="utility:edit" alternative-text="Edit" size="xx-small"
+						class="slds-align_absolute-center"></lightning-icon>
+				</h3>
+				<ul>
+					<template for:each={selectedOptions} for:item="option">
+						<li key={option.value} data-value={option.value}>
+							<lightning-input type="checkbox" checked={option.isEditable} onchange={handleCheckboxChange}
+								data-id={option.value} data-name='editCheckbox' disabled = {option.isEditDisabled} class="slds-align_absolute-center">
+							</lightning-input>
+
+						</li>
+					</template>
+				</ul>
+			</div>
+		</template>
+	</div>
+
+
+</template>

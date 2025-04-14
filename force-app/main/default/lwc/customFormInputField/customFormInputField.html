@@ -1,0 +1,46 @@
+<template>
+    <template if:false={field.fieldData.hide}>
+        <template if:false={isSummaryAndSignature}>
+            <div>
+                {label}
+                <span if:true={field.fieldData.required} style="color:red">*</span>
+            </div>
+            <div if:true={field.fieldData.helpText} class="helptext">
+                {field.fieldData.helpText}
+            </div>
+            <!-- <template if:true={isCreateOrVerifyApplication}>
+                <lightning-record-edit-form object-api-name={objectName} record-id={field.fieldData.recordId} onload={handleOnLoad}>
+                    <div if:true={field.fieldData.controllingField} style="display: none;">
+                        <lightning-input-field class="thefield" disabled={isSummary}  field-name={field.fieldData.controllingField}> </lightning-input-field>    
+                    </div>
+                    <lightning-input-field class="thefield" style="display: none;" disabled={isSummary} onchange={handleChange} variant="label-hidden" field-name={field.fieldData.fieldApi}></lightning-input-field>
+                </lightning-record-edit-form>
+            </template> -->
+            <lightning-record-edit-form object-api-name={objectName}>
+                <div if:true={field.fieldData.controllingField} style="display: none;">
+                    <lightning-input-field disabled={isSummary} value={field.fieldData.controllingFieldValue} field-name={field.fieldData.controllingField}> </lightning-input-field>    
+                </div>
+                <lightning-input-field disabled={isSummary} onchange={handleChange} onkeydown={handleKeyPress} value={field.fieldData.inputValue} variant="label-hidden" field-name={field.fieldData.fieldApi}></lightning-input-field>
+            </lightning-record-edit-form>
+            <template if:true={isPrefillFieldsForm}>
+                <lightning-record-edit-form object-api-name={objectName} record-id={field.fieldData.recordId} onload={handleOnLoad}>
+                    <div if:true={field.fieldData.controllingField} style="display: none;">
+                        <lightning-input-field class="thefield" disabled={isSummary} field-name={field.fieldData.controllingField}> </lightning-input-field>    
+                    </div>
+                    <lightning-input-field class="thecopyfield" style="display: none;" disabled={isSummary} onchange={handleChange} variant="label-hidden" field-name={field.fieldData.fieldApi}></lightning-input-field>
+                </lightning-record-edit-form>
+            </template>
+            <!-- <div if:true={field.fieldData.formName} style="border:.5px solid blue;border-radius:5px" class="slds-m-top_small slds-p-around_xx-small slds-text-link">
+                {field.fieldData.formName}
+            </div> -->
+        </template>
+        <template if:true={isSummaryAndSignature}>
+            <div class="signature">
+                <div class="header">
+                    {label}
+                </div>
+                {field.fieldData.inputValue}
+            </div>
+        </template>
+    </template>
+</template>

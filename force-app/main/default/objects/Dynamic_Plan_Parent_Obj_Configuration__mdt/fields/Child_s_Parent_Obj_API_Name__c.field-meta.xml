@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Child_s_Parent_Obj_API_Name__c</fullName>
+    <deprecated>false</deprecated>
+    <description>This is Junction object&apos;s field API name which contains Id of it&apos;s second parent which is gonna get considered for UI(
+relationship filed).</description>
+    <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Child&apos;s Parent Obj API Name</label>
+    <length>255</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

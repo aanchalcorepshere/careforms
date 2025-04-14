@@ -1,0 +1,26 @@
+.slds-modal__container {
+    max-width: 90rem !important;
+    width: 90% !important;
+}
+
+.slds-modal__content{ 
+    height : 40vh !important; 
+    max-height: 40vh !important; 
+} 
+
+.section{
+    background-color: rgb(58, 58, 58);
+    color:white;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 20px 0 0 20px;
+}
+
+.sectionbutton {
+    background: #e3e3e3;
+    border : none;
+    border-radius: 5px;
+    color: rgb(58, 58, 58);
+    font-size: 12px;
+    padding: 4px 10px 4px 10px;
+}

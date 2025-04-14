@@ -1,0 +1,105 @@
+<template>
+    <div class={section.sectionClass} data-id={section.sectionIndex>
+        <div class="columnoption">
+            COLUMNS: &nbsp; &nbsp;
+            <select name="columns" onchange={handleColumns}>
+                <template if:true={columnOptions} for:each={columnOptions} for:item="option">
+                    <option key={option.value} value={option.value} selected={option.selected}>{option.label}</option>
+                </template>
+            </select>
+            <!-- <lightning-combobox
+                name="progress"
+                label="Status"
+                value={size}
+                options={columnOptions}
+                onchange={handleColumns} ></lightning-combobox> -->
+        </div>
+        <div key={section.sectionIndex} class="section-head">
+            <template if:false={section.isLabelEdit}>
+                <b>{section.sectionName}</b>
+                <div class="editsection">
+                    <lightning-icon size="xx-small" icon-name="utility:edit" alternative-text="edit" title="edit" class="edit-icnsection" onclick={handleSectionLabelEdit}></lightning-icon>
+                </div>
+            </template>
+            <template if:true={section.isLabelEdit}>
+                <div style="display:inline-block">
+                    <!-- <lightning-input class="labelinput" type="text" variant="label-hidden" name={section.sectionIndex}
+                        onblur={handleSectionLabelEditDone} value={section.sectionName}></lightning-input> -->
+                    <input class="slds-input labelinput" type="text" label="" name={section.sectionIndex} onblur={handleSectionLabelEditDone} value={section.sectionName}></input>
+                </div>
+            </template>
+        </div>
+
+        <div if:true={section.objectLabel} class="objlabel">
+            {section.objectLabel}
+        </div>
+        <div key={section.sectionIndex} class="form-content">
+            <div class="fields">
+                <lightning-layout multiple-rows="true">
+                    <template for:each={section.fields} for:item="field">
+                        <lightning-layout-item onmousedown={handleFieldMouseDown} size={size} key={field.fieldIndex}>
+                            <div class="field" data-id={field.fieldIndex} ondrop={handleDrop}
+                                ondragenter={handleDragEnter} ondragover={handleDragOver} ondragleave={handleDragLeave}>
+                                <div class="actionbuttons">
+                                    <template if:false={field.fieldData.isNotNillable}>
+                                        <div class="clearcontent">
+                                            <a href="#" onclick={handleClear} data-id={field.fieldIndex}
+                                                class="slds-align_absolute-center">
+                                                Clear
+                                            </a>
+                                        </div>
+                                    </template>
+                                    <template if:false={field.fieldData.isNotNillable}>
+                                        <div class="deletecell">
+                                            <a href="#" onclick={handleDelete} data-id={field.fieldIndex} class="slds-align_absolute-center">
+                                                Delete
+                                            </a>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div if:false={field.fieldData.isQuestion} class="edit">
+                                    <lightning-icon size="xx-small" icon-name="utility:edit" alternative-text="edit" title="edit" data-id={field.fieldIndex} class="edit-icnpage" onclick={handleFieldLabelEdit}></lightning-icon>
+                                </div>
+                                <div class={field.fieldClass} draggable="true" ondragstart={handleDragStart} data-id={field.fieldIndex}>
+                                    <div class="slds-grid">
+                                        <div class="slds-col slds-size_1-of-12">
+                                            <div class="vertical-center">
+                                                <lightning-icon size="small" icon-name="utility:drag_and_drop" alternative-text="drag_and_drop" title="drag_and_drop">
+                                                </lightning-icon>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-size_11-of-12">
+                                            <template if:true={field.isField}>
+                                                <c-forms-field-module key={field.fieldIndex} field={field.fieldData} field-index={field.fieldIndex} object={field.objectName} section-index={section.sectionIndex} page-index={pageIndex}></c-forms-field-module>
+                                            </template>
+                                            <template if:true={field.isRichTextBox}>
+                                                <lightning-input-rich-text 
+                                                placeholder="Type something interesting" onblur={handleRichTextContent} value={field.content} data-id={field.fieldIndex}>
+                                                </lightning-input-rich-text>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </lightning-layout-item>
+                    </template>
+                </lightning-layout>
+                <template if:true={section.isSectionMulti}>
+                    <div class="slds-clearfix">
+                        <div
+                            class="slds-float_right slds-m-right_medium slds-text-heading_small slds-text-color_success">
+                            <b>(+/-)</b>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div class="slds-align_absolute-center">
+                <a href="#" class="addrow" onclick={addCell}>Add Cell</a>
+            </div>
+            <div class="deletesection">
+                <lightning-icon size="x-small" icon-name="utility:delete" alternative-text="delete" title="delete" class="delete-icn" onclick={handleSectionDelete}>
+                </lightning-icon>
+            </div>
+        </div>
+    </div>
+</template>

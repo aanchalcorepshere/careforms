@@ -1,0 +1,18 @@
+<template>
+    <div class="container">
+        <div class="gauge-a"></div>
+        <div class="gauge-b"></div>
+        <div class="gauge-c" style={styleGaugeC}></div>
+        <div class="gauge-data">
+          <h1>{value}%</h1>
+        </div>
+      </div>
+      <div class="score-data slds-align_absolute-center">
+          Score : {score}/{maxScore}
+      </div>
+      <template if:true={error}>
+        <div class="error-message">
+          ⚠️ {error}
+        </div>
+      </template>
+  </template>

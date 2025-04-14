@@ -1,0 +1,55 @@
+<template>
+    <div class="slds-box slds-theme_default">
+        <template lwc:if={formLauncher}>
+            <div style="height:100vh;">
+                <div if:true={error} class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                    <b>{error}</b>
+                </div>
+                <div if:true={showCombobox}>
+                    <div class="slds-col slds-size_5-of-6">
+                        <lightning-combobox
+                            name="forms"
+                            label="Select Form"
+                            value={value}
+                            placeholder="Select Form"
+                            options={formsOptions}
+                            onchange={handleChange} ></lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-p-top_medium">
+                        <lightning-button name="launch" label="Launch" variant="brand" onclick={handleSubmit}></lightning-button>
+                        <!-- UST-501 -->
+                        <!-- <lightning-button class="slds-m-left_medium" name="sendform" label="Send Form" variant="success" onclick={handleSendForm}></lightning-button> -->
+                    </div>
+                </div>
+                <!-- <template if:true={sendFormClicked}>
+                    <div class="slds-m-top_medium slds-m-left_medium">
+                        <lightning-radio-group name="recipientOptions"
+                          label="Select Individual to Send Form"
+                          options={recipientOptions}
+                          type="radio"
+                          onchange={handleRecipientSelection}></lightning-radio-group>
+                          <div class="slds-m-top_medium slds-m-left_medium">
+                            <template if:true={clientsOptionSelected}>
+                                <lightning-radio-group name="clients"
+                                    label="Client(s)"
+                                    options={clientsList}
+                                    type="radio"
+                                    onchange={handleClientSelection}></lightning-radio-group>
+                              </template>
+                              <template if:true={otherOptionSelected}>
+                                <lightning-input name="other" type="email" label="Enter email" onblur={handleClientSelection} required></lightning-input>
+                              </template>
+                              <div class="slds-p-top_medium">
+                                <lightning-button name="cancel" label="Cancel" variant="neutral" onclick={handleCancel}></lightning-button>
+                                <lightning-button class="slds-m-left_medium" name="submitSend" label="Submit" variant="brand" onclick={handleSendSubmit}></lightning-button>
+                                </div>
+                          </div>
+                    </div>
+                </template> -->
+            </div>
+        </template>
+        <template lwc:else>
+            <c-custom-form-input-container form-id={selectedForm} is-prefill-fields-form={isPrefillFieldsForm} primary-object-for-prefill={objectApiName} record-id={recordId} onformsubmitted={handleSubmitForm}></c-custom-form-input-container>
+        </template>
+    </div>
+</template>

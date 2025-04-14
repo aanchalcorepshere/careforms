@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Domain__c</fullName>
+    <deprecated>false</deprecated>
+    <label>Domain</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Access to Community Resources</fullName>
+                <default>false</default>
+                <label>Access to Community Resources</label>
+            </value>
+            <value>
+                <fullName>Child Care</fullName>
+                <default>false</default>
+                <label>Child Care</label>
+            </value>
+            <value>
+                <fullName>Child Development</fullName>
+                <default>false</default>
+                <label>Child Development</label>
+            </value>
+            <value>
+                <fullName>Drug and Alcohol</fullName>
+                <default>false</default>
+                <label>Drug and Alcohol</label>
+            </value>
+            <value>
+                <fullName>Education</fullName>
+                <default>false</default>
+                <label>Education</label>
+            </value>
+            <value>
+                <fullName>Employment and Training</fullName>
+                <default>false</default>
+                <label>Employment and Training</label>
+            </value>
+            <value>
+                <fullName>Financial</fullName>
+                <default>false</default>
+                <label>Financial</label>
+            </value>
+            <value>
+                <fullName>Food</fullName>
+                <default>false</default>
+                <label>Food</label>
+            </value>
+            <value>
+                <fullName>Housing</fullName>
+                <default>false</default>
+                <label>Housing</label>
+            </value>
+            <value>
+                <fullName>Legal</fullName>
+                <default>false</default>
+                <label>Legal</label>
+            </value>
+            <value>
+                <fullName>Medical</fullName>
+                <default>false</default>
+                <label>Medical</label>
+            </value>
+            <value>
+                <fullName>Mental Health</fullName>
+                <default>false</default>
+                <label>Mental Health</label>
+            </value>
+            <value>
+                <fullName>Parenting</fullName>
+                <default>false</default>
+                <label>Parenting</label>
+            </value>
+            <value>
+                <fullName>Peer Support</fullName>
+                <default>false</default>
+                <label>Peer Support</label>
+            </value>
+            <value>
+                <fullName>Transportation</fullName>
+                <default>false</default>
+                <label>Transportation</label>
+            </value>
+            <value>
+                <fullName>Utilities</fullName>
+                <default>false</default>
+                <label>Utilities</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

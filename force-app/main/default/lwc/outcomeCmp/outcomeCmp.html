@@ -1,0 +1,142 @@
+<template>
+    <template if:true={hasAccess}>
+        <div if:true={isLoading}>
+            <lightning-spinner variant="brand" 
+                               alternative-text="Loading..."     
+                               size="medium">
+            </lightning-spinner>
+        </div>
+        <div class="slds-theme_default slds-box">
+            <div class="headerBox">
+                <div class="vertical-center">
+                    Assessment Outcomes
+                </div>
+            </div>
+            <div class="slds-m-left_small slds-m-bottom_small">
+                <template if:true={outcomeList} for:each={outcomeList} for:item="outcome" for:index="index">
+                    <span key={outcome.Id} class="outcometitle" data-outcome-id={outcome.Id} onclick={handleClick}>{outcome.Name}</span>
+                    <div key={outcome.Id} class="slds-m-left_small slds-m-top_small">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_1-of-2">
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <b>Assessment Name :</b>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <template if:true={outcome.isAssessmentAccessible}>
+                                                    <a href={outcome.assessmentUrl}>{outcome.Assessment__r.Name}</a>
+                                                </template>
+                                                <template if:false={outcome.isAssessmentAccessible}>
+                                                    {outcome.Assessment__r.Name}
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <b>Assessment Date :</b>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                {outcome.assessmentDate}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <b>Client Name :</b>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <a href={outcome.clientUrl}>{outcome.caresp__Client__r.caresp__Full_Name__c}</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <b>Last Modified By :</b>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <a href={outcome.lastmodifiedbyUrl}>{outcome.LastModifiedBy.Name}</a>, {outcome.editDate}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2">
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <b>Assessment Status :</b>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <div class={outcome.caresp__Color__c}>
+                                                    {outcome.caresp__Status__c}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <b>Total Score :</b>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                {outcome.caresp__Total_Score__c}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <b>Total Max Score :</b>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                {outcome.caresp__Total_Max_Score__c}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <b>Outcome :</b>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                {outcome.caresp__Outcome__c}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <b>Created By :</b>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <a href={outcome.createdbyUrl}>{outcome.CreatedBy.Name}</a>, {outcome.createDate}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <p key={outcome.Id} class={outcome.Color__c}>
+                             
+                        </p> -->
+                    </div>
+                </template>
+            </div>
+            <div if:true={isNoOutcomes} class="slds-align_absolute-center">
+                <p>No Assessments have been submitted for this record.</p>
+            </div>
+        </div>
+    </template>
+    <template if:false={hasAccess}>
+        <div class="slds-m-around_medium">
+            Sorry, you do not have access to this record's outcomes.
+        </div>
+    </template>
+</template>

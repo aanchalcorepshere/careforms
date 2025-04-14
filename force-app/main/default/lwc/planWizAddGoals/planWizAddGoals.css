@@ -1,0 +1,15 @@
+.head{
+    border-radius: 10px;
+    height: 40px;
+    border: 2px solid #122a3f;
+    background-color: #122a3f;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 5px;
+    color:white;
+}
+
+.sectionHeader {
+    background-color: #4468AB;
+    color: white;
+}

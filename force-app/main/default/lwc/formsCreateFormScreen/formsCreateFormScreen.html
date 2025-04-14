@@ -1,0 +1,112 @@
+<template>
+    <template if:true={isLoading}>
+        <lightning-spinner size="medium"> </lightning-spinner>
+    </template>
+    <lightning-button variant="base" label="labelName" title="titleName" onclick={handleClick}></lightning-button>
+    <div class="container-box" style="height: 100vh;overflow: hidden;">
+        <div class="head">
+            {formName}
+        </div>
+        <div class="slds-box slds-scrollable" style="height: 90%;">
+            <template if:true={pages} for:each={pages} for:item="page">
+                <c-forms-page-module key={page.pageName} page={page} onaddsection={handleAddSection}
+                    onpagelabeledit={handlePageLabelEdit} onpagelabeleditdone={handlePageLabelEditDone}
+                    onpagedelete={handlePageDelete} onsectiondrag={captureDraggedSectionSource}
+                    onsectiondropzone={captureDestinationSection}></c-forms-page-module>
+                <div key={page.pageName} class="slds-align_absolute-center">
+                    <a href="#" class="addpage" onclick={addPage} data-id={page.pageIndex}>Add Page</a>
+                </div>
+            </template>
+
+        </div>
+        <div class="metadata">
+            <div class="slds-text-heading_small">
+                <b>FIELDS</b>
+            </div>
+            <div class="slds-m-top_small">
+                <lightning-input type="text" variant="label-hidden" name="searchfields" placeholder="search fields..."
+                    onchange={handleFieldSearch}></lightning-input>
+            </div>
+            <!-- <div class="slds-p-vertical_small">
+                <button name="addMultiQuesSection" label="Add Multi Question Section" class="slds-button slds-button_neutral slds-button_stretch" onclick={handleAddMultiQuesSection}>Add Multi Question Section</button>
+            </div> -->
+            <div class="fieldsbox" style="height:65%;">
+                <template if:true={fieldList} for:each={fieldList} for:item="obj">
+                    <div key={obj.objectName} class="objecttext">
+                        {obj.objectName}<span if:true={obj.isMulti}>&nbsp;(Multiple Records Allowed)</span>
+                    </div>
+
+                    <template if:true={obj.fields} for:each={obj.fields} for:item="field">
+                        <div key={field.fieldUniqueName} class="fieldcard" draggable="true"
+                            ondragstart={handleDragStart} data-id={field.fieldUniqueName}>
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_2-of-12">
+                                    <div class="icon vertical-center">
+                                        <lightning-icon variant="inverse" size="small" icon-name="utility:drag_and_drop"
+                                            alternative-text="drag_and_drop" title="drag_and_drop">
+                                        </lightning-icon>
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_10-of-12">
+                                    <div class="fieldlabel">
+                                        {field.fieldName} <span if:false={field.isQuestion}>({field.fieldApi})</span>
+                                    </div>
+                                    <div class="datatype">
+                                        {field.dataType}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+            </div>
+            <div class="richtextboximage" draggable="true" data-id="richtextbox" ondragstart={handleDragStart}>
+                <div class="slds-grid">
+                    <div class="slds-col slds-size_1-of-12">
+                        <div style="margin-top:30%;">
+                            <lightning-icon variant="brand" size="small" icon-name="utility:drag_and_drop" alternative-text="drag_and_drop" title="drag_and_drop">
+                            </lightning-icon>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_11-of-12">
+                        <img src={richTextBoxImage} draggable="false" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <template if:true={isSectionTypeModalOpen}>
+        <div style="height: 100px;">
+            <!-- Modal/Popup Box LWC starts here -->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box LWC header here -->
+                    <header class="slds-modal__header">
+                        <!-- <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse"
+                            size="small"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button> -->
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Select Section Type
+                        </h2>
+                    </header>
+                    <!-- Modal/Popup Box LWC body starts here -->
+                    <div style="background:white; margin-bottom:10px;">
+                        <lightning-combobox name="sectiontype" label="Section Types" value={sectionvalue}
+                            placeholder="Select Section Type" options={sectionTypeOptions}
+                            onchange={handleSectionTypeSelection}></lightning-combobox>
+                    </div>
+                    <!-- Modal/Popup Box LWC footer starts here -->
+                    <!-- <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick={closeModal} title="Cancel">Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick={closeModal} title="OK">OK</button>
+                </footer> -->
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </template>
+</template>

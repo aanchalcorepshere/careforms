@@ -1,0 +1,39 @@
+<template>
+
+    <template if:false={submitted}>
+            <b>Date -</b> {todaysDate}
+        <div class="c-container"> 
+            <div style="width: 400px"> 
+                <div class="slds-form-element__label">
+                    <label for="signaturename">
+                        Enter text
+                    </label>
+                </div>
+                <lightning-input variant="label-hidden" id="signturename" type="text" value={name} onchange={signIt}></lightning-input>
+                <p>
+                    <!-- {headerText} -->
+                </p>         
+                <p class="thecanvas slds-m-top_medium"> 
+                    <canvas name="canvasItem" height="200" width="400px" style="border:2px solid rgb(136, 135, 135); background: white;"></canvas>
+                </p>
+                <p class="slds-m-bottom_small"> 
+                <!-- <lightning-button variant="brand" label="Download Signature" title="Save" 
+                    onclick={downloadSignature} class="slds-m-left_x-small"></lightning-button> -->
+    
+                <lightning-button variant="brand" label="Confirm Signature" title="Save" 
+                onclick={saveSignature} class="slds-m-left_x-small"></lightning-button>
+    
+                <lightning-button variant="brand" label="Clear" title="Clear" 
+                    onclick={handleClearClick} class="slds-m-left_x-small"></lightning-button>
+                </p>
+            </div>       
+        </div>
+    </template>
+    <template if:true={submitted}>
+        <img src={theSignature}>
+        <div>
+            <lightning-button variant="brand" label="Reset" title="Reset" 
+                    onclick={handleResetClick} class="slds-m-left_x-small"></lightning-button>
+        </div>
+    </template>
+</template>

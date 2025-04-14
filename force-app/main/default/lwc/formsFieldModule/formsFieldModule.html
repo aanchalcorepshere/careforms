@@ -1,0 +1,105 @@
+<template>
+    <template if:false={field.isLabelEdit}>
+        {label}
+        <div if:true={label} class="lgc-bg" style="display:inline-block;margin-top:-20px;">
+            <lightning-helptext content={helptext}></lightning-helptext>
+        </div>
+    </template>
+    <template if:true={field.isLabelEdit}>
+        <div style="display:inline-block">
+            <!-- <lightning-input class="slds-m-around_xx-small labelinput" type="text" variant="label-hidden" name={field.fieldIndex} onblur={handleLabelChange} value={field.customlabel} onclick={handleLabelClick}></lightning-input> -->
+            <input class="slds-input slds-m-around_xx-small labelinput" label="" type="text" name={fieldIndex} onblur={handleLabelChange} value={field.customlabel} onclick={handleLabelClick}></input>
+        </div>
+    </template>
+    <div class="slds-grid slds-gutters">
+        <template if:true={isText}>
+            <div class="slds-col slds-size_5-of-6">
+                <lightning-input type="text" variant="label-hidden" disabled={disabled}></lightning-input>
+            </div>
+        </template>
+        <template if:true={isTextarea}>
+            <div class="slds-col slds-size_5-of-6">
+                <lightning-textarea name={label} variant="label-hidden" disabled={disabled}></lightning-textarea>
+            </div>
+        </template>
+        <template if:true={isNumber}>
+            <div class="slds-col slds-size_5-of-6">
+                <lightning-input type="number" variant="label-hidden" disabled={disabled}></lightning-input>
+            </div>
+        </template>
+        <template if:true={isPicklist}>
+            <div class="slds-col slds-size_5-of-6">
+                <lightning-combobox name={label} variant="label-hidden" placeholder="Select..." options={options} disabled={disabled}></lightning-combobox>
+            </div>
+        </template>
+        <template if:true={isMultiPicklist}>
+            <div class="slds-col slds-size_5-of-6">
+                <lightning-dual-listbox name={label}
+                    variant="label-hidden"
+                    source-label="Available"
+                    selected-label="Selected"
+                    options={options}
+                    disabled={disabled}></lightning-dual-listbox>
+            </div>
+        </template>
+        <template if:true={isDate}>
+            <div class="slds-col slds-size_5-of-6">
+                <lightning-input type="date" name={label} variant="label-hidden" disabled={disabled}></lightning-input>
+            </div>
+        </template>
+        <template if:true={isBoolean}>
+            <div class="slds-col slds-size_5-of-6">
+                <lightning-radio-group name="radioGroup" variant="label-hidden" options={checkboxOptions} value={value} type="radio" disabled={disabled}></lightning-radio-group>
+            </div>
+        </template>
+        <template if:true={isCheckbox}>
+            <div class="slds-col slds-size_5-of-6">
+                <lightning-checkbox-group name="Checkbox Group" varient="label-hidden" options={field.quesAnsOptions} value={field.inputValue} disabled={disabled}></lightning-checkbox-group>
+            </div>
+        </template>
+        <template if:true={isRadiobox}>
+            <div class="slds-col slds-size_5-of-6">
+                <lightning-radio-group name="radioGroup" variant="label-hidden" options={field.quesAnsOptions} type="radio" value={field.inputValue} disabled={disabled}></lightning-radio-group>
+            </div>
+        </template>
+        <div class="slds-col slds-size_1-of-6 slds-clearfix">
+            <div if:true={label} class="columnoption slds-float_right">
+                <div class="slds-grid slds-grid_vertical">
+                    <div class="slds-col">
+                        <span class="slds-text-color_error">*<input class="slds-checkbox" type="checkbox" disabled={field.isNotNillable} checked={field.required} onchange={handleRequired}></span>
+                    </div>
+                    <div class="slds-col">
+                        <lightning-icon icon-name="utility:help" alternative-text="Click for help text" size="x-small" title="help text" onclick={handleHelpTextModal}></lightning-icon>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help text modal -->
+    <template if:true={openHelpTextModal}>
+        <div style="height: 100px;z-index: 10;">
+            <!-- Modal/Popup Box LWC starts here -->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box LWC header here -->
+                    <header class="slds-modal__header"> 
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Enter Help Text For Field</h2>
+                    </header>
+                    <!-- Modal/Popup Box LWC body starts here -->
+                    <div style="background:white;">
+                        <div class="slds-p-around_large">
+                            <lightning-textarea type="text" title="Help Text" label="Enter Help Text" value={field.helpText} onblur={handleHelpText} name="helptext"></lightning-textarea>
+                        </div>
+                    </div>
+                    <!-- Modal/Popup Box LWC footer starts here -->
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" variant="neutral" onclick={closeModal}></lightning-button>
+                        <lightning-button label="Save" variant="brand" onclick={saveHelpText}></lightning-button> 
+                    </footer>
+                </div>  
+            </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </template>
+</template>

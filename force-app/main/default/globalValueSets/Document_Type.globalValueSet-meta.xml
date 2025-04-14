@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>Assessment</fullName>
+        <default>false</default>
+        <label>Assessment</label>
+    </customValue>
+    <customValue>
+        <fullName>Consent</fullName>
+        <default>false</default>
+        <label>Consent</label>
+    </customValue>
+    <customValue>
+        <fullName>Evidence</fullName>
+        <default>false</default>
+        <label>Evidence</label>
+    </customValue>
+    <customValue>
+        <fullName>Letter</fullName>
+        <default>false</default>
+        <label>Letter</label>
+    </customValue>
+    <customValue>
+        <fullName>Plan</fullName>
+        <default>false</default>
+        <label>Plan</label>
+    </customValue>
+    <customValue>
+        <fullName>Record</fullName>
+        <default>false</default>
+        <label>Record</label>
+    </customValue>
+    <customValue>
+        <fullName>Release of Information</fullName>
+        <default>false</default>
+        <label>Release of Information</label>
+    </customValue>
+    <customValue>
+        <fullName>Verification</fullName>
+        <default>false</default>
+        <label>Verification</label>
+    </customValue>
+    <masterLabel>Document Type</masterLabel>
+    <sorted>false</sorted>
+</GlobalValueSet>

@@ -1,0 +1,134 @@
+<template>
+    <!-- <c-file-uploader-comp-lwc></c-file-uploader-comp-lwc> -->
+    <div if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+    </div>
+    <div class="headerBox">
+        <div class="vertical-center">
+            {formName}
+        </div>
+    </div>
+    <div if:true={error} class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+        <b>{error}</b>
+    </div>
+    <!-- <template if:false={dataSaved}>
+        <div style="position:absolute;display:inline-block;right:10px;top:10px;">
+            <lightning-button variant="brand-outline" label={filesButtonLabel} title="uploadfiles" disabled={filesData} onclick={openFileUpdoad}></lightning-button>
+            <template if:true={filesData}>
+                <a style="color:white;margin-left: 2px;" onclick={resetFileUpdoad}>Reset</a>
+            </template>
+        </div>
+        <div style="position:absolute;display:inline-block;right:180px;top:10px;">
+            <lightning-button variant="brand-outline" label={signatureButtonLabel} title="uploadsignature" disabled={signatureData} onclick={openSignatureUpdoad}></lightning-button>
+            <template if:true={signatureData}>
+                <a style="color:white;margin-left: 2px;" onclick={resetSignatureUpdoad}>Reset</a>
+            </template>
+        </div>
+    </template> -->
+    <template if:false={dataSaved}>
+        <!-- <div class="slds-clearfix">
+            <div class="slds-float_right">
+                <lightning-button variant="brand-outline" label="Upload Files" title="uploadfiles" onclick={openFileUpdoad}></lightning-button>
+            </div>
+        </div> -->
+        <div class="slds-theme_default slds-m-bottom_large">
+            <div class="slds-m-top_medium">
+                <ul class="progress-indicator">
+                    <template if:true={pageData} for:each={pageData} for:item="page">
+                        <li key={page.pageIndex} class={page.className}>
+                            <span class="bubble"></span>
+                            {page.pageName}
+                        </li>
+                    </template>
+                </ul>
+            </div>
+            <!-- <div class="navbuttons slds-align_absolute-center">
+                <button class="slds-button slds-button_brand" style="width:100px" name="previous" onclick={handleNavigation} disabled={firstPage}>Previous</button>
+                <template if:false={lastPage}>
+                    <button class="slds-button slds-button_brand" style="width:100px" name="next" onclick={handleNavigation}>Next</button>
+                </template>
+                <template if:true={lastPage}>
+                    <button class="slds-button slds-button_brand" style="width:100px" name="submit" onclick={handleSubmit}>Submit</button>
+                </template>
+            </div> -->
+            <div class="pagearea">
+                <template if:true={pageData} for:each={pageData} for:item="page">
+                    <template if:true={page.current}>
+                        <template if:true={page.isFormPage}>
+                            <div key={page.pageName} class="slds-box slds-m-around_medium">
+                                <template if:true={page.sections} for:each={page.sections} for:item="section">
+                                    <c-input-form-section key={section} page-index={page.pageIndex} section={section} onaddrow={handleAddRow} ondeleterow={handleDeleteRow}></c-input-form-section>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:true={page.isSignature}>
+                            <div key={page.pageName} class="slds-box slds-m-around_medium">
+                                <c-signature-cmp-for-forms onuploadsignature={handleSignature}></c-signature-cmp-for-forms>
+                            </div>
+                        </template>
+                        <template if:true={page.isDocUpload}>
+                            <div key={page.pageName} class="slds-box slds-m-around_medium">
+                                <c-doc-collection-public existing-documents={uploadedDocuments} ondocsupload={handleDocuments}></c-doc-collection-public>
+                            </div>
+                        </template>
+                        <template if:true={page.isSummary}>
+                            <c-input-form-summary-page key={page} page-data={pageData} uploaded-documents={uploadedDocuments} oneditpage={handleEditPage}></c-input-form-summary-page>
+                        </template>
+                    </template>
+                </template>
+            </div>
+            <div class="navbuttons slds-clearfix">
+                <div class="slds-float_right slds-m-right_large">
+                    <button class="slds-button slds-button_neutral" style="width:100px" name="previous" onclick={handleNavigation} disabled={firstPage}>Previous</button>
+                    <template if:false={lastPage}>
+                        <button class="slds-button slds-button_brand" style="width:100px" name="next" onclick={handleNavigation}>Next</button>
+                    </template>
+                    <template if:true={lastPage}>
+                        <button class="slds-button slds-button_success slds-m-left_medium" style="width:100px" name="submit" onclick={handleSubmit}>Submit</button>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
+    <template if:true={dataSaved}>
+        <div class="slds-box slds-m-around_medium slds-text-heading_medium slds-text-title_caps">
+            <lightning-formatted-rich-text value={confirmationMessage}></lightning-formatted-rich-text>
+        </div>
+    </template>
+
+    <!-- <template if:true={openFileUploadModal}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <div class="slds-text-heading_small">
+                        <b>
+                            <template if:true={isUploadFiles}>
+                                Upload Files
+                            </template>
+                            <template if:true={isUploadSignature}>
+                                Electronic Signature
+                            </template>
+                        </b>
+                    </div>
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close"
+                            alternative-text="close"
+                            variant="inverse"
+                            size="small" ></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <template if:true={isUploadFiles}>
+                        <c-file-upload-multi-l-w-c onuploadfiles={handleUploadFiles}></c-file-upload-multi-l-w-c>
+                    </template>
+                    <template if:true={isUploadSignature}>
+                        <c-signature-canvas onuploadsignature={handleUploadSignature}></c-signature-canvas>
+                    </template>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template> -->
+    <!-- <iframe id="vfIframe" src="/apex/generateFormDataPDF"> </iframe> -->
+</template>

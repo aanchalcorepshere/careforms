@@ -1,0 +1,20 @@
+<template>
+    <div class="slds-text-color_error slds-align_absolute-center">
+        {error}
+    </div>
+    <div class="slds-box slds-p-top_small" style="background-color: white; position: relative;">
+        <lightning-input type="file"
+                         label="** Multiple files can be uploaded"
+                         onchange={handleFileUploaded}
+                         multiple>
+        </lightning-input>
+        <template if:true={filesData}>
+            <template for:each={filesData} for:item="imgName" for:index="index">
+                {imgName.fileName}
+                <span key={imgName.fileName} data-id={index} onclick={removeReceiptImage} class="removeImage">x</span> &nbsp;
+            </template>
+        </template>
+        <br/>
+        <lightning-button variant="brand" label="Save File(s)" onclick={uploadFiles} class="slds-m-top_medium"> </lightning-button>
+    </div>
+</template>

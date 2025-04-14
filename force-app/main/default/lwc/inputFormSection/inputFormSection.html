@@ -1,0 +1,60 @@
+<template>
+    <template if:false={hideSection}>
+        <div if:true={showSectionHeader} class="slds-m-left_small slds-box slds-box_x-small slds-theme_shade slds-m-around_medium">
+            <div class="slds-text-heading_medium slds-text-title_caps">
+                <b>{section.sectionName} <!-- <span if:true={section.isSectionMulti}>(multiple allowed)</span> --></b>
+            </div>
+        </div>
+    
+        <div class="section">
+            <lightning-layout multiple-rows="true">
+                <template if:false={section.isSectionMulti}>
+                    <template if:true={section.fields} for:each={section.fields} for:item="field">
+                        <lightning-layout-item size={size} key={field.fieldIndex}>
+                            <div if:true={field.isField} key={field} class="field">
+                                <template if:false={field.fieldData.isQuestion}>
+                                    <c-input-form-field is-summary={isSummary} page-index={pageIndex} section-index={section.sectionIndex} field={field} section-is-multi={section.isSectionMulti}></c-input-form-field>
+                                </template>
+                                <template if:true={field.fieldData.isQuestion}>
+                                    <c-input-form-question is-summary={isSummary} page-index={pageIndex} section-index={section.sectionIndex} question={field}></c-input-form-question>
+                                </template>
+                            </div>
+                            <div if:true={field.isRichTextBox} key={field} class="field">
+                                <lightning-formatted-rich-text value={field.content}></lightning-formatted-rich-text>
+                            </div>
+                        </lightning-layout-item>
+                    </template>
+                </template>
+                <template if:true={section.isSectionMulti}>
+                    <template if:true={section.fields} for:each={section.fields} for:item="record">
+                        <div key={record.recordIndex} class="utilityarea">
+                            <div class="recordindex slds-text-heading_small">
+                                <b>{record.recordIndex}.</b>
+                            </div>
+                            <div class="deleterecord">
+                                <lightning-button-icon data-id={record.recordIndex} icon-name="utility:delete" alternative-text="Delete" title="Delete" onclick={handleDeleteRecord}></lightning-button-icon>
+                            </div>
+                        </div>
+                        <template if:true={record.recordFields} for:each={record.recordFields} for:item="multiRecordField">
+                            <lightning-layout-item size={size} key={multiRecordField.fieldIndex}>
+                                <div class="slds-m-around_small">
+                                    <template if:false={multiRecordField.fieldData.isQuestion}>
+                                        <c-input-form-field is-summary={isSummary} page-index={pageIndex} section-index={section.sectionIndex} field={multiRecordField} section-is-multi={section.isSectionMulti} record-index={record.recordIndex}></c-input-form-field>
+                                    </template>
+                                    <template if:true={multiRecordField.fieldData.isQuestion}>
+                                        <c-input-form-question is-summary={isSummary} page-index={pageIndex} section-index={section.sectionIndex} section-is-multi={section.isSectionMulti} question={multiRecordField} record-index={record.recordIndex}></c-input-form-question>
+                                    </template>
+                                </div>
+                            </lightning-layout-item>
+                        </template>
+                    </template>
+                </template>
+            </lightning-layout>
+        </div>
+        <div if:true={section.isSectionMulti} class="slds-clearfix">
+            <div class="slds-float_right">
+                <lightning-button variant="base" label="Add Another" title="addanother" onclick={handleAddRecord}></lightning-button>
+            </div>
+        </div>
+    </template>
+</template>

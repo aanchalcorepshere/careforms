@@ -1,0 +1,76 @@
+<template>
+    <div class="slds-p-around_medium">
+        <div class="slds-align_absolute-center">
+            <div if:true={error} class="slds-text-color_error">
+                {error}
+            </div>
+        </div>
+        <div class="slds-m-left_small slds-box slds-box_x-small slds-theme_shade slds-m-around_medium">
+            <div class="slds-text-heading_medium slds-text-title_caps">
+                <b>document collection</b>
+            </div>
+        </div>
+        <div class="slds-m-vertical_medium slds-p-horizontal_large">
+            <div class="slds-grid slds-gutters slds-m-left_xx-large">
+                <div class="slds-col slds-size_3-of-12">
+                    <label for="filename">File Name</label>
+                    <input class="slds-input" required type="text" id="filename" name="filename" value={currentFileName} placeholder="type file name here..." onblur={handleInput}></lightning-input>
+                </div>
+                <div class="slds-col slds-size_6-of-12">
+                    <label for="description">Description</label>
+                    <input class="slds-input" type="text" id="description" name="description" value={currentDescription} placeholder="type here..." onblur={handleInput}></lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-12">
+                    <div class="slds-m-top_xx-small">
+                        <label class="custom-file-upload">
+                            <lightning-input type="file" accept="image/jpeg,image/gif,image/png,application/pdf" onchange={handleUploadFile}></lightning-input>
+                            <lightning-icon size="xx-small" icon-name="utility:upload"></lightning-icon>
+                        </label>
+                    </div>
+                    <div class="slds-text-color_success" style="font-size: 9px;">
+                        {currentFileUploadName}
+                    </div>
+                </div>
+                <div class="slds-col slds-size_2-of-12 slds-m-top_medium">
+                    <lightning-button variant="brand" label="Upload" name="uploadButton" onclick={handleUploadButton}></lightning-button>
+                </div>
+            </div>
+        </div>
+        <div if:false={noFileUploaded} class="slds-align_absolute-center">
+            <table class="GeneratedTable">
+                <colgroup>
+                    <col span="1" style="width: 5%;">
+                    <col span="1" style="width: 30%;">
+                    <col span="1" style="width: 40%;">
+                    <col span="1" style="width: 20%;">
+                    <col span="1" style="width: 5%;">
+                 </colgroup>
+                <thead>
+                  <tr>
+                    <th>S.No.</th>
+                    <th>File Name</th>
+                    <th>Description</th>
+                    <th>Uploaded File Name</th>
+                    <th>Delete</th>
+                  </tr>
+                </thead>
+                <tbody>
+                    <template if:true={docList} for:each={docList} for:item="doc">
+                        <tr key={doc.index}>
+                            <td>{doc.index}</td>
+                            <td>{doc.fileName}</td>
+                            <td>{doc.description}</td>
+                            <td><lightning-icon icon-name={doc.fileTypeIcon} alternative-text="Approved" title="Approved"></lightning-icon>
+                                {doc.fileUploadName}</td>
+                            <td>
+                                <div class="slds-align_absolute-center">
+                                    <lightning-button-icon variant="base" size="x-small" icon-name="utility:delete" data-id={doc.index} alternative-text="delete" onclick={handleDelete}></lightning-button-icon>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</template>

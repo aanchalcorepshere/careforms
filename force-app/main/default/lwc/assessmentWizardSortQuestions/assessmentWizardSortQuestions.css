@@ -1,0 +1,47 @@
+.slds-modal__container {
+    max-width: 90rem !important;
+    width: 90% !important;
+}
+
+.slds-modal__content{ 
+    height : 40vh !important; 
+    max-height: 40vh !important; 
+} 
+
+.ansOp{
+    background-color: rgb(238, 238, 238);
+    color:#042D60;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 20px 0 0 20px;
+}
+
+.ansOpbtn {
+    background: #2F4858;
+    border : none;
+    border-radius: 5px;
+    color: #ffffff;
+    font-size: 10px;
+    padding: 2px 5px 2px 5px;
+}
+
+.ansOpbtn:hover {
+    background: #465779;
+}
+
+.levelA{
+    border-left: 4px solid #E8EFFF; 
+    margin:10px 0 0 10px;
+}
+
+.levelB{
+    border-left: 4px solid #CBC5F1; 
+    margin:10px 0 0 20px;
+    padding-left:20px;
+}
+
+.levelC{
+    border-left: 4px solid #EEBAC5;
+    margin:10px 0 0 20px; 
+    padding-left:20px;
+}

@@ -1,0 +1,101 @@
+<apex:page controller="FormsPDFController" renderAs="advanced_pdf" showHeader="false" sidebar="false" standardStylesheets="false" applyBodyTag="false" applyHtmlTag="false">
+    <!-- <apex:variable var="lastpage" value="{!pageDataFromLwc.length}" /> -->
+    <head>
+        <style>
+            body{
+                font-family: Verdana, Geneva, Tahoma, sans-serif;
+            }
+            @page {
+                size: A4 portrait;    
+                border: 1px solid black;    
+                padding-left: 5px;    
+                padding-right: 5px;      
+            }
+            .heading{
+                text-align: center;
+                font-weight: bold;
+                text-transform: uppercase;
+                text-decoration: underline;
+                font-size: 24px;
+            }
+            .page { 
+                margin-top: 10px;
+                width: 98%;
+                height: 22px;
+                background-color:cornflowerblue;
+                border-radius: 10px;
+                border: 1px solid black;
+                padding: 5px 3px;
+                color: darkgray;
+                font-size: 20px;
+                font-weight: bold;
+             }
+             .section{
+                margin: 20px;
+                margin-top: 40px;
+                width: 93%;
+                height: 14px;
+                background-color:cornflowerblue;
+                border-radius: 10px;
+                border-bottom: 1px solid rgb(64, 95, 153);
+                padding-bottom: 5px;
+                color: darkgray;
+                font-size: 17px;
+                font-weight: bold;
+             }
+             .record{
+                font-weight: bold; 
+                margin-left: 20px;
+                margin-top: 10px;
+                text-decoration: underline;
+             }
+             .label{
+                margin-left : 30px; 
+                margin-top: 5px;
+                font-weight: bold;
+                font-size: 14px;
+             }
+             .richtext{
+                margin-left : 30px; 
+                margin-top: 5px;
+             }
+             .response{
+                margin-left : 50px;
+                margin-top: 5px;
+                font-size: 14px;
+                font-style: italic;
+             }
+        </style>
+    </head>
+    <body>
+        <div class="heading">responses</div>
+        <apex:repeat value="{!pageDataFromLwc}" var="page" id="thePage">
+        <div style="{!if(page.pageName == 'New Page','display:none;','')}" class="page">
+            <apex:outputText rendered="{!if(page.pageName != 'New Page', true, false)}" value="{!page.pageName}" />
+        </div>
+        <apex:repeat value="{!page.sections}" var="section" id="theSection">
+            <div style="{!if(section.sectionName == 'New Section','display:none;','')}" class="section">
+                <apex:outputText rendered="{!if(section.sectionName != 'New Section', true, false)}" value="{!section.sectionName}" />
+            </div>
+            <apex:repeat value="{!section.Fields}" var="record" id="theRecord">
+                
+                <apex:repeat value="{!record.RecordFields}" var="field" id="theField">
+                    <div rendered="{!if(field.isField , true ,false)}">
+                        <div rendered="{!if(field.isField == true, true, false)}" class="label">
+                            <apex:outputText rendered="{!if(field.isField == true, true, false)}" value="{!field.fieldIndex+1}." /> &nbsp;
+                            <apex:outputText rendered="{!if(field.isField == true, true, false)}" value="{!field.fieldName}" />
+                        </div>
+                        <div rendered="{!if(field.isField , true ,false)}" class="response">
+                            <apex:outputText rendered="{!if(field.isField , true ,false)}" value="{!field.inputValue}" />
+                        </div>
+                    </div>
+                    <div rendered="{!if(field.isRichTextBox == true , true ,false)}" class="richtext">
+                        <apex:outputText rendered="{!if(field.isRichTextBox == true , true ,false)}"  value="{!field.content}" ></apex:outputText>
+                    </div>
+                </apex:repeat>
+            </apex:repeat>
+        </apex:repeat>
+        <div style="{!if(page.pageIndex != pageLength-1,'page-break-after:always;','')}"></div>
+    </apex:repeat>
+    </body>
+</apex:page>

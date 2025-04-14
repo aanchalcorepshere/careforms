@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Field_Blueprint_Default_Section_Fields__c</fullName>
+    <deprecated>false</deprecated>
+    <description>Field Blueprint Default Section Fields (Add &apos;,&apos; seperated field API names)</description>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>Field Blueprint Default Section Fields (Add &apos;,&apos; seperated field API names)</inlineHelpText>
+    <label>Field Blueprint Default Section Fields</label>
+    <length>32768</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

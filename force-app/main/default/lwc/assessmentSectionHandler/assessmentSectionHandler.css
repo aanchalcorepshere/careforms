@@ -1,0 +1,22 @@
+.headerBox{
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    background-color: #001739;
+    color: white;
+    height: 50px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 10px;
+    position: relative;
+    text-align: center;
+}
+
+.vertical-center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+  }

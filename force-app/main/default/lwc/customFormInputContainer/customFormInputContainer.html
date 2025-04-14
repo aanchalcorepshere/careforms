@@ -1,0 +1,242 @@
+<template>
+  <div class="theTop"></div>
+  <div if:true={isLoading}>
+    <lightning-spinner
+      alternative-text="Loading"
+      size="large"
+    ></lightning-spinner>
+  </div>
+  <div class="headerBox">
+    <div class="vertical-center">{formName}</div>
+  </div>
+  <div
+    if:true={error}
+    class="slds-notify slds-notify_alert slds-alert_error"
+    role="alert"
+  >
+    <b>{error}</b>
+  </div>
+  <template if:false={dataSaved}>
+    <div class="slds-theme_default slds-m-bottom_large">
+      <div class="slds-m-top_medium">
+        <ul class="progress-indicator">
+          <template if:true={pageData} for:each={pageData} for:item="page">
+            <li key={page.pageIndex} class={page.className}>
+              <span class="bubble"></span>
+              {page.pageName}
+            </li>
+          </template>
+        </ul>
+      </div>
+      <div class="pagearea">
+        <template if:true={pageData} for:each={pageData} for:item="page">
+          <template if:true={page.current}>
+            <template if:true={page.isFormPage}>
+              <div key={page.pageName} class="slds-box slds-m-around_medium">
+                <template
+                  if:true={page.sections}
+                  for:each={page.sections}
+                  for:item="section"
+                >
+                  <!--UST-00287 added recordId-->
+                  <c-custom-form-input-section
+                    key={section.sectionName}
+                    page-index={page.pageIndex}
+                    section={section}
+                    onaddrow={handleAddRow}
+                    ondeleterow={handleDeleteRow}
+                    record-id={recordId}
+                    is-prefill-fields-form={isPrefillFieldsForm}
+                  ></c-custom-form-input-section>
+                </template>
+              </div>
+            </template>
+            <template if:true={page.isSignature}>
+              <div key={page.pageName} class="slds-box slds-m-around_medium">
+                <c-forms-signature-page
+                  onuploadsignature={handleSignature}
+                  existing-signature={signatureData}
+                  requires-text-on-signature-page={requiresTextOnSignaturePage}
+                  signature-page-text={signaturePageText}
+                ></c-forms-signature-page>
+              </div>
+            </template>
+            <template if:true={page.isDocUpload}>
+              <div key={page.pageName} class="slds-box slds-m-around_medium">
+                <c-doc-collection-public
+                  existing-documents={uploadedDocuments}
+                  ondocsupload={handleDocuments}
+                ></c-doc-collection-public>
+              </div>
+            </template>
+            <template if:true={page.isSummary}>
+              <c-input-form-summary-page
+                key={page.pageName}
+                page-data={pageData}
+                uploaded-documents={uploadedDocuments}
+                oneditpage={handleEditPage}
+              ></c-input-form-summary-page>
+            </template>
+            <!-- <template if:true={page.dependentForms}>
+              <div
+                key={page.pageName}
+                class="slds-text-heading_medium slds-m-around_medium"
+              >
+                Additional forms to be filled:
+              </div>
+              <template for:each={page.dependentForms} for:item="dependentForm">
+                <div
+                  if:true={dependentForm.showFlagForForm}
+                  key={dependentForm.formId}
+                  class="slds-m-around_medium"
+                >
+                  <div class="slds-col slds-size_3-of-12">
+                    <div class="slds-grid slds-gutters">
+                      <div class="slds-col slds-size_5-of-6">
+                        <a href={dependentForm.formLink} target="_blank"
+                          >{dependentForm.formName}</a
+                        ><span
+                          if:true={dependentForm.requiredFlagForForm}
+                          style="color: red"
+                          >*</span
+                        >
+                      </div>
+                      <div class="slds-col slds-size_1-of-6">
+                        <template if:true={dependentForm.submitted}>
+                          <lightning-icon
+                            icon-name="utility:check"
+                            alternative-text="Event"
+                            title="Event"
+                            size="x-small"
+                            variant="success"
+                          ></lightning-icon>
+                        </template>
+                        <template if:false={dependentForm.submitted}>
+                          <lightning-icon
+                            icon-name="utility:close"
+                            alternative-text="Event"
+                            title="Event"
+                            size="x-small"
+                            variant="error"
+                          ></lightning-icon>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </template> -->
+          </template>
+        </template>
+      </div>
+      <div class="navbuttons slds-clearfix">
+        <div class="slds-float_right slds-m-right_large">
+          <button
+            class="slds-button slds-button_neutral"
+            style="width: 100px"
+            name="previous"
+            onclick={handleNavigation}
+            disabled={firstPage}
+          >
+            Previous
+          </button>
+          <template if:false={lastPage}>
+            <button
+              class="slds-button slds-button_brand"
+              style="width: 100px"
+              name="next"
+              onclick={handleNavigation}
+            >
+              Next
+            </button>
+          </template>
+          <template if:true={lastPage}>
+            <button
+              class="slds-button slds-button_success slds-m-left_medium"
+              style="width: 100px"
+              name="submit"
+              onclick={confirmSubmit}
+            >
+              Submit
+            </button>
+          </template>
+        </div>
+      </div>
+    </div>
+  </template>
+  <template if:true={dataSaved}>
+    <div
+      class="slds-box slds-m-around_medium slds-text-heading_medium slds-text-title_caps"
+    >
+      <!-- <template lwc:if={openFromDraft}>
+                Draft application has been saved.
+            </template>
+            <template lwc:else>
+                <template if:true={showPendingApplicationMessage}>
+                    <template if:true={applicationName}>
+                        <lightning-formatted-rich-text value={confirmationMessage}></lightning-formatted-rich-text>
+                        Your Application <strong>{applicationName}</strong> has been successfully submitted.
+                    </template>
+                </template>
+                <template if:true={isCreateApplication}>
+                    Application <a href={referralLink}>{referralName}</a> has been successfully submitted.
+                </template>
+            </template> -->
+      <template if:true={confirmationMessage}>
+        <lightning-formatted-rich-text
+          value={confirmationMessage}
+        ></lightning-formatted-rich-text>
+      </template>
+    </div>
+  </template>
+
+  <!-- Modal start -->
+  <template if:true={isConfirmationBox}>
+    <div style="height: 300px">
+      <!-- Modal/Popup Box LWC starts here -->
+      <section
+        role="dialog"
+        tabindex="-1"
+        aria-labelledby="modal-heading-01"
+        aria-modal="true"
+        aria-describedby="modal-content-id-1"
+        class="slds-modal slds-fade-in-open"
+      >
+        <div class="slds-modal__container">
+          <div
+            class="vertical-center"
+            style="
+              background: white;
+              padding: 20px;
+              border-radius: 5px;
+              width: 300px;
+            "
+          >
+            <div
+              class="slds-align_absolute-center slds-text-heading_small slds-m-bottom-small"
+            >
+              Are you sure you want to submit?
+            </div>
+            <div class="slds-align_absolute-center" style="margin-top: 20px">
+              <lightning-button
+                style="margin-right: 40px"
+                name="confirmno"
+                label="No"
+                variant="neutral"
+                onclick={handleNo}
+              ></lightning-button>
+              <lightning-button
+                name="confirmyes"
+                label="Yes"
+                variant="brand"
+                onclick={handleSubmit}
+              ></lightning-button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+  </template>
+  <!-- Modal end -->
+</template>

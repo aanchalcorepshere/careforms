@@ -1,0 +1,20 @@
+p{
+    font-size: 15px;
+}
+
+@media print {
+    input[type="radio"]:checked+span { 
+        font-weight: bold; 
+    }
+}
+
+.selected{
+    color:green;
+}
+.unselected{
+    color:black;
+}
+
+textarea {
+    --sds-c-textarea-sizing-min-height: 200px;
+}

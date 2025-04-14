@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Junction_Exist__c</fullName>
+    <defaultValue>false</defaultValue>
+    <deprecated>false</deprecated>
+    <description>This checkbox tells if junction object exist or not. If exist then we will consider values of  &apos;Child&apos;s parent Filter Field API Name&apos;,  &apos;Child&apos;s Parent Obj API Name&apos; fields to display fetched data on UI.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Is Junction Exist</label>
+    <type>Checkbox</type>
+</CustomField>

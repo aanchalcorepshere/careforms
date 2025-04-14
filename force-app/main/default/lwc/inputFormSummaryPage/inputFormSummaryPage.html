@@ -1,0 +1,63 @@
+<template>
+    <div class="pagearea">
+        <template if:true={pageData} for:each={pageData} for:item="page">
+            <div key={page.pageName} class="slds-grid">
+                <template if:true={page.isFormPage}>
+                    <div class="slds-col slds-size_11-of-12">
+                        <div class="slds-box slds-m-around_medium">
+                            <template if:true={page.sections} for:each={page.sections} for:item="section">
+                                <c-input-form-section is-summary={isSummary} key={section} page-index={page.pageIndex} section={section} onaddrow={handleAddRow} ondeleterow={handleDeleteRow}></c-input-form-section>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-12 slds-m-top_medium">
+                        <lightning-button-icon data-id={page.pageIndex} variant="brand" size="small" icon-name="utility:edit" alternative-text="edit" onclick={handleEdit}></lightning-button-icon>
+                    </div>
+                </template>
+                <template if:true={page.isDocUpload}>
+                    <div class="slds-col slds-size_11-of-12">
+                        <div class="slds-box slds-m-around_medium">
+                            <table class="GeneratedTable">
+                                <colgroup>
+                                    <col span="1" style="width: 5%;">
+                                    <col span="1" style="width: 30%;">
+                                    <col span="1" style="width: 40%;">
+                                    <col span="1" style="width: 20%;">
+                                    <!-- <col span="1" style="width: 5%;"> -->
+                                 </colgroup>
+                                <thead>
+                                  <tr>
+                                    <th>S.No.</th>
+                                    <th>File Name</th>
+                                    <th>Description</th>
+                                    <th>Uploaded File Name</th>
+                                    <!-- <th>Delete</th> -->
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                    <template if:true={uploadedDocuments} for:each={uploadedDocuments} for:item="doc">
+                                        <tr key={doc.index}>
+                                            <td>{doc.index}</td>
+                                            <td>{doc.fileName}</td>
+                                            <td>{doc.description}</td>
+                                            <td><lightning-icon icon-name={doc.fileTypeIcon} alternative-text="Approved" title="Approved"></lightning-icon>
+                                                {doc.fileUploadName}</td>
+                                            <!-- <td>
+                                                <div class="slds-align_absolute-center">
+                                                    <lightning-button-icon variant="base" size="x-small" icon-name="utility:delete" data-id={doc.index} alternative-text="delete" onclick={handleDelete}></lightning-button-icon>
+                                                </div>
+                                            </td> -->
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-12 slds-m-top_medium">
+                        <lightning-button-icon data-id={page.pageIndex} variant="brand" size="small" icon-name="utility:edit" alternative-text="edit" onclick={handleEdit}></lightning-button-icon>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

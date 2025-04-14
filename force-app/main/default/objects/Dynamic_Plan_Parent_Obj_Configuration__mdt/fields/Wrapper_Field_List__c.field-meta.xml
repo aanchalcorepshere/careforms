@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Wrapper_Field_List__c</fullName>
+    <deprecated>false</deprecated>
+    <description>List of wrapper field which will store value of the &apos;obj fields for wrapper fields&apos; in the same order. &apos;,&apos; comma separated values</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Wrapper Field List</label>
+    <length>32768</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

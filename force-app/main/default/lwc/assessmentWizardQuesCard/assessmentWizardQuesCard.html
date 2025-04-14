@@ -1,0 +1,45 @@
+<template>
+    <div if:true={isLoading}>
+        <lightning-spinner variant="brand" alternative-text="Loading..." size="medium">
+        </lightning-spinner>
+    </div>
+    <div class={cardClass} draggable={dragDisable} ondragstart={handleDragStart} ondragover={handleDragOver}
+        ondrop={handleDrop} ondragenter={handleDragEnter} ondragleave={handleDragLeave} ondragend={handleDragEnd}
+        data-id="mainDiv">
+        <div class="slds-grid slds-clearfix">
+            <div class="slds-col slds-size_6-of-12 slds-align-middle">
+                <div class="slds-grid slds-clearfix slds-gutters">
+                    <div class="slds-col slds-size_1-of-12 slds-float_left slds-align-middle">
+                        <lightning-icon icon-name="utility:sort" size="small" alternative-text="Sort" title="Sort">
+                        </lightning-icon>
+                    </div>
+                    <div class="slds-col slds-size_11-of-12 slds-float_left slds-align-middle">
+                        <p><b>{localQues.sfSeq}. &nbsp; {localQues.quesText}</b> <br /> &nbsp; <template
+                                if:true={localQues.quesAnsOptions}>({localQues.quesAnsOptions})</template> &nbsp;
+                            ({localQues.dataType})</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-col slds-size_6-of-12 slds-align-middle myactiondiv">
+                <div class="slds-grid slds-gutters slds-clearfix">
+                    <div class="slds-col slds-align-middle slds-size_3-of-12">
+                        <template if:true={fieldList}>
+                            <div class="mycombo">
+                                <lightning-combobox disabled={isSubmit} name="fieldname" value={localQues.fieldname} class="slds-m-top_medium" variant="label-hidden" placeholder="Select Field to be updated" options={fieldList} onchange={handleChange}></lightning-combobox>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="slds-col slds-align-middle slds-size_3-of-12">
+                        <lightning-input disabled={isSubmit} class="slds-m-left_small" type="checkbox" label="Required?" checked={localQues.required} name="required" onchange={handleChange}></lightning-input>
+                    </div>
+                    <div if:false={isSubmit} class="slds-col slds-align-middle slds-size_3-of-12">
+                        <lightning-button-icon class="slds-float_right" variant="brand" size="medium"
+                            icon-name="utility:delete" alternative-text="Remove" title="Remove"
+                            onclick={handleRemoveClick}></lightning-button-icon>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</template>

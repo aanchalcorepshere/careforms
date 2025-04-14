@@ -1,0 +1,95 @@
+<template>
+    <template if:false={isHousehold}>
+        <div class="head">
+            <div class="slds-align_absolute-center slds-text-heading_medium">
+                <strong>New Individual Goal</strong>
+            </div>
+        </div>
+    </template>
+    <div if:true={isLoading}>
+        <lightning-spinner variant="brand" 
+                           alternative-text="Loading"     
+                           size="medium">
+        </lightning-spinner>
+    </div>
+    
+    <template if:true={renderCmp}>
+        <lightning-record-edit-form object-api-name="caresp__Goal__c" record-id={goalId} onsubmit={handleSaveGoalDetails}>
+        
+            <!-- Error Messages -->
+            <template if:false={allGood}>
+                <div style="height:4rem;">
+                    <div class="slds-notify slds-notify_toast slds-theme_error slds-align_absolute-center" role="status" style="margin-right:1rem; margin-left:1rem;">
+                        <div class="slds-notify__content">
+                            <h2 class="slds-text-heading_small">
+                                {message}
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <lightning-messages></lightning-messages>
+    
+            <!-- Goal Fields -->
+            <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-size--1-of-3">
+                    <lightning-input-field field-name='{metadataInformation.goalFilterFieldName}' name="clientName" variant="label-stacked" disabled value={childIdGoalModal}>
+                    </lightning-input-field>
+                </div>
+                <div class="slds-col slds-size--1-of-3">
+                    <lightning-input-field field-name="caresp__Status__c" name="status" disabled={disableGoalStatus} variant="label-stacked" value={statusVal}>
+                    </lightning-input-field>
+                </div>
+                <div class="slds-col slds-size--1-of-3">
+                    <lightning-input-field field-name="caresp__Start_Date__c" name="startDate" variant="label-stacked" value={startDateVal}>
+                    </lightning-input-field>
+                </div>
+                <div class="slds-col slds-size--1-of-3">
+                    <lightning-input-field field-name="caresp__Domain__c" name="domain" required variant="label-stacked" value={domainVal}>
+                    </lightning-input-field>
+                </div>
+                <div class="slds-col slds-size--1-of-3">
+                    <lightning-input-field field-name="caresp__Stuck_Reason__c" name="reason" variant="label-stacked" value={reasonVal}>
+                    </lightning-input-field>
+                </div>
+                <div class="slds-col slds-size--1-of-3">
+                    <lightning-input-field field-name="caresp__Target_Date__c" name="targetDate" variant="label-stacked" value={targetDateVal}>
+                    </lightning-input-field>
+                </div>
+                <div class="slds-col slds-size--1-of-1">
+                    <lightning-input-field field-name="caresp__Description__c" name="description" required variant="label-stacked" value={descriptionVal}>
+                    </lightning-input-field>
+                </div>
+            </div>
+    
+            <br/>
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col slds-size--7-of-8">
+                    <div class="slds-box slds-box_xx-small sectionHeader slds-text-title_bold slds-m-bottom_medium slds-align_absolute-center">
+                        {stepType} Steps (Optional)
+                    </div>
+                </div>
+                <div class="slds-col">
+                    <lightning-button variant="brand" label="+ Add Step" onclick={handleAddStep} disabled={disableAddStep} style="margin-left: 1rem;"></lightning-button>
+                </div>
+            </div>
+
+            <!-- Steps -->
+            <template for:each={listSteps} for:item="step">
+                <div class="slds-box slds-m-bottom_xx-small" key={step.stepId}>
+                    <c-plan-wiz-add-steps key={step.Id} client-name={clientName} record-id={recordId} goal-id={goalId} step-id={step.Id} num-val={step.caresp__Step_Num__c} start-date-val={step.caresp__Start_Date__c} assigned-to-val={step.caresp__Assigned_To__c} step-record={step} object-api-name={objectApiName} ></c-plan-wiz-add-steps>
+                </div>
+            </template>
+
+
+            <!-- Buttons -->
+            <br/>
+            <div class="slds-align_absolute-center">
+                <lightning-button variant="neutral" label="Cancel" onclick={closeGoalsModal} style="margin-right: 1rem;"></lightning-button>
+                <lightning-button variant="brand" label="Save & New" onclick={saveAndNew} style="margin-right: 1rem;"></lightning-button>
+                <lightning-button variant="brand" label="Save" type="submit" ></lightning-button>
+            </div>
+        </lightning-record-edit-form>
+    </template>
+    
+</template>

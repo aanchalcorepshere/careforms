@@ -1,0 +1,38 @@
+<template>
+	<div class="container slds-fade-in-open">
+		<lightning-card variant="brand">
+			<template if:true={isLoading}>
+				<div class="slds-spinner_container">
+					<lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+				</div>
+			</template>
+			<div class="head">
+				<div class="slds-align_absolute-center slds-text-heading_medium">
+					<strong>Create Field Blueprint</strong>
+				</div>
+			</div>
+			<div class="custom-input">
+				<lightning-input label="Enter Section Name" name='sectionName' value={recordFields.caresp__Section_Name__c}
+					onchange={handleChange} class="section-input" required></lightning-input>
+			</div>
+			<template if:true={optionLoaded}>
+				<div class='custom-multi-select-picklist'>
+					<div class="field-label">Select Plan Fields</div>
+					<c-custom-multiselect-picklist available-options={availableOptions}
+						selected-options={selectedOptions} show-mandatory show-editable show-default-val></c-custom-multiselect-picklist>
+				</div>
+
+		
+
+				<div class="custom-buttons slds-align_absolute-center">
+					<lightning-button label="Save" onclick={handleSave} class="save-button" disabled={isSaveDisabled}
+						variant="Brand">
+					</lightning-button>
+					<lightning-button label="Cancel" onclick={handleCancel} class="cancel-button"
+						variant="neutral">
+					</lightning-button>
+				</div>
+			</template>
+		</lightning-card>
+	</div>
+</template>

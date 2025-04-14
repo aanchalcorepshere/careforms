@@ -1,0 +1,58 @@
+<template>
+    <template if:true={sectionData} for:each={sectionData} for:item="section">
+        <div class="section" key={section}>
+            <div class="slds-grid slds-clearfix">
+                <div class="slds-col slds-size_2-of-3 slds-align-middle">
+                    {section.secName}
+                </div>
+                <div class="slds-col slds-size_1-of-3 slds-clearfix">
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col">
+
+                        </div>
+                        <div if:false={isSubmit} class="slds-col">
+                            <button class="sectionbutton slds-float_right" data-section-name={section.secName} data-section-sequence={section.serial}
+                                name="addQuestions" onclick={handleAddQuestions}>Add Questions</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <template if:true={section.questionData}>
+            <c-assessment-wizard-sort-questions key={section} is-submit={isSubmit} onquestions={handleQuestions} onaqtobedeleted={handleAssessmentQuesDeletion} section={section.secName}
+                section-serial={section.serial} ques-list-from-ques-selection={section.questionData} object-name={assessmentDetails.objectName} need-scoring={assessmentDetails.needScoring}></c-assessment-wizard-sort-questions>
+        </template>
+    </template>
+
+    <!-- Add Question Modal -->
+    <template if:true={isModalOpen}>
+        <div class="slds-scrollable" style="height: 200px;">
+            <!-- Modal/Popup Box LWC starts here -->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+            aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box LWC header here -->
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse"
+                            size="small"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Questions</h2>
+                </header>
+                <!-- Modal/Popup Box LWC body starts here -->
+                <div style="background:white;">
+                    <c-assessment-wizard-question-selection></c-assessment-wizard-question-selection>
+                </div>
+                <!-- Modal/Popup Box LWC footer starts here -->
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick={closeModal} title="Cancel">Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick={getQuestions} title="OK">OK</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+        </div>
+    </template>
+</template>

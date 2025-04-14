@@ -1,0 +1,47 @@
+<template>
+        <div class="slds-grid slds-gutters">
+            <div class="slds-col slds-size_12-of-12">
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                    <thead>
+                        <tr class="slds-line-height_reset">
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="Serial Number">Section Number</div>
+                            </th>
+                            <th class="" scope="col">
+                                <div class="slds-truncate" title="section name">Section Name</div>
+                            </th>
+                            <th if:false={isSubmit} class="" scope="col">
+                                <div class="slds-truncate" title="action">Action</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={sectionList} for:item="item" for:index="index">
+                            <tr key={item.id}>
+                                <th scope="col">
+                                    <div>{item.serial}</div>
+                                </th>
+                                <th scope="col">
+                                    <div><lightning-input disabled={isSubmit} name="sectionName" data-sec-serial={item.serial} variant="label-hidden" value={item.secName} onblur={handleInput}></lightning-input></div>
+                                </th>
+                                <th if:false={isSubmit} scope="col">
+                                    <div class="slds-col">
+                                        <div class="slds-grid slds-gutters">
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <lightning-button-icon disabled={isSubmit} access-key={item.id} icon-name="utility:add" class="slds-m-left_large" onclick={addRow}></lightning-button-icon>
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-2">
+                                                <template if:true={item.showDelete}>
+                                                    <lightning-button-icon disabled={isSubmit} access-key={item.id} icon-name="utility:delete" class="slds-m-left_large" onclick={removeRow}></lightning-button-icon>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </th>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+</template>

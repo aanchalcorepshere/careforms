@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>Child/Family Has Relationship With Caregiver(s)</fullName>
+        <default>false</default>
+        <label>Child/Family Has Relationship With Caregiver(s)</label>
+    </customValue>
+    <customValue>
+        <fullName>Independent Living Placement Setting</fullName>
+        <default>false</default>
+        <label>Independent Living Placement Setting</label>
+    </customValue>
+    <customValue>
+        <fullName>Placement is Within Child&apos;s Own Community</fullName>
+        <default>false</default>
+        <label>Placement is Within Child&apos;s Own Community</label>
+    </customValue>
+    <customValue>
+        <fullName>Placement Resource Able to Provide Permanency</fullName>
+        <default>false</default>
+        <label>Placement Resource Able to Provide Permanency</label>
+    </customValue>
+    <customValue>
+        <fullName>Providers for Child&apos;s Special Treatment Needs</fullName>
+        <default>false</default>
+        <label>Providers for Child&apos;s Special Treatment Needs</label>
+    </customValue>
+    <masterLabel>Placement Setting</masterLabel>
+    <sorted>false</sorted>
+</GlobalValueSet>

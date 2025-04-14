@@ -1,0 +1,105 @@
+.Green,.green{
+    background-color: green;
+    padding-left: auto;
+    padding-right: auto;
+    color:white;
+    font-size: 15px;
+    border-radius: 50%;
+    font-weight: bold;
+    line-height: 150px;
+    text-align: center;
+    height: 150px;
+    width: 150px;
+    box-shadow: inset -25px -25px 40px rgba(0,0,0,.5);
+}
+
+.Orange,.orange{
+    background-color: orange;
+    padding-left: auto;
+    padding-right: auto;
+    color:white;
+    font-size: 15px;
+    border-radius: 50%;
+    font-weight: bold;
+    line-height: 150px;
+    text-align: center;
+    height: 150px;
+    width: 150px;
+    box-shadow: inset -25px -25px 40px rgba(0,0,0,.5);
+}
+
+.Red,.red{
+  background-color: red;
+  padding-left: auto;
+  padding-right: auto;
+  color:white;
+  font-size: 15px;
+  border-radius: 50%;
+  font-weight: bold;
+  line-height: 150px;
+  text-align: center;
+  height: 150px;
+  width: 150px;
+  box-shadow: inset -25px -25px 40px rgba(0,0,0,.5);
+}
+
+.Yellow,.yellow{
+  background-color: yellow;
+  padding-left: auto;
+  padding-right: auto;
+  color:white;
+  font-size: 15px;
+  border-radius: 50%;
+  font-weight: bold;
+  line-height: 150px;
+  text-align: center;
+  height: 150px;
+  width: 150px;
+  box-shadow: inset -25px -25px 40px rgba(0,0,0,.5);
+}
+
+.LightGreen,.lightgreen{
+  background-color: lightgreen;
+  padding-left: auto;
+  padding-right: auto;
+  color:white;
+  font-size: 15px;
+  border-radius: 50%;
+  font-weight: bold;
+  line-height: 150px;
+  text-align: center;
+  height: 150px;
+  width: 150px;
+  box-shadow: inset -25px -25px 40px rgba(0,0,0,.5);
+}
+
+
+.chart-skills {
+    position: relative;
+    width: 350px;
+    height: 175px;
+}
+.chart-skills::before,
+.chart-skills::after {
+  position: absolute;
+}
+ 
+.chart-skills::before {
+  content: '';
+  width: inherit;
+  height: inherit;
+  border: 45px solid rgba(211,211,211,.3);
+  border-bottom: none;
+  border-top-left-radius: 175px;
+  border-top-right-radius: 175px;
+}
+ 
+.chart-skills::after {
+  content: 'Top Skills';
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: cadetblue;
+}

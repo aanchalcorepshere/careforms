@@ -1,0 +1,20 @@
+<aura:component implements="force:hasRecordId,force:lightningQuickActionWithoutHeader,force:hasSObjectName" access="global">
+    <aura:attribute name="recordId" type="String" />
+
+    <aura:html tag="style">
+        .slds-modal__container
+        { 
+            width: 175vh !important;
+            max-width: 600vh !important;
+            height: 107vh !important;
+        }
+        .modal-body, .slds-modal__content
+        { 
+            height : 80vh !important; 
+            max-height: 200vh !important;
+        }
+    </aura:html>
+
+    <c:planWizContainer recordId="{!v.recordId}" onclose="{!c.closeLWC}" objectApiName="{!v.sObjectName}"/>
+
+</aura:component>

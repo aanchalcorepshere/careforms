@@ -1,0 +1,48 @@
+<template>
+    <div class="headerBox">
+        <div class="vertical-center">
+            Assessment Details
+        </div>
+    </div>
+    <div class="slds-box slds-m-around_medium slds-scrollable" style="height: 425px;">
+        <template if:true={assessment}>
+            <div class="slds-m-left_medium" style="width: 50%;">
+                <div class="slds-grid slds-wrap">
+                    <div class="slds-col slds-size_1-of-1 slds-m-vertical_medium">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_1-of-2">
+                                <b>Assessment Name</b>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2">
+                                {assessment.Name}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-m-vertical_medium">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_1-of-2">
+                                <b>Assessment Description</b>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2">
+                                {assessment.caresp__Assessment_Description__c}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-m-vertical_medium">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_1-of-2">
+                                <b>Assessment Date</b>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2">
+                                <lightning-input type="date" name="input1" value={selectedDate} variant="label-hidden" onblur={handleDate}></lightning-input>
+                            </div>
+                        </div>
+                    </div>
+                </div>    
+            </div>
+        </template>
+    </div>
+    <div class="slds-align_absolute-center">
+        <lightning-button name="start" label="Start" variant="brand" onclick={handleStart}></lightning-button>
+    </div>
+</template>

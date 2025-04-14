@@ -1,0 +1,54 @@
+.headerBox{
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    background-color: #001739;
+    color: white;
+    height: 30px;
+    font-size: 15px;
+    font-weight: bold;
+    border-radius: 5px;
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.vertical-center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);       
+}
+
+.Red{
+    color:red;
+}
+
+.Orange{
+    color:orange;
+}
+
+.Yellow{
+    color:rgb(223, 170, 71);
+}
+
+.LightGreen{
+    color:rgb(92, 181, 92);
+}
+
+.Green{
+    color:green;
+}
+
+.outcometitle{
+    font-size: 16px;
+    margin-left: 10px;
+    color : #0176D2;
+}
+
+.outcometitle:hover{
+    cursor: pointer;
+    text-decoration: underline;
+    font-weight: bold;
+}

@@ -1,0 +1,32 @@
+.ansText.original{
+    width:100%;
+    border-radius: 5px;
+    background-color: rgb(218, 218, 218);
+    margin: 5% 0;
+    padding:5%;
+}
+.ansText.selected{
+    width:100%;
+    border-radius: 5px;
+    background-color: steelblue;
+    margin: 5% 0;
+    padding:5%;
+    color: white;
+    z-index: 10;
+}
+.slds-box.slds-scrollable{
+    background-color: white;
+}
+
+.inputbox{
+    width:100%;
+}
+
+.over{
+    transform: scale(1.1, 1);
+}
+
+.sortselect{
+    transform: scale(1.1, 1);
+    border: 1px solid black;
+}

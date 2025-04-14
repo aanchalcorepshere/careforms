@@ -1,0 +1,75 @@
+.over {
+	transform: scale(1.1, 1.1);
+	/* margin-left: 50px;
+	background-color: #C6E2FF; */
+}
+
+.level1{
+	border-radius: 5px;
+	background-color: #E8EFFF;
+	padding: 10px;
+}
+
+.level1summary{
+	border-radius: 5px;
+	background-color: lightgrey;
+	padding: 10px;
+}
+
+.level2{
+	border-radius: 5px;
+	background-color: #CBC5F1;
+	padding: 10px;
+}
+
+.level2summary{
+	border-radius: 5px;
+	background-color: lightgrey;
+	padding: 10px;
+}
+
+.level3{
+	border-radius: 5px;
+	background-color: #EEBAC5;
+	padding: 10px;
+}
+
+.level3summary{
+	border-radius: 5px;
+	background-color: lightgrey;
+	padding: 10px;
+}
+
+.ansOp{
+    background-color: salmon;
+    color:white;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 20px 0 0 50px;
+}
+
+.ansOpbtn {
+    background: #2F4858;
+    border : none;
+    border-radius: 5px;
+    color: #ffffff;
+    font-size: 10px;
+    padding: 5px 10px 5px 10px;
+}
+  
+.ansOpbtn:hover {
+    background: #465779;
+}
+
+.mycombo{
+    margin-top: -10px;
+}
+
+.myinput{
+    margin-top: 5px;
+}
+
+.myactiondiv{
+    border-left: 2px solid #6A6D70;
+    padding-left: 10px;
+}

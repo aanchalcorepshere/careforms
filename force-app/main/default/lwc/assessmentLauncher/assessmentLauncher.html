@@ -1,0 +1,15 @@
+<template>
+    <template if:true={questions} for:each={questions} for:item="ques" for:index="index">
+        <c-question-card key={ques.assessmentQuesId} is-submit={isSubmit} ass-ques-id={ques.assessmentQuesId} ques-text={ques.quesText} ques-sequence={ques.sequence} ans-ops={ques.quesAnsList} level={ques.level} grand-parent={ques.grandParent} parent={ques.parent} is-text={ques.isText} is-number={ques.isNumber} is-checkbox={ques.isCheckbox} is-radio={ques.isRadio} is-combobox={ques.isCombobox} is-long-text={ques.isLongText} is-date={ques.isDate} is-currency={ques.isCurrency} is-phone={ques.isPhone} response={ques.selectedValue} is-required={ques.required} onupdateresponse={handleResponse}></c-question-card>
+        <template if:true={ques.dependentQuestions} for:each={ques.dependentQuestions} for:item="depQues" for:index="index">
+            <div key={depQues.assessmentQuesId} style="color:#005A8E;margin-left:50px;">
+                <c-question-card key={depQues.assessmentQuesId} is-submit={isSubmit} ass-ques-id={depQues.assessmentQuesId} ques-text={depQues.quesText} ques-sequence={depQues.sequence} ans-ops={depQues.quesAnsList} level={depQues.level} grand-parent={depQues.grandParent} parent={depQues.parent} is-text={depQues.isText} is-number={depQues.isNumber} is-checkbox={depQues.isCheckbox} is-radio={depQues.isRadio} is-combobox={depQues.isCombobox} is-long-text={depQues.isLongText} is-date={depQues.isDate} is-currency={depQues.isCurrency} is-phone={depQues.isPhone} response={depQues.selectedValue} is-required={depQues.required} onupdateresponse={handleResponse}></c-question-card>
+            </div>
+            <template if:true={depQues.dependentDependentQuestions} for:each={depQues.dependentDependentQuestions} for:item="depDepQues" for:index="index">
+                <div key={depDepQues.assessmentQuesId} style="color:#0089A0;margin-left:100px;">
+                    <c-question-card key={depDepQues.assessmentQuesId} is-submit={isSubmit} ass-ques-id={depDepQues.assessmentQuesId} ques-text={depDepQues.quesText} ques-sequence={depDepQues.sequence} ans-ops={depDepQues.quesAnsList} level={depDepQues.level} grand-parent={depDepQues.grandParent} parent={depDepQues.parent} is-text={depDepQues.isText} is-number={depDepQues.isNumber} is-checkbox={depDepQues.isCheckbox} is-radio={depDepQues.isRadio} is-combobox={depDepQues.isCombobox} is-long-text={depDepQues.isLongText} is-date={depDepQues.isDate} is-currency={depDepQues.isCurrency} is-phone={depDepQues.isPhone} response={depDepQues.selectedValue} is-required={depDepQues.required} onupdateresponse={handleResponse}></c-question-card>
+                </div>
+            </template>
+        </template>
+    </template>
+</template>

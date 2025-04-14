@@ -1,0 +1,51 @@
+<template>
+    <template if:true={showTaskExecuter}>
+        <template if:false={taskCompleted}>
+            <div class="slds-box slds-theme_default">
+                Click <a onclick={handleClick}>here</a> to complete this task.
+            </div>
+        </template>
+        <template if:true={taskCompleted}>
+            <div class="slds-box slds-theme_default">
+                This task has been completed.
+            </div>
+        </template>
+    
+        <template if:true={openModal}>
+            <div class="slds-scrollable" style="height: 200px;">
+                <!-- Modal/Popup Box LWC starts here -->
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box LWC header here -->
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            title="Close" onclick={closeModal}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse"
+                                size="small"></lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{taskType}</h2>
+                    </header>
+                    <!-- Modal/Popup Box LWC body starts here -->
+                    <div class="slds-p-around_medium" style="background:white;">
+                        <template if:true={typeAssessment}>
+                            <c-assessment-section-handler record-id={task.whatId} object-name={objectApiName} pre-selected-assessment-id={taskSubType} oncancelclick={handleSubmitAssessment} show-client-selection={showClientSelection} is-called-from-other-component={isCalledFromOtherComponent} onsubmitted={handleSubmitAssessment} pre-selected-client={clientId} preselected-client-name={clientName}></c-assessment-section-handler>
+                        </template>
+                        <!-- <template if:true={typeDocCollection}>
+                            <c-doc-collection record-id={task.whatId} preselected-document-type={taskSubType}></c-doc-collection>
+                        </template> -->
+                    </div>
+                    <!-- Modal/Popup Box LWC footer starts here -->
+                    <footer class="slds-modal__footer">
+                        <template if:true={typeDocCollection}>
+                            <lightning-button variant="brand" label="Submit" title="Submit" onclick={handleModalSubmit}></lightning-button>
+                        </template>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+            </div>
+        </template>
+    </template>
+</template>

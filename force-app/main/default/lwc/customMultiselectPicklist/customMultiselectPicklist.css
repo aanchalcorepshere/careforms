@@ -1,0 +1,129 @@
+.custom-multiselect-picklist {
+    display: flex;
+    gap: 20px;
+    margin: 25px;
+}
+.sfdclesson-branding {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 14px;
+    color: #737373;
+}
+.available-options,
+.selected-options {
+	/*min-width:200px;*/
+    width:50%;
+	white-space: nowrap; /* Prevent text from wrapping */
+    overflow: hidden; /* Hide overflow text */
+    text-overflow: ellipsis;
+    background-color: #f3f3f3;
+    padding: 10px;
+    border-radius: 5px;
+	max-height: 300px; /* Adjust the height as needed */
+    overflow-y: auto;
+	overflow-x:auto;
+}
+
+.available-options h3,
+.selected-options h3, 
+.mark-mandatory h3
+{  
+     font-size: 18px;
+    font-weight: bold;
+    margin: 0 0 10px;
+}
+
+.available-options ul,
+.selected-options ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.available-options li,
+.selected-options li, 
+.mark-mandatory li,
+.mark-editable li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.available-options li:hover,
+.selected-options li:hover {
+    background-color: #e0e0e0;
+}
+
+.available-options li span,
+.selected-options li span {
+    display: inline-block;
+}
+
+.custom-multiselect-picklist .selected-options {
+    /*background-color: #e5f3ed;*/
+    background-color: #9ecfef63;
+}
+
+.custom-multiselect-picklist .selected-options li {
+    /*background-color: #c5e1a5;*/
+     background-color: #57a0d75c;
+    
+}
+
+.custom-multiselect-picklist .selected-options li:hover {
+    /*background-color: #aed581;*/
+    background-color: #57a0d7a6;
+   
+}
+
+
+.mark-mandatory h3{
+    /*margin-top:7px !important;*/
+    color:red;
+}
+
+
+.mark-mandatory {
+	white-space: nowrap; /* Prevent text from wrapping */
+    overflow: hidden; /* Hide overflow text */
+    text-overflow: ellipsis;
+    padding: 10px;
+    border-radius: 5px;
+	max-height: 300px; /* Adjust the height as needed */
+    overflow-y: auto;
+	overflow-x:auto;
+    min-width: 8%;
+    background-color: rgb(234 0 30 / 7%);
+}
+
+.marked-mandatory-checked{
+    background-color: #57a0d7a6;
+
+}
+
+
+.mark-editable
+{
+    white-space: nowrap; /* Prevent text from wrapping */
+    overflow: hidden; /* Hide overflow text */
+    text-overflow: ellipsis;
+    padding: 10px;
+    border-radius: 5px;
+	max-height: 300px; /* Adjust the height as needed */
+    overflow-y: auto;
+	overflow-x:auto;
+    min-width: 8%;
+    background-color:  rgb(61 234 0 / 7%);
+   
+
+}
+
+.mark-editable h3{
+ 
+    margin: 0 0 18px;
+}

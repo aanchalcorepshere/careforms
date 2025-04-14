@@ -1,0 +1,78 @@
+.rule{
+    margin: 20px auto;
+    min-height: 200px;
+    width: 80%;
+    background: white;
+    box-shadow: rgba(14, 30, 37, 0.12) 0px 2px 4px 0px, rgba(14, 30, 37, 0.32) 0px 2px 16px 0px;
+    border: .25px solid lightgray;
+    padding: 10px;
+    position: relative;
+}
+
+.theline{
+    position: absolute;
+    left: 54.5%;
+    border-left: dashed 1px #0176D2;
+    height: 100%;
+    bottom: 0;
+    top:10px;
+    z-index: -1;
+    transform: translate(-50%);
+}
+
+.ruleName{
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+    background-color: #0176D2;
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border-radius: 50px;
+    padding-top: 12px;
+    top: -15px;
+    left: -15px;
+    position: absolute;
+    box-shadow: rgba(14, 30, 37, 0.12) 0px 2px 4px 0px, rgba(14, 30, 37, 0.32) 0px 2px 16px 0px;
+}
+
+.value{
+    margin-top: 28px;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.show{
+    margin-top: 20px;
+    margin-left: 0;
+    margin-bottom: 0px;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.delete-icnpage{
+    --sds-c-icon-color-foreground-default: gray;
+    --sds-c-icon-color-foreground: gray;
+    cursor:pointer;
+}
+
+.delete-icnpage:hover{
+    --sds-c-icon-color-foreground-default: rgb(200, 0, 0);
+    --sds-c-icon-color-foreground: rgb(200, 0, 0);
+    cursor:pointer;
+}
+
+.ruledelete{
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
+.secondaryfield{
+    width:95%;
+    align-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    height: 100px;
+}

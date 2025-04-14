@@ -1,0 +1,90 @@
+<template>
+    <div class="slds-text-color_error slds-align_absolute-center">
+        {error}
+    </div>
+    <template if:true={showEditError}>
+        <div class="slds-theme_error slds-text-title_bold slds-m-bottom_x-small slds-align_absolute-center">
+            {editError}
+        </div>
+    </template>
+    <div class="slds-grid slds-wrap">
+        <template for:each={questions} for:item="ques">
+            <div key={ques.Id} class="slds-col slds-size_1-of-1 slds-m-bottom_x-small">
+                <lightning-card variant="Narrow" title={ques.caresp__Question_Text__c} icon-name="custom:custom21">
+                    <lightning-button-menu icon-size="small" menu-alignment="auto" variant="border-filled" data-id={ques.Id} alternative-text="Show menu" slot="actions" onselect={handleAction}>
+                        <lightning-menu-item value="Edit" label="Edit" ></lightning-menu-item>
+                        <lightning-menu-item value="Delete" label="Delete"></lightning-menu-item>
+                        <lightning-menu-item value={activeButton} label={activeButton}></lightning-menu-item>
+                    </lightning-button-menu>
+                    <p class="slds-p-horizontal_small"><strong>Data Type - </strong>  {ques.caresp__Question_Data_type__c}</p>
+                    <template if:true={ques.caresp__Answer_Options__c}>
+                        <p class="slds-p-horizontal_small"><strong>Answer Options - </strong> {ques.caresp__Answer_Options__c}</p>
+                    </template>
+                    <p class="slds-p-horizontal_small"><strong>Active - </strong>  {ques.caresp__Active__c}</p>
+                </lightning-card>
+            </div>
+        </template>
+    </div>
+    <!-- <template if:true={isEditModalOpen}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close"
+                            alternative-text="close"
+                            variant="inverse"
+                            size="small" ></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <c-create-new-question is-edit={isEdit} edit-rec-id={editRecId} onsaveevent={handleQuestionSave} onediterror={handleEditError}></c-create-new-question>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template> -->
+
+    <template if:true={isNewModalOpen}>
+        <!-- Modal/Popup Box LWC starts here -->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-02" aria-modal="true" aria-describedby="modal-content-id-2" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box LWC header here -->
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close"
+                            alternative-text="close"
+                            variant="inverse"
+                            size="small" ></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <!-- <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Edit Question</h2> -->
+                </header>
+                <!-- Modal/Popup Box LWC body starts here -->
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-2">
+                    <c-create-new-question is-edit={isEdit} edit-rec-id={editRecId} onsaveevent={handleQuestionSave} onediterror={handleEditError}></c-create-new-question>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <div style="max-width: 30px;">
+    <template if:true={isDeleteModalOpen}>
+        <!-- Modal/Popup Box LWC starts here -->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-03" aria-modal="true" aria-describedby="modal-content-id-3" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-3">
+                    Are you sure you want to delete this Question?
+                </div>
+                <!-- Modal/Popup Box LWC footer starts here -->
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick={closeModal} title="No">No</button>
+                    <button class="slds-button slds-button_brand" onclick={handleDeleteAction} title="Yes">Yes</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    </div>
+</template>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>Community Residential Rehabilitation</fullName>
+        <default>false</default>
+        <label>Community Residential Rehabilitation</label>
+    </customValue>
+    <customValue>
+        <fullName>Detention</fullName>
+        <default>false</default>
+        <label>Detention</label>
+    </customValue>
+    <customValue>
+        <fullName>Diagnostic Treatment Facility</fullName>
+        <default>false</default>
+        <label>Diagnostic Treatment Facility</label>
+    </customValue>
+    <customValue>
+        <fullName>Drug and Alcohol Treatment Facility</fullName>
+        <default>false</default>
+        <label>Drug and Alcohol Treatment Facility</label>
+    </customValue>
+    <customValue>
+        <fullName>Group Home</fullName>
+        <default>false</default>
+        <label>Group Home</label>
+    </customValue>
+    <customValue>
+        <fullName>Medical Hospital</fullName>
+        <default>false</default>
+        <label>Medical Hospital</label>
+    </customValue>
+    <customValue>
+        <fullName>Psychiatric Hospital</fullName>
+        <default>false</default>
+        <label>Psychiatric Hospital</label>
+    </customValue>
+    <customValue>
+        <fullName>Residential Facility</fullName>
+        <default>false</default>
+        <label>Residential Facility</label>
+    </customValue>
+    <customValue>
+        <fullName>Residential Treatment Facility</fullName>
+        <default>false</default>
+        <label>Residential Treatment Facility</label>
+    </customValue>
+    <customValue>
+        <fullName>Resource Family Home - Adoptive</fullName>
+        <default>false</default>
+        <label>Resource Family Home - Adoptive</label>
+    </customValue>
+    <customValue>
+        <fullName>Resource Family Home - Foster Care</fullName>
+        <default>false</default>
+        <label>Resource Family Home - Foster Care</label>
+    </customValue>
+    <customValue>
+        <fullName>Resource Family Home - Kinship Foster Care</fullName>
+        <default>false</default>
+        <label>Resource Family Home - Kinship Foster Care</label>
+    </customValue>
+    <customValue>
+        <fullName>Resource Family Home - Pre-Adoptive</fullName>
+        <default>false</default>
+        <label>Resource Family Home - Pre-Adoptive</label>
+    </customValue>
+    <customValue>
+        <fullName>Supervised Independent Living</fullName>
+        <default>false</default>
+        <label>Supervised Independent Living</label>
+    </customValue>
+    <masterLabel>Placement Type</masterLabel>
+    <sorted>false</sorted>
+</GlobalValueSet>

@@ -1,0 +1,173 @@
+<template>
+    <ul class="slds-has-dividers_around-space slds-var-m-around_medium">
+        <!-- LIST OF PARENT QUESTIONS - START -->
+        <lightning-accordion allow-multiple-sections-open
+            onsectiontoggle={toggleSections}>
+            <template for:each={quesList} for:item="ques">
+                <div key={ques.quesId} class="levelA">
+                    <li key={ques.quesId} class="slds-var-m-horizontal_large slds-var-m-vertical_small">
+
+                        <!-- LIST OF PARENT CARD - START -->
+
+                        <c-assessment-wizard-ques-card is-submit={isSubmit} ques={ques} field-list={fieldList} onstartdrag={handleDragStart} onitemdrop={handleDrop} onremoveitem={handleRemoveItem} onupdatequestiondata={updateQuestionData} onupdatescore={updateScore}>
+                        </c-assessment-wizard-ques-card>
+
+                        <!-- LIST OF PARENT CARD - END -->
+
+                        <!-- LIST OF PARENT ANS OPTIONS - START -->
+                        <template if:true={ques.dependentQuesData}>
+                            <lightning-accordion-section key={ques.quesId} name="ansOptions" label="Answer options ">
+                                <template for:each={ques.dependentQuesData} for:item="ansOp">
+                                    <div class="ansOp" key={ansOp.ansOpId}>
+                                        <div class="slds-grid slds-clearfix">
+                                            <div class="slds-col slds-size_2-of-3 slds-align-middle">
+                                                {ansOp.ansOpText}
+                                            </div>
+                                            <div class="slds-col slds-size_1-of-3 slds-clearfix">
+                                                <div class="slds-grid slds-gutters">
+                                                    <div if:true={needScoring} class="slds-col">
+                                                        <input disabled={isSubmit} name="score" placeholder="Score..."
+                                                            type="number" data-parent-ques={ques.quesId}
+                                                            data-ans={ansOp.ansOpId} data-level={ques.level}
+                                                            value={ansOp.score} onblur={handleScoring}></input>
+                                                    </div>
+                                                    <div if:false={isSubmit} class="slds-col">
+                                                        <button class="ansOpbtn slds-float_right" data-section={section}
+                                                            data-parent-ques={ques.quesId} data-ans={ansOp.ansOpId}
+                                                            data-level={ques.level} name="addDependent"
+                                                            onclick={handleAddDependent}>Add Dependent</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- LIST OF LEVEL 1 DEPENDENTS - START -->
+
+                                    <template if:true={ansOp.dependentQuesList}>
+
+                                        <template for:each={ansOp.dependentQuesList} for:item="depques">
+                                            <div key={depques.quesId} class="levelB">
+
+                                                <!-- LIST OF LEVEL 1 DEPENDENT CARD - START -->
+
+                                                <c-assessment-wizard-ques-card key={depques.quesId} is-submit={isSubmit}
+                                                    ques={depques} onstartdrag={handleDragStart} onitemdrop={handleDrop}
+                                                    onremoveitem={handleRemoveItem} onupdatequestiondata={updateQuestionData}>
+                                                </c-assessment-wizard-ques-card>
+
+                                                <!-- LIST OF LEVEL 1 DEPENDENT CARD - END -->
+
+                                                <!-- LIST OF LEVEL 1 ANS OPTIONS - START -->
+                                                <template if:true={depques.dependentQuesData}>
+                                                    <lightning-accordion-section key={depques.quesId} name="ansOptions"
+                                                        label="Answer options ">
+                                                        <template for:each={depques.dependentQuesData}
+                                                            for:item="depAnsOp">
+                                                            <div class="ansOp" key={depAnsOp.ansOpId}>
+                                                                <div class="slds-grid slds-clearfix">
+                                                                    <div
+                                                                        class="slds-col slds-size_2-of-3 slds-align-middle">
+                                                                        {depAnsOp.ansOpText}
+                                                                    </div>
+                                                                    <div
+                                                                        class="slds-col slds-size_1-of-3 slds-clearfix">
+                                                                        <button disabled={isSubmit}
+                                                                            class="ansOpbtn slds-float_right"
+                                                                            data-section={section}
+                                                                            data-parent-ques={depques.quesId}
+                                                                            data-ans={depAnsOp.ansOpId}
+                                                                            data-level={depques.level}
+                                                                            data-grand-parent={ques.quesId}
+                                                                            data-parent-ans={ansOp.ansOpId}
+                                                                            name="addDependent"
+                                                                            onclick={handleAddDependent}>Add
+                                                                            Dependent</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- LIST OF LEVEL 2 DEPENDENTS - START -->
+
+                                                            <template if:true={depAnsOp.dependentQuesList}>
+                                                                <template for:each={depAnsOp.dependentQuesList}
+                                                                    for:item="depDepques">
+                                                                    <div key={depDepques.quesId} class="levelC">
+
+                                                                        <!-- LIST OF LEVEL 2 DEPENDENT CARD - START -->
+
+                                                                        <c-assessment-wizard-ques-card
+                                                                            key={depDepques.quesId} is-submit={isSubmit}
+                                                                            ques={depDepques}
+                                                                            onstartdrag={handleDragStart}
+                                                                            onitemdrop={handleDrop}
+                                                                            onremoveitem={handleRemoveItem} onupdatequestiondata={updateQuestionData}>
+                                                                        </c-assessment-wizard-ques-card>
+
+                                                                        <!-- LIST OF LEVEL 2 DEPENDENT CARD - END -->
+
+                                                                    </div>
+                                                                </template>
+                                                            </template>
+
+                                                            <!-- LIST OF LEVEL 2 DEPENDENTS - START -->
+
+                                                        </template>
+                                                    </lightning-accordion-section>
+                                                </template>
+                                                <!-- LIST OF LEVEL 1 ANS OPTIONS - END  -->
+                                            </div>
+                                        </template>
+                                    </template>
+
+                                    <!-- LIST OF LEVEL 1 DEPENDENTS - END -->
+
+                                </template>
+                            </lightning-accordion-section>
+                        </template>
+
+
+                        <!-- LIST OF PARENT ANS OPTIONS - END -->
+                    </li>
+                </div>
+            </template>
+        </lightning-accordion>
+        <!-- LIST OF PARENT QUESTIONS - END -->
+    </ul>
+    <!-- </template> -->
+
+    <!-- Dependent Selection Modal - START -->
+    <template if:true={isModalOpen}>
+        <!-- Modal/Popup Box LWC starts here -->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+            aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box LWC header here -->
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse"
+                            size="small"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Dependent Questions</h2>
+                </header>
+                <div style="background: white;">
+                    <!-- Modal/Popup Box LWC body starts here -->
+                    <c-assessment-wizard-dependent-question parent={parentQuesForDependent} level={levelForDependent}
+                    section={sectionForDependent} grandparent={grandParentQuesForDependent}
+                    dependent-allowed={dependentAllowedForDependent} ans-op-id={ansOpForDependent}
+                    grand-parent-ans-op-id={parentAnsOpForDependent} ondependentques={handleDependent}>
+                    </c-assessment-wizard-dependent-question>
+                    <!-- Modal/Popup Box LWC footer starts here -->
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick={closeModal} title="Cancel">Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick={getDependents} title="OK">OK</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    <!-- Dependent Selection Modal - END -->
+</template>

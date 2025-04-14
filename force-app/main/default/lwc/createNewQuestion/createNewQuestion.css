@@ -1,0 +1,12 @@
+.spins::after {
+    position: absolute;
+    content: 'Saving Data.....';
+    width: 100%;
+    text-align: center;
+    top: calc(50% + 3em);
+    font-weight: bold;
+}
+
+.slds-theme_warning, .slds-theme--warning{
+    font-size: 12px;
+}

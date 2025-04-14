@@ -1,0 +1,75 @@
+.headerBox{
+    margin-left: auto;
+    margin-right: auto;
+    /* margin-bottom: 1em; */
+    width: 100%;
+    background-image: linear-gradient(to left bottom, #0176d2, #006cc0, #0061ad, #00579b, #014d8a);
+    color: white;
+    height: 50px;
+    font-size: 18px;
+    font-weight: bold;
+    position: relative;
+    text-transform: uppercase;
+    letter-spacing: .25em;
+    box-shadow: rgba(0, 0, 0, 0.09) 0px 2px 1px, rgba(0, 0, 0, 0.09) 0px 4px 2px, rgba(0, 0, 0, 0.09) 0px 8px 4px, rgba(0, 0, 0, 0.09) 0px 16px 8px, rgba(0, 0, 0, 0.09) 0px 32px 16px;
+}
+
+.vertical-center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.arrow {
+    border: solid white;
+    border-width: 0 5px 5px 0;
+    display: inline-block;
+    padding: 5px;
+}
+
+.right {
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+    top: 30%;
+    right:100px;
+    position: absolute;
+}
+
+.arrow:hover{
+    cursor: pointer;
+}
+
+.left {
+    transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+    top: 30%;
+    left:100px;
+    position: absolute;
+}
+
+.nav-previous{
+    position:absolute;
+    margin-left:120px;
+    top: 25%;
+    font-size: 16px;
+    font-weight: bold;
+    position: relative;
+    text-transform: none;
+    letter-spacing: .10em;
+    cursor: pointer;
+}
+
+.nav-next{
+    position:absolute;
+    margin-left:180px;
+    top: 25%;
+    font-size: 16px;
+    font-weight: bold;
+    position: relative;
+    text-transform: none;
+    letter-spacing: .10em;
+    cursor: pointer;
+}

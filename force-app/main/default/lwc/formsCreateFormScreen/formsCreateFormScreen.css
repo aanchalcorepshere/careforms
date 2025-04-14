@@ -1,0 +1,175 @@
+html, body {
+    margin:0px;
+    height:100%;
+}
+
+.richtextboximage{
+    padding : 5px;
+    border-radius: 10px;
+    border: 1px lightgray solid;
+    margin-top: 10px;
+}
+
+.head{
+    color : #373F51;
+    font-size: 20px;
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-bottom: 10px;
+    margin-left: 10px;
+}
+
+.container-box{
+    margin: 15px;
+    width: 75%;
+    float: right;
+}
+
+.pagearea{
+    width:100%;
+    display: inline-block;
+    border-radius: 10px;
+    border: 1px lightgray solid;
+    overflow-y:auto;
+    position: relative;
+    height: 620px;
+}
+
+.metadata{
+    position:absolute;
+    top:54px;
+    right:0px;
+    bottom:0px;
+    left:0px;
+    width: 20%;
+    background: white;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px;
+    border: .25px solid lightgray;
+    height: 100%;
+    color : #373F51;
+    padding: 10px;
+}
+
+.fieldlist{
+    background: white;
+    border: .25px solid lightgray;
+    height: 100%;
+    color : #0176D2;
+    border-radius: 0 10px 0 0;
+    padding: 10px;
+}
+
+.datatype{
+    font-size: 12px;
+    font-style: italic;
+}
+
+.addpage {
+	border-radius:15px;
+	display:inline-block;
+    border : 1px dashed #0176D2;
+    background-color: #FAFAF9;
+	cursor:pointer;
+	color:#0176D2;
+	font-family:Verdana;
+	font-size:12px;
+	font-weight:bold;
+	padding:5px 10px;
+	text-decoration:none;
+}
+
+.addpage:hover {
+	/*background:linear-gradient(to bottom, #3e8dac 5%, #74bdda 100%);*/
+	background-color:#0176D2;
+    border : 1px solid #0176D2;
+    color: white;
+}
+.addpage:active {
+	position:relative;
+	top:1px;
+}
+
+.fieldsbox{
+    height: 70%;
+    width : 100%;
+    background: #FAFAF9;
+    border-radius: 10px;
+    border: 1px lightgray solid;
+    padding : 10px;
+    margin : 0px;
+    overflow-y:auto;
+}
+
+.fieldcard{
+    min-height: 15px;
+    background: #0176D2;
+    border-radius: 10px;
+    /* border: .25px #418099 solid; */
+    box-shadow: 1px 1px 2px 2px #dddddd;
+    padding : 10px;
+    margin : 10px 0px;
+    color : white;
+    position: relative;
+}
+
+.vertical-center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 8%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.fieldlabel{
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.objecttext{
+    font-size: 15px;
+    color: #373F51;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.deletesection{
+    position:relative;
+    float: right;
+    top: 45%;
+    left: 16.5px;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.delete-icn{
+    --sds-c-icon-color-foreground-default: #0176D2;
+    --sds-c-icon-color-foreground: #0176D2; 
+    --sds-c-icon-color-background: white;
+    cursor:pointer;
+}
+
+.delete-icn:hover{
+    --sds-c-icon-color-foreground-default: #CE2D4F;
+    --sds-c-icon-color-foreground: #CE2D4F;
+    cursor:pointer;
+}
+
+.delete-icnpage{
+    --sds-c-icon-color-foreground-default: gray;
+    --sds-c-icon-color-foreground: gray;
+    cursor:pointer;
+}
+
+.delete-icnpage:hover{
+    --sds-c-icon-color-foreground-default: #CE2D4F;
+    --sds-c-icon-color-foreground: #CE2D4F;
+    cursor:pointer;
+}
+
+.pagedelete{
+    position:inherit;
+    float: right;
+    top: -25px;
+    left: 25px;
+}

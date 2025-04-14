@@ -1,0 +1,241 @@
+<template>
+    <lightning-record-edit-form object-api-name="caresp__Step__c" record-id={stepId} onload={handleStepLoad}>
+
+        <!-- Error Messages -->
+        <template if:false={allGood}>
+            <div style="height:4rem;">
+                <div class="slds-notify slds-notify_toast slds-theme_error slds-align_absolute-center" role="status"
+                    style="margin-right:1rem; margin-left:1rem;">
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small">
+                            {message}
+                        </h2>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <lightning-messages></lightning-messages>
+        <!-- Added By Anubhav -->
+        <template if:true={selectActionRadio}>
+        <!-- <div class="horizontal-radio-group" >
+            <lightning-radio-group style="display: flex;" name="radioGroup" label="Type of Step"
+                options={actionableoptions} value={actionablevalue} type="radio"
+                onchange={handleActionableSelection} class="customRadiocls"></lightning-radio-group>
+        </div> -->
+        <div style="display: flex; align-items: center; margin-bottom: 24px;">
+            <span style="margin-right: 20px;">Type of Step:</span>
+            <div style="display: flex; align-items: center;">
+            <template for:each={actionableoptions} for:item="item">
+                <fieldset key={item.value} style="display: block; float: left;">
+                    <div class="slds-form-element__control">
+                        <span class="slds-radio">
+                            <input name="radiogroup" id={item.value} type="radio" value={item.value} onchange={handleActionableSelection}/>
+                            <label class="slds-radio__label" for={item.value}>
+                                <span class="slds-radio_faux"></span>
+                                <span class="slds-form-element__label">{item.label}</span>
+                            </label>
+                        </span>
+                    </div>
+                </fieldset>
+            </template>
+            </div>
+        </div>
+       </template>
+        <template if:true={actionableSelected}>
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col slds-size_6-of-12">
+                    <lightning-input-field field-name="caresp__Type_of_Action__c" onchange={handelTypeSelected} 
+                    name="typeaction"  variant="label-stacked" value={typeaction}>
+                    </lightning-input-field>
+                </div>
+            </div>
+        </template>
+        <template if:true={referralSelected}>
+            <span style="margin-right: 20px;">{stepSelectedType}</span>
+            <div class="slds-grid slds-gutters">
+                    <div class="slds-col slds-size_1-of-12">
+                        <lightning-input-field field-name="caresp__Step_Num__c" name="stepNum" readonly value={numVal}
+                            variant="label-stacked">
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Description__c" name="description" variant="label-stacked"
+                            value={descVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Start_Date__c" name="startDate" variant="label-stacked"
+                            value={startDateVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Target_Date__c" name="targetDate" variant="label-stacked"
+                            value={targetDateVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                    <lightning-input-field field-name="caresp__Service__c" readonly name="Service"  variant="label-stacked" value={serVal}>
+                    </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Status__c" name="status" variant="label-stacked"
+                            value={statusVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_1-of-12" style="margin-top: 24px;">
+                        <lightning-button label="Back" onclick={handleBack} variant="brand"></lightning-button>
+                    </div>
+            </div>
+        </template>
+        <template if:true={serviceSelected}>
+            <span style="margin-right: 20px;">{stepSelectedType}</span>
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col slds-size_1-of-12">
+                        <lightning-input-field field-name="caresp__Step_Num__c" name="stepNum" readonly value={numVal}
+                            variant="label-stacked">
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Description__c" name="description" variant="label-stacked"
+                            value={descVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Start_Date__c" name="startDate" variant="label-stacked"
+                            value={startDateVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Target_Date__c" name="targetDate" variant="label-stacked"
+                            value={targetDateVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Service__c"  name="Service"  variant="label-stacked" value={serVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Status__c" name="status" variant="label-stacked"
+                            value={statusVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_1-of-12" style="margin-top: 24px;">
+                        <lightning-button label="Back" onclick={handleBack} variant="brand"></lightning-button>
+                    </div>
+            </div>
+        </template>
+        <template if:true={documentSelected}>
+            <span style="margin-right: 20px;">{stepSelectedType}</span>
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col slds-size_1-of-12">
+                        <lightning-input-field field-name="caresp__Step_Num__c" name="stepNum" readonly value={numVal}
+                            variant="label-stacked">
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Description__c" name="description" variant="label-stacked"
+                            value={descVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Start_Date__c" name="startDate" variant="label-stacked"
+                            value={startDateVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Target_Date__c" name="targetDate" variant="label-stacked"
+                            value={targetDateVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Document_Type__c" name="Document" readonly variant="label-stacked" value={docVal} >
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Status__c" name="status" variant="label-stacked"
+                            value={statusVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_1-of-12" style="margin-top: 24px;">
+                        <lightning-button label="Back" onclick={handleBack} variant="brand"></lightning-button>
+                    </div>
+            </div>
+        </template>
+        <template if:true={assessmentSelected}>
+            <span style="margin-right: 20px;">{stepSelectedType}</span>
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col slds-size_1-of-12">
+                        <lightning-input-field field-name="caresp__Step_Num__c" name="stepNum" readonly value={numVal}
+                            variant="label-stacked">
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Description__c" name="description" variant="label-stacked"
+                            value={descVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Start_Date__c" name="startDate" variant="label-stacked"
+                            value={startDateVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Target_Date__c" name="targetDate" variant="label-stacked"
+                            value={targetDateVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Assessment__c" name="Assessment" readonly variant="label-stacked" value={asseVal} >
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <lightning-input-field field-name="caresp__Status__c" name="status" variant="label-stacked"
+                            value={statusVal}>
+                        </lightning-input-field>
+                    </div>
+                    <div class="slds-col slds-size_1-of-12" style="margin-top: 24px;">
+                        <lightning-button label="Back" onclick={handleBack} variant="brand"></lightning-button>
+                    </div>
+            </div>
+        </template>
+        <template if:true={normalSelected}>
+            <span style="margin-right: 20px;">{stepSelectedTypeNormal}</span>
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col slds-size_1-of-12">
+                    <lightning-input-field field-name="caresp__Step_Num__c" name="stepNum" readonly value={numVal}
+                        variant="label-stacked">
+                    </lightning-input-field>
+                </div>
+                <div class="slds-col slds-size_2-of-12">
+                    <lightning-input-field field-name="caresp__Description__c" name="description" variant="label-stacked"
+                        value={descVal}>
+                    </lightning-input-field>
+                </div>
+                <div class="slds-col slds-size_2-of-12">
+                    <lightning-input-field field-name="caresp__Start_Date__c" name="startDate" variant="label-stacked"
+                        value={startDateVal}>
+                    </lightning-input-field>
+                </div>
+                <div class="slds-col slds-size_2-of-12">
+                    <lightning-input-field field-name="caresp__Target_Date__c" name="targetDate" variant="label-stacked"
+                        value={targetDateVal}>
+                    </lightning-input-field>
+                </div>
+                <div class="slds-col slds-size_2-of-12">
+                    <lightning-combobox name="assignedTo" label="Assigned To" variant="label-stacked"
+                        value={assignedToVal} options={assignedToOptions} onchange={handleAssignedToChange}
+                        required></lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_2-of-12">
+                    <lightning-input-field field-name="caresp__Status__c" name="status" variant="label-stacked"
+                        value={statusVal}>
+                    </lightning-input-field>
+                </div>
+                <div class="slds-col slds-size_1-of-12" style="margin-top: 24px;">
+                    <lightning-button label="Back" onclick={handleBack} variant="brand"></lightning-button>
+                </div>
+            </div>
+        </template>
+        <!-- End -->
+    </lightning-record-edit-form>
+</template>

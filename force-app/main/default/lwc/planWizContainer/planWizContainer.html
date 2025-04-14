@@ -1,0 +1,205 @@
+<template>
+<div class="slds-theme_default">
+
+
+<!--plan sign email modal-->
+<!--template if:true={isSignEmailModal}>
+	<c-plan-signature-email-modal class="plan-signature-email-modal" is-sign-email-modal={isSignEmailModal}
+		allowed-entries=1 onsendemail={handleSendEmail} oncloseemail={handleCloseEmail}>
+	</c-plan-signature-email-modal>
+</template--><!--commented for later purpose-->
+<!--sign modal end-->
+
+<!--Page 1 plan type or existing plan-->
+<div if:true={selectType}>
+	<div class="head">
+		<div class="slds-align_absolute-center slds-text-heading_medium">
+			<strong>Select Plan</strong>
+		</div>
+	</div>
+	<lightning-layout-item padding="around-small" size="6" style="float: left;">
+		<lightning-combobox name="selPlanType" label="Select New Plan Type" value={selectedPlanType}
+			options={optionsPlanType} onchange={handlePlanTypeChange}></lightning-combobox>
+	</lightning-layout-item>
+	<lightning-layout-item padding="around-small" size="6" style="float: left;">
+		<lightning-combobox label="Select Existing Plan" options={optionsPlanDraft}
+			onchange={handlePlanDraftSelectChange}></lightning-combobox>
+		<!-- Select Existing Plan                 -->
+	</lightning-layout-item>
+</div>
+<!--Page 1 plan type or existing plan End-->
+
+
+
+<!--Page 2-->
+<div if:false={selectType}>
+	<div class="head head slds-grid slds-grid_align-spread">
+		<div class="slds-align_absolute-center slds-text-heading_medium">
+			<strong>{planType}</strong>
+		</div>
+		<template if:true={forPrint}>
+			<div>
+				<lightning-button label="Print" onclick={handlePrintPlans} class="slds-no-print slds-float_right" style ='margin-top: -2px;'></lightning-button>
+			</div>
+		</template>
+	</div>
+	<template if:true={hasAccess}>
+		<!-- Error Messages -->
+			<template if:false={allGood}>
+				<div style="height:4rem;">
+					<div class="slds-notify slds-notify_toast slds-theme_error slds-align_absolute-center"
+						role="status" style="margin-right:1rem; margin-left:1rem;">
+						<div class="slds-notify__content">
+							<h2 class="slds-text-heading_small">
+								{message}
+							</h2>
+						</div>
+					</div>
+				</div>
+			</template>
+			<lightning-messages></lightning-messages>
+		
+
+		<!--Page 2 Dynamic field rendering-->
+		<lightning-record-edit-form object-api-name="caresp__Plan__c" record-id={planRecordId}
+			onsubmit={handleSavePlanDetails} onsuccess={handleFormSuccess} onerror={handleFormError}>
+			<template if:true={isPlanTemDataFound}>
+				<template for:each={planTemplateData} for:item="item">
+					<div key={item.sectionName}
+						class="slds-box slds-box_xx-small sectionHeader slds-text-title_bold slds-m-bottom_medium">
+						{item.sectionName} :
+					</div>
+					<div class="slds-grid slds-wrap" key={item.sectionName}>
+						<template for:each={item.fieldBlueprints} for:item="field">
+							<div class='slds-col slds-size--1-of-3 custom-style' key={field.value}>
+								<template if:false={field.isHyperLink}>
+								<lightning-input-field field-name={field.value} variant="label-stacked"
+									disabled={field.isReadOnly} required={field.isMandatory}  onchange={handleInputFieldChange} value = {field.defaultVal}>
+								</lightning-input-field>
+								</template>
+								<template if:true={field.isHyperLink}>
+								<lightning-output-field field-name="caresp__Parent_Plan_F__c" variant="label-stacked"></lightning-output-field>
+								</template>
+								<!--commented for later purpose-->
+								<!--template if:true={field.isSignDateField}>
+									<template if:false={isSignDateFilled}>
+										<template if:false={forPrint}>
+											<div key={item.value}
+												class="slds-col slds-size--1-of-3 save-sign-button-position">
+												<lightning-button-icon icon-name='utility:save' alternative-text="Save Signature Date"
+													class="slds-no-print" variant="brand"
+													title="Save Signature Date" onclick={saveSignatureDate}>
+												</lightning-button-icon>
+											</div>
+										</template>
+									</template>
+								</template-->
+								<!--commented for later purpose-->
+
+							</div>
+
+						</template>
+					</div>
+				</template>
+			</template>
+
+			<template if:true={planExists}>
+				<div class="slds-box slds-box_xx-small sectionHeader slds-text-title_bold slds-m-bottom_medium">
+					Goal Details :
+				</div>
+				<c-plan-wiz-show-clients record-id={recordId} plan-id={planRecordId}
+					object-api-name={objectApiName} plan-active={isActive} plan-start-date={planStartDate}
+					for-print={forPrint} profile-name={profileName} onrefreshplanfields={refreshPlanFields}
+					plan-temp-id={selectedPlanTypeId} default-date-values = {defaultDateValues}>
+				</c-plan-wiz-show-clients> 
+			</template>
+			<br/><br/><br/><br/>
+
+					<template if:false={forPrint}>
+							<div class="slds-p-around_medium lgc-bg slds-align_absolute-center">
+						<template if:true={planExists}>
+							<template if:false={newVersionPlanModal}>
+								<template if:false={forClientSignature}>
+									<template if:false={notCurrent}>
+										<lightning-button-icon class="slds-no-print" variant="brand" icon-name = 'utility:new'
+											alternative-text="Create New Version" title="Create New Version" onclick={handleNewVersion}
+											disabled={newVersionDisabled} >
+										</lightning-button-icon>
+									</template>
+								</template>
+								<lightning-button-icon icon-name='utility:print' class="slds-no-print slds-m-left_xx-small"
+									variant="brand" alternative-text="Print" title="Print" onclick={handlePrint}></lightning-button-icon>
+<!--commented for later purpose-->
+								<!--template if:false={forClientSignature}>
+									<template if:false={forPrint}>
+										<template if:false={isSignDateFilled}>
+											<lightning-button-icon icon-name='utility:signature'
+												class="slds-no-print slds-m-left_xx-small" variant="brand" alternative-text="Request Signature" title="Request Signature"
+													onclick={handleRequestSignature}>
+											</lightning-button-icon>
+										</template>
+									</template>
+								</template-->
+								<!--commented for later purpose-->
+
+							</template>
+							<template if:false={notCurrent}>
+								<template if:true={newVersionPlanModal}>
+									Please Confirm before Creating a New Plan.&nbsp;
+									<lightning-button class="slds-no-print" variant="neutral" label="Cancel"
+										onclick={handleCancelPlanModal} style="margin-right: 1rem;">
+									</lightning-button>
+									<lightning-button class="button slds-no-print" variant="brand"
+										label="Confirm" onclick={createNewVersion}></lightning-button>
+								</template>
+							</template>
+							<lightning-button-icon class="slds-no-print slds-m-left_xx-small" variant="brand" title="Save As Draft" alternative-text="Save As Draft"
+								onclick={handleSaveAsDraft}  disabled={isActive} icon-name = 'standard:drafts' size = 'medium'>
+							</lightning-button-icon>
+						</template>
+
+							<!-- Buttons -->
+		
+					<template if:false={fromPlan}>
+						<lightning-button class="slds-no-print slds-m-left_xx-small" variant="neutral" label="Cancel"
+							onclick={handleCancel} ></lightning-button>
+					</template>
+					<template if:false={isActive}>
+						<template if:false={planExists}>
+							<lightning-button class="button slds-no-print slds-m-left_xx-small" variant="brand"
+								label="Save Plan Details" type="submit"
+								disabled={isActive}></lightning-button>
+						</template>
+						
+						<template if:true={planExists}>
+							<lightning-button class="slds-no-print slds-m-left_xx-small" variant="success" label="Submit"
+								onclick={handleSubmit} disabled={isActive}></lightning-button>
+						</template>
+
+
+					</template>
+							</div>
+						</template>
+
+		</lightning-record-edit-form>
+		<!--Page 2 Dynamic field rendering-->
+
+
+	</template>
+	<!--Page 2 End-->
+
+	<template if:false={hasAccess}>
+		<div style="height:4rem;">
+			<div class="slds-notify slds-notify_toast slds-theme_error slds-align_absolute-center" role="status"
+				style="margin-right:1rem; margin-left:1rem;">
+				<div class="slds-notify__content">
+					<h2 class="slds-text-heading_small">
+						You do not have access to Service Planning on this record.
+					</h2>
+				</div>
+			</div>
+		</div>
+	</template>
+</div>
+</div>
+</template>

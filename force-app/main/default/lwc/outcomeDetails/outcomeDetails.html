@@ -1,0 +1,87 @@
+<template>
+    <div class="slds-box slds-m-around_medium">
+        <template if:true={outcome}>
+            <lightning-record-edit-form record-id={outcome.recordId} object-api-name={outcome.objectName} onload={handleOnLoad}>
+                <lightning-input-field style="display: none;" class="thefield" field-name="Name"></lightning-input-field>
+            </lightning-record-edit-form>
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col slds-size_1-of-2">
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-col slds-size_1-of-1 slds-m-vertical_x-small">
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <b>Assessment Name :</b>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    {outcome.assessmentName}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-m-vertical_x-small">
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <b>Status :</b>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    {outcome.assessmentStatus}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-m-vertical_x-small">
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <b>Completion Date/Time :</b>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    {assessmentDate}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-m-vertical_x-small">
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <b>Created By :</b>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    {outcome.createdBy}, {outcome.createdDate}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-m-vertical_x-small">
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <b>Last Modified By :</b>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    {outcome.lastModifiedBy}, {outcome.lastModifiedDate}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-m-vertical_x-small">
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <b>Related Record :</b>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <a href={recordLink} target="_blank">{recordName}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-2 slds-align_absolute-center">
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-col slds-size_1-of-1">
+                            <c-gauge-cmp limit1="33" limit2="66" gauge-color1="green" gauge-color2="lime" gauge-color3="red" field-value={percentScore} score={outcome.totalScore} max-score={outcome.totalMaxScore}></c-gauge-cmp>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 slds-align_absolute-center">
+                            <div class="slds-text-heading_medium" style="margin-top: -40px;">
+                                <b>{outcome.outcome}</b>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>

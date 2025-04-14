@@ -1,0 +1,103 @@
+<template>
+    <div class="theline"></div>
+    <div class="rule slds-clearfix">
+        <div class="ruleName">
+            {rule.ruleName}
+        </div>
+        <div class="slds-grid" style="margin-top:20px;">
+            <div class="slds-col slds-size_4-of-12">
+                <lightning-combobox
+                    name="parent"
+                    label="Select Field"
+                    value={rule.primaryField}
+                    placeholder="Select Field"
+                    options={primaryFieldList}
+                    onchange={handleChange} ></lightning-combobox>
+            </div>
+            <div class="slds-col slds-size_4-of-12">
+                <div class="operator">
+                    <lightning-combobox
+                        name="operator"
+                        label="Select Opterator"
+                        value={rule.operator}
+                        placeholder="Select Operator"
+                        options={operatorOptions}
+                        onchange={handleChange} ></lightning-combobox>
+                </div>
+            </div>
+            <div class="slds-col slds-size_4-of-12">
+                <lightning-input type="text" value={rule.value} label="Value" name="parentfieldvalue" placeholder="type here..." onblur={handleChange}></lightning-input>
+            </div>
+        </div>
+        <div class="show slds-align_absolute-center">
+            SHOW
+        </div>
+        <!-- <div>
+            <div class="slds-form-element" style="margin-left: 15px;margin-right: 20px;">
+                <label class="slds-form-element__label" for="select-01">Select Field to Show</label>
+                <div class="slds-form-element__control">
+                    <div class="slds-select_container">
+                        <select class="slds-select" id="select-02" name="child" onchange={handleChange}>
+                            <option value="">Select…</option>
+                            <template for:each={fields} for:item="page">
+                                <template for:each={page.sections} for:item="section">
+                                    <template for:each={section.fields} for:item="field">
+                                        <template if:false={field.fieldData.required}>
+                                            <option selected={rule.secondaryField} value={field.fieldData.fieldApi} key={field.fieldIndex}>{field.fieldData.fieldName}</option>
+                                        </template>
+                                    </template>
+                                </template>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+        <div class="slds-size_1-of-1">
+            <div class="slds-align_absolute-center slds-m-top_medium">
+                <lightning-radio-group name={rule.ruleIndex}
+                    variant="label-hidden"
+                    options={dependentOptions}
+                    value={rule.dependentType}
+                    required
+                    type="button"
+                    onchange={handleChange}></lightning-radio-group>
+            </div>
+        </div>
+        <template if:true={typeSelected}>
+            <template lwc:if={typeForm}>
+                <div class="secondaryfield">
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_5-of-6">
+                            <lightning-combobox
+                                name="childForm"
+                                label="Select Form"
+                                value={rule.secondaryField}
+                                placeholder="Select Form"
+                                options={formsList}
+                                onchange={handleChange} ></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-6 slds-m-top_large">
+                            <lightning-input type="checkbox" variant="standard" name="required" label="Required?" onchange={handleChange} checked={rule.required}></lightning-input>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <template lwc:else>
+                <div class="secondaryfield">
+                    <lightning-combobox
+                        name="child"
+                        label="Select Field"
+                        value={rule.secondaryField}
+                        placeholder="Select Field"
+                        options={secondaryFieldList}
+                        onchange={handleChange} ></lightning-combobox>
+                </div>
+            </template>
+        </template>
+        <div class="ruledelete">
+            <lightning-icon size="small" icon-name="utility:delete" alternative-text="delete" title="delete" class="delete-icnpage" onclick={handleRuleDelete}>
+            </lightning-icon>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,19 @@
+<template>
+    <div if:true={error} class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+        <b>{error}</b>
+    </div>
+    <div if:true={formsList} class="slds-grid slds-gutters">
+        <div class="slds-col slds-size_5-of-6">
+            <lightning-combobox
+                name="forms"
+                label="Completed forms"
+                value={value}
+                placeholder="Select Form"
+                options={formsList}
+                onchange={handleChange} ></lightning-combobox>
+        </div>
+        <div class="slds-col slds-size_1-of-6 slds-p-top_medium">
+            <lightning-button name="print" label="Print" variant="brand" onclick={handleSubmit}></lightning-button>
+        </div>
+    </div>
+</template>

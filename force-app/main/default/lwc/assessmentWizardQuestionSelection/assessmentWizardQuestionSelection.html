@@ -1,0 +1,17 @@
+<template>
+    <!-- <lightning-button-icon class="btnIconOverlay" icon-name="utility:adduser">
+    </lightning-button-icon> -->
+    <div class="slds-box slds-scrollable" style="height: 450px;">
+        <lightning-input class="slds-m-bottom_small" type="search" name="search" value={search} placeholder="Type here to search a question..." onchange={handleSearch}>              
+        </lightning-input>
+        <template if:true={quesList}>
+            <lightning-datatable
+                key-field="quesId"
+                data={quesList}
+                columns={columns}
+                onrowselection={handleRowSelection}
+                selected-rows={preSelectedRows}>
+            </lightning-datatable>
+        </template>
+    </div>
+</template>

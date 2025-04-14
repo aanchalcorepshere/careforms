@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>Not Started</fullName>
+        <default>true</default>
+        <label>Not Started</label>
+    </customValue>
+    <customValue>
+        <fullName>Work in Progress</fullName>
+        <default>false</default>
+        <label>Work in Progress</label>
+    </customValue>
+    <customValue>
+        <fullName>Completed</fullName>
+        <default>false</default>
+        <label>Completed</label>
+    </customValue>
+    <customValue>
+        <fullName>On Hold</fullName>
+        <default>false</default>
+        <label>On Hold</label>
+    </customValue>
+    <customValue>
+        <fullName>Discontinued</fullName>
+        <default>false</default>
+        <label>Discontinued</label>
+    </customValue>
+    <description>Status List for Plan, Goals and Steps</description>
+    <masterLabel>Service Plan Status</masterLabel>
+    <sorted>false</sorted>
+</GlobalValueSet>

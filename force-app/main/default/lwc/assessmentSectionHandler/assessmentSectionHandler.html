@@ -1,0 +1,106 @@
+<template>
+    <div if:true={isLoading}>
+        <lightning-spinner variant="brand" 
+                           alternative-text="Loading..."     
+                           size="medium">
+        </lightning-spinner>
+    </div>
+    <div class="slds-align_absolute-center">
+        <div if:true={error} class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small" role="alert" style="width:70%;">
+            {error}
+        </div>
+    </div>
+    <div if:false={error}>
+        <div if:true={isSelectAssessment}>
+            <div class="headerBox">
+                <div class="vertical-center">
+                    Select Assessment
+                </div>
+            </div>
+            <div class="slds-grid slds-gutters">
+                <template if:true={showAssessmentList}>
+                    <div class="slds-col slds-size_5-of-6">
+                        <lightning-combobox
+                        name="assessments"
+                        class="slds-m-top_medium"
+                        variant="label-hidden"
+                        placeholder="Select New Assessment to Launch"
+                        options={assessments}
+                        onchange={handleChange} ></lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-6 slds-m-top_medium">
+                        <lightning-button name="select" label="Launch" variant="brand" onclick={handleChange}></lightning-button>
+                    </div>
+                </template>
+            </div>
+            <div if:true={showDraftArea} style="border-top: 2px lightgray solid; margin-top:100px;">
+                <div class="slds-grid slds-gutters">
+                    <template if:false={refreshDraft}>
+                        <div class="slds-col slds-size_5-of-6">
+                            <lightning-combobox
+                            name="draftassessments"
+                            class="slds-m-top_medium"
+                            variant="label-hidden"
+                            placeholder="Select a Draft Assessment to Launch"
+                            options={draftAssessments}
+                            onchange={handleChange} ></lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-6 slds-m-top_medium">
+                            <lightning-button name="launchDraft" label="Launch" variant="brand" onclick={handleChange}></lightning-button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div if:true={isAssessmentDetails}>
+        <c-assessment-details assessment={selectedAssessment} clients={clients} onstart={handleStart}></c-assessment-details>
+    </div>
+    <div if:true={isLaunchAssessment}>
+        <div class="headerBox slds-m-bottom_medium">
+            <div class="vertical-center">
+                {selectedAssessmentName}
+            </div>
+        </div>
+        <template if:true={hasSections}>
+            <ul class="progress-indicator">
+                <template if:true={sections} for:each={sections} for:item="section" for:index="index">
+                    <li key={section.sectionSequence} class={section.class}>
+                        <span class="bubble"></span>
+                        {section.sectionName}
+                    </li>
+                </template>
+            </ul>
+        </template>
+        <!-- <template if:false={hasSections}>
+            <div class="headerBox slds-m-bottom_medium">
+                <div class="vertical-center">
+                    {selectedAssessmentName}
+                </div>
+            </div>
+        </template> -->
+        <div class="slds-box slds-m-around_medium slds-scrollable" style="height: 380px;">
+            <div class="bringtotop"></div>
+            <template if:true={sections} for:each={sections} for:item="section" for:index="index">
+                <template if:true={section.flag}>
+                    <c-assessment-launcher key={section.sectionSequence} section={section.sectionName} onresponses={handleResponses} questions-from-section-handler={section.questionData}></c-assessment-launcher>
+                </template>
+            </template>
+        </div>
+        <div class="slds-align_absolute-center">
+            <template if:true={showPrevious}>
+                <lightning-button class="slds-m-right_medium" variant="neutral" name="previous" label="Previous" title="previous" onclick={handleNav}></lightning-button>
+            </template>
+            <!-- <template if:false={hasSections}>
+                <lightning-button class="slds-m-right_medium" variant="neutral" name="cancel" label="Cancel" title="cancel" onclick={handleSubmit}></lightning-button>
+            </template> -->
+            <template if:false={isSubmit}>
+                <lightning-button class="slds-button slds-button_success" variant="base" name="next" label="Next" title="next" onclick={handleNav}></lightning-button>
+            </template>
+            <template if:true={isSubmit}>
+                <lightning-button variant="success" name="submit" label="Submit" title="submit" onclick={handleSubmit}></lightning-button>
+            </template>
+            <lightning-button class="slds-m-left_medium" variant="brand" name="draft" label="SAVE AS DRAFT" title="draft" onclick={handleDraft}></lightning-button>
+        </div>
+    </div>
+</template>

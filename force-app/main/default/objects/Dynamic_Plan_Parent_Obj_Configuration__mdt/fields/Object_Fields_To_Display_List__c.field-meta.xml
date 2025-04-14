@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Object_Fields_To_Display_List__c</fullName>
+    <deprecated>false</deprecated>
+    <description>Field API names comma separated which needs to be displayed on the UI. &apos;-&apos; seperated values.</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Object Fields To Display List</label>
+    <length>32768</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

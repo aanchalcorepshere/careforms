@@ -1,0 +1,23 @@
+<aura:component implements="force:hasRecordId,force:lightningQuickActionWithoutHeader,force:hasSObjectName,lightning:actionOverride" access="global">
+    <aura:attribute name="recordId" type="String" />
+    <aura:attribute name="isModalOpen" type="Boolean" default="true"/>
+    
+    
+    <aura:html tag="style">
+        .slds-modal__container
+        { 
+        width: 175vh !important;
+        max-width: 600vh !important;
+        height: 107vh !important;
+        }
+        .modal-body, .slds-modal__content
+        { 
+        height : 80vh !important; 
+        max-height: 200vh !important; 
+        }
+    </aura:html>
+    
+    <aura:if isTrue="{!v.isModalOpen}">
+        <c:createPlanTempFieldBlueprint recordId="{!v.recordId}" onclose="{!c.closeLWC}" objectApiName="{!v.sObjectName}"/>
+    </aura:if>
+</aura:component>

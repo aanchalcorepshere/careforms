@@ -1,0 +1,20 @@
+<aura:component implements="force:lightningQuickActionWithoutHeader,force:hasRecordId,flexipage:availableForAllPageTypes,force:hasSObjectName" access="global">
+    <aura:html tag="style">
+        .slds-modal__container{
+            height : 110vh !important;
+            max-height: 220vh !important;
+            width: 180vh !important;
+            max-width: 600vh !important;
+        }
+
+        .slds-modal__content
+        { 
+            overflow:visible;
+            height : 90vh !important; 
+            max-height: 100vh !important;
+        }
+    </aura:html> 
+    <aura:attribute name="sObjectName" type="String" />
+    <aura:attribute name="recordId" type="String" />
+    <c:customFormLauncherLwc objectApiName="{!v.sObjectName}" recordId="{!v.recordId}" onclosequickaction="{!c.handleSubmitForm}" onclosequickactionsend="{!c.handleSendForm}" onclosequickactioncancel="{!c.handleCancel}"></c:customFormLauncherLwc>
+</aura:component>

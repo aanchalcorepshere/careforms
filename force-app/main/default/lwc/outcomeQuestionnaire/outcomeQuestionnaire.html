@@ -1,0 +1,14 @@
+<template>
+    <template if:true={sections} for:each={sections} for:item="section">
+        <div key={section} class="section">
+            {section.sectionName}
+        </div>
+        <div key={section} class="slds-box slds-m-around_medium">
+            <template if:true={section.questionData} for:each={section.questionData} for:item="response">
+                <div key={response.Id} class={response.level}>
+                    <c-question-card key={response.Id} is-outcome-view="true" is-submit={isSubmit} ass-ques-id={response.Id} ques-text={response.quesText} ques-sequence={response.sfSeq} ans-ops={response.quesAnsList} level={response.level} is-text={response.isText} is-number={response.isNumber} is-checkbox={response.isCheckbox} is-radio={response.isRadio} is-combobox={response.isCombobox} is-long-text={response.isLongText} is-date={response.isDate} is-currency={response.isCurrency} is-phone={response.isPhone} response={response.response}></c-question-card>
+                </div>
+            </template>
+        </div>
+    </template>
+</template>

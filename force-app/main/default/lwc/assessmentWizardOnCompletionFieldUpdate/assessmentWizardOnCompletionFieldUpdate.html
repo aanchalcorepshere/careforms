@@ -1,0 +1,47 @@
+<template>
+    <template if:true={error}>
+        {error}
+    </template>
+    <div if:true={isLoading}>
+        <lightning-spinner variant="brand" 
+                           alternative-text="Loading..."     
+                           size="medium">
+        </lightning-spinner>
+    </div>
+    Please select the field to be updated once Assessment is completed (PICKLIST or BOOLEAN) (Optional) :
+        <lightning-combobox
+            name="fieldname"
+            disabled={isSubmit}
+            class="slds-m-top_medium"
+            label="Field Names"
+            value={fieldData.selectedField}
+            placeholder="Select Field to be updated"
+            options={fieldData.fieldList}
+            onchange={handleChange} ></lightning-combobox>
+        <div if:true={fieldData.fieldType} class="slds-m-top_large">
+           <strong>Field Type : </strong>  {fieldData.fieldType}
+        </div>
+        <template if:true={fieldData.isPicklist}>
+            <div if:true={fieldData.fieldValueList}>
+                <lightning-combobox
+                name="fieldvalue"
+                disabled={isSubmit}
+                class="slds-m-top_medium"
+                label="Field Names"
+                value={fieldData.selectedValue}
+                placeholder="Select Value"
+                options={fieldData.fieldValueList}
+                onchange={handleChange} ></lightning-combobox>
+            </div>
+        </template>
+        <div class="slds-m-top_large">
+            <template if:true={fieldData.isBoolean}>
+                <lightning-radio-group name="radio"
+                        label="Select Value"
+                        disabled={isSubmit}
+                        options={options}
+                        checked={fieldData.selectedValues}
+                        type="radio"></lightning-radio-group>
+            </template>
+        </div>
+</template>

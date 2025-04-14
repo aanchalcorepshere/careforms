@@ -1,0 +1,308 @@
+<!-- sldsValidatorIgnore -->
+<template>
+   <!-- Spinner start -->
+   <div if:true={isLoading} class="spinner">
+      <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+   </div>
+   <!-- Spinner end -->
+
+   <div style="margin-left:.5em;">
+      <div class="slds-grid slds-gutters">
+         <div class="slds-col slds-size_3-of-12">
+            <!-- Header start -->
+            <div class="slds-text-heading_medium slds-m-bottom_small">
+               <b>Form Details</b>
+            </div>
+            <!-- Header end -->
+
+            <!-- Form name and confirmation message start -->
+            <div class="forminput">
+               <lightning-input type="text" required variant="Brand" name="formname" label="Form Name"
+                  onchange={handleFromName} onblur={sendDataToContainer} value={formName} placeholder="Enter Form Name..."></lightning-input>
+            </div>
+            <div class="forminput slds-m-top_small">
+               <lightning-input-rich-text
+                  label="Confirmation Message"
+                  label-visible="true"
+                  required="true"
+                  field-level-help="This message will be shown to the client/user on submission of the Form."
+                  value={confirmationMessage}
+                  onblur={handleConfirmationMessage}>
+               </lightning-input-rich-text>
+            </div>
+
+            <!-- Form name and confirmation message end -->
+
+            <!-- Form configuration start -->
+            <div class="slds-box slds-m-left_large slds-m-top_x-small">
+               <lightning-input type="checkbox" variant="standard" name="generatepdf" data-id="generatepdf" label="Generate PDF?" onchange={handleConfiguration} checked={generatePDF} disabled={requiresSignatureSelected}></lightning-input>
+               <lightning-input type="checkbox" variant="standard" name="requiressignature" label="Requires Signature?" onchange={handleConfiguration} data-id="requiresSignature" checked={requiresSignature}></lightning-input>
+               <div if:true={requiresSignature} class="slds-m-left_small">
+                  <lightning-input type="checkbox" variant="standard" name="requirestextonsignaturepage" label="Requires Text on Signature Page?" onchange={handleConfiguration} data-id="requiresTextOnSignaturePage" checked={requiresTextOnSignaturePage}></lightning-input>
+                  <div class="slds-m-left_small slds-m-top_xx-small" if:true={showSignaturePageTextButton}>
+                     <lightning-button label="Edit Signature Page Text" variant="brand" onclick={openSignaturePageModal}></lightning-button>
+                  </div>
+               </div>
+               <lightning-input type="checkbox" variant="standard" name="requiresdocupload" label="Requires Documents Upload?" onchange={handleConfiguration} checked={requiresDocUpload}></lightning-input>
+               <lightning-input type="checkbox" variant="standard" name="showsummary" label="Show Summary?" onchange={handleConfiguration} checked={showSummary}></lightning-input>
+               <lightning-input type="checkbox" variant="standard" name="createpdfonly" label="Create PDF Only?" onchange={handleConfiguration} checked={createPDFOnly}></lightning-input>
+            </div>
+            <!-- Form configuration end -->
+            <!-- Object relationship legend start -->
+            <div class="slds-box slds-m-left_large slds-m-top_x-small">
+               <div>
+                  <span><img width="15" src={parenticon}></span><span class="slds-m-left_small">Parent Object</span>
+               </div>
+               <div>
+                  <span><img width="15" src={childicon}></span><span class="slds-m-left_small">Child Object</span>
+               </div>
+               <div>
+                  <span><img width="15" src={childwithmultiicon}></span><span class="slds-m-left_small">Multi Child Object(repeatable)</span>
+               </div>
+               <div>
+                  <span><img width="15" src={grandchildicon}></span><span class="slds-m-left_small">Grand Child Object</span>
+               </div>
+            </div>
+         </div>
+
+         <!-- Object structure selection area start -->
+         <template if:true={objectStructure}>
+            <div class="slds-col slds-size_9-of-12" style="border-left:solid #C9C9C9 1px;min-height:650px">
+               <div class="slds-text-heading_medium slds-m-bottom_medium">
+                  <div class="slds-grid slds-gutters">
+                     <div class="slds-col slds-size_6-of-6">
+                        <b>Object Structure</b><span if:true={prefillFields}>&nbsp; (Prefill Fields Form)</span>
+                     </div>
+                  </div>
+               </div>
+               <ul>
+                  <div style="width : 20rem;display:inline-block;" class="slds-clearfix">
+                     <!-- Search component for primary object seletction start -->
+                     <c-custom-combo-with-search placeholder={objectStructure.placeholder}
+                        field-label={objectStructure.fieldlabel} options={primaryObjList}
+                        disabled={isEdit} value={objectStructure.selectedLabel} onchange={handlePrimaryChange}>
+                     </c-custom-combo-with-search>
+                     <div if:true={objectStructure.selectedRecordType} class="slds-float_right" style="font-size: 10px; margin-left: 1.5rem;">
+                        <a onclick={resetRecordType} data-level="1" data-object={objectStructure.selectedLabel}>RT : {objectStructure.selectedRecordTypeLabel}</a>
+                     </div>
+                     <!-- Search component for primary object seletction end -->
+                  </div>
+                  <template if:false={prefillFields}>
+                     <ul>
+                        <!-- Iterate object structure from JSON objectStructure start -->
+                        <template if:true={objectStructure.objectList} for:each={objectStructure.relatedList}
+                           for:item="related">
+                           <li key={related.id}>
+                              <div key={related.id} class="level1">
+                                 <div class="slds-grid slds-gutters">
+                                    <div class="slds-col slds-size_4-of-12">
+                                       <div style="width : 20rem;display:inline-block;" class="slds-clearfix">
+                                          <!-- custom search component for related object selection with categories as parent or lookup (child) - LEVEL 1 - start -->
+                                          <c-custom-combo-with-category-and-search key={related.id}
+                                             placeholder="Select Related Object" field-label="Related Object" options={objectStructure.objectList} onchange={handleRelatedChange} value={related.selectedLabel}
+                                             type={related.type} level={related.level} parent={related.parent} grand-parent={related.grandParent} obj-id={related.id}
+                                             objects-to-filter={objectStructure.usedObjects} disabled={isEdit}>
+                                          </c-custom-combo-with-category-and-search>
+                                          <div if:true={related.selectedRecordType} class="slds-float_right" style="font-size: 10px;">
+                                             <a onclick={resetRecordType} data-level={related.level} data-object={related.selectedValue} data-id={related.id} data-parent={related.parent}>RT : {related.selectedRecordTypeLabel}</a>
+                                          </div>
+                                          <!-- custom search component for related object selection with categories as parent or lookup (child) - LEVEL 1 - end -->
+                                       </div>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-12 slds-clearfix" style="padding-top: 24px;">
+                                       <!-- if child object is selected at level 1 then user should have ability to mark it is multi which will enable user to create multiple records of same object at the time of filling the form - start -->
+                                       <div class="slds-float_right">
+                                          <template if:true={related.isChild}>
+                                             <lightning-input type="checkbox" variant="standard" name="multi" label="multi?" data-parent={related.parent} data-obj-id={related.id} data-level={related.level} onchange={handleMultiChange} checked={related.isMulti} disabled={isEdit}></lightning-input>
+                                          </template>
+                                       </div>
+                                       <!-- if child object is selected at level 1 then user should have ability to mark it is multi which will enable user to create multiple records of same object at the time of filling the form - end -->
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-12 slds-clearfix" style="padding-top: 24px;">
+                                       <div class="slds-float_left">
+                                          <!-- button to delete current level - start -->
+                                          <lightning-button-icon icon-name="utility:delete" alternative-text="Delete" title="Delete" data-parent={related.parent} data-obj-id={related.id} disabled={isEdit} data-level={related.level} onclick={handleDelete}>
+                                          </lightning-button-icon>
+                                          <!-- button to delete current level - end -->
+                                       </div>
+                                       <div class="slds-float_right" style="">
+                                          <!-- icons to show object relationship with parent object - start -->
+                                          <template if:true={related.type}>
+                                             <template if:true={related.isChild}>
+                                                <template if:true={related.isMulti}>
+                                                   <img width="25" src={childwithmultiicon}>
+                                                </template>
+                                                <template if:false={related.isMulti}>
+                                                   <img width="25" src={childicon}>
+                                                </template>
+                                             </template>
+                                             <template if:false={related.isChild}>
+                                                <img width="25" src={parenticon}>
+                                             </template>
+                                          </template>
+                                          <!-- icons to show object relationship with parent object - end -->
+                                       </div>
+                                    </div>
+                                 </div>
+                                 <ul>
+                                    <template if:true={related.objectList} for:each={related.relatedList}
+                                       for:item="grandrelated">
+                                       <div key={related.id} class="level2">
+                                          <li>
+                                             <div class="slds-grid slds-gutters">
+                                                <div class="slds-col slds-size_4-of-12">
+                                                   <div class="slds-clearfix" style="width : 20rem; display:inline-block;">
+                                                      <!-- custom search component for related object selection with categories as parent or lookup (child) - LEVEL 2 - start -->
+                                                      <c-custom-combo-with-category-and-search key={grandrelated.id} placeholder="Select Related Object" field-label="Related Object" options={related.objectList} onchange={handleRelatedChange} value={grandrelated.selectedLabel} type={grandrelated.type} level={grandrelated.level} parent={grandrelated.parent} grand-parent={grandrelated.grandParent} obj-id={grandrelated.id} objects-to-filter={related.usedObjects} disabled={isEdit}>
+                                                      </c-custom-combo-with-category-and-search>
+                                                      <div if:true={grandrelated.selectedRecordType} class="slds-float_right" style="font-size: 10px;">
+                                                         <a onclick={resetRecordType} data-level={grandrelated.level} data-object={grandrelated.selectedValue} data-id={grandrelated.id} data-parent={grandrelated.parent}>RT : {grandrelated.selectedRecordTypeLabel}</a>
+                                                      </div>
+                                                      <!-- custom search component for related object selection with categories as parent or lookup (child) - LEVEL 2 - end -->
+                                                   </div>
+                                                </div>
+                                                <div class="slds-col slds-size_2-of-12 slds-clearfix"
+                                                   style="padding-top: 24px;">
+                                                  <!--  <template if:true={related.selectedRecordType}>
+                                                      {grandrelated.selectedRecordTypeLabel}
+                                                   </template> -->
+                                                </div>
+                                                <div class="slds-col slds-size_2-of-12 slds-clearfix"
+                                                   style="padding-top: 24px;padding-right:27px;">
+                                                   <div class="slds-float_left">
+                                                      <!-- button to delete current level - start -->
+                                                      <lightning-button-icon icon-name="utility:delete"
+                                                         alternative-text="Delete" title="Delete"
+                                                         data-parent={grandrelated.parent} data-obj-id={grandrelated.id} data-level={grandrelated.level} onclick={handleDelete} style="margin-left:-25px;" disabled={isEdit}>
+                                                      </lightning-button-icon>
+                                                      <!-- button to delete current level - end -->
+                                                   </div>
+                                                   <div class="slds-float_right">
+                                                      <!-- show grandchild icon - start -->
+                                                      <template if:true={grandrelated.type}>
+                                                         <img width="25" src={grandchildicon}>
+                                                      </template>
+                                                      <!-- show grandchild icon - end -->
+                                                   </div>
+                                                </div>
+                                             </div>
+                                          </li>
+                                       </div>
+                                    </template>
+                                 </ul>
+                                 <!-- Button to add grandchild object - start -->
+                                 <div key={related.id} if:true={related.showAddButton}>
+                                    <div style="width : 20rem; display:inline-block;">
+                                       <button name="addRelatedToChild" class="addbtn slds-button slds-button_brand slds-button_stretch slds-m-vertical_medium" data-id="relatedButton" data-type={related.type} data-level={related.level} data-parent={related.parent} data-grand-parent={related.grandParent} data-obj-id={related.id} onclick={addChildRelated} disabled={isEdit}>Add Related Object</button>
+                                    </div>
+                                 </div>
+                                 <!-- Button to add grandchild object - end -->
+                              </div>
+                           </li>
+                        </template>
+                        <!-- Iterate object structure from JSON objectStructure end -->
+                     </ul>
+                     <!-- Button to add child object - start -->
+                     <div if:true={objectStructure.showAddButton}>
+                        <div style="width : 20rem;display: inline-block;">
+                           <button name="addRelated" data-id="parentButton"
+                              class="addbtn slds-button slds-button_brand slds-button_stretch slds-m-vertical_medium" onclick={addRelated} disabled={isEdit}>Add Related Object</button>
+                        </div>
+                     </div>
+                     <!-- Button to add child object - end -->
+                  </template>
+               </ul>
+            </div>
+         </template>
+         <!-- Object structure selection area end -->
+      </div>
+   </div>
+
+   <!-- Record type selection modal start -->
+   <template if:true={isRecordTypeModalOpen}>
+      <div style="height: 100px;">
+          <!-- Modal/Popup Box LWC starts here -->
+          <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+          aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+          <div class="slds-modal__container">
+              <!-- Modal/Popup Box LWC header here -->
+              <header class="slds-modal__header"> 
+                  <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Select Record Type</h2>
+              </header>
+              <!-- Modal/Popup Box LWC body starts here -->
+              <div style="background:white;">
+                  <c-forms-record-type-selection level={currentLevel} source-object={currentObject} parent={currentParent} record-type-options={recordTypeOptions} onselectrecordtype={setRecordTypeData}></c-forms-record-type-selection>
+              </div>
+              <!-- Modal/Popup Box LWC footer starts here -->
+              <footer class="slds-modal__footer">
+              </footer>
+          </div>  
+      </section>
+      <div class="slds-backdrop slds-backdrop_open"></div>
+      </div>
+  </template>
+  <!-- Record type selection modal end -->
+
+  <!-- Signature text modal start -->
+  <template if:true={openSignaturePageModalBox}>
+      <div style="height: 100px;">
+         <!-- Modal/Popup Box LWC starts here -->
+         <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-02" aria-modal="true"
+         aria-describedby="modal-content-id-2" class="slds-modal slds-fade-in-open">
+         <div class="slds-modal__container">
+            <!-- Modal/Popup Box LWC header here -->
+            <header class="slds-modal__header"> 
+                  <h2 id="modal-heading-02" class="slds-text-heading_medium slds-hyphenate">Enter Text for Signature Page.</h2>
+            </header>
+            <!-- Modal/Popup Box LWC body starts here -->
+            <div style="background:white;">
+               <lightning-input-rich-text
+                  label="Signature Page Text"
+                  label-visible="true"
+                  required="true"
+                  field-level-help="This rich text will be shown to user above the Signature box on Signature page."
+                  data-id="signaturePageText"
+                  value={signaturePageText}
+                  onblur={handleSignaturePageText}>
+               </lightning-input-rich-text>
+            </div>
+            <!-- Modal/Popup Box LWC footer starts here -->
+            <footer class="slds-modal__footer">
+               <lightning-button label="Cancel" variant="neutral" onclick={closeSignaturePageModal}></lightning-button>
+               <lightning-button label="Save" variant="brand" onclick={closeSignaturePageModal}></lightning-button>
+            </footer>
+         </div>  
+      </section>
+      <div class="slds-backdrop slds-backdrop_open"></div>
+      </div>
+   </template>
+   <!-- Signature text modal end -->
+
+   <!-- Prefill Fields Modal start -->
+  <template if:true={openPrefillFieldsModal}>
+   <div style="height: 100px;">
+      <!-- Modal/Popup Box LWC starts here -->
+      <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-03" aria-modal="true"
+      aria-describedby="modal-content-id-3" class="slds-modal slds-fade-in-open">
+      <div class="slds-modal__container">
+         <!-- Modal/Popup Box LWC header here -->
+         <!-- <header class="slds-modal__header"> 
+               <h2 id="modal-heading-03" class="slds-text-heading_medium slds-hyphenate">Please select the type of form</h2>
+         </header> -->
+         <!-- Modal/Popup Box LWC body starts here -->
+         <div class="slds-align_absolute-center" style="background:white;padding:20px;border-radius:5px;">
+            <lightning-radio-group name="formType"
+                  label="Select form type"
+                  options={formTypeOptions}
+                  value={formTypeValue}
+                  onchange={handleConfiguration}
+                  type="button"></lightning-radio-group>
+         </div>
+      </div>  
+   </section>
+   <div class="slds-backdrop slds-backdrop_open"></div>
+   </div>
+</template>
+<!-- Prefill Fields Modal end -->
+  
+</template>

@@ -1,0 +1,45 @@
+<template>
+    <div if:true={isLoading}>
+        <lightning-spinner variant="brand" alternative-text="Loading..." size="medium">
+        </lightning-spinner>
+    </div>
+    <!-- TRY AREA -->
+    
+    <!-- TRY AREA-->
+
+    <template if:true={scoringData} for:each={scoringData} for:item="score" for:index="index">
+        <div key={score} class="slds-box slds-box_xx-small slds-m-around_small">
+            <div class="slds-grid slds-gutters slds-clearfix">
+                 <div class="slds-col slds-m-top_large slds-size_1-of-12">
+                     <p>{score.seq}.</p>
+                 </div>
+                 <div class="slds-col slds-size_2-of-12">
+                     <lightning-input disabled={isSubmit} value={score.minScore} name="minscore" label="Min Score" data-score-seq={score.seq} type="number" onblur={handleChange}></lightning-input>
+                 </div>
+                 <div class="slds-col slds-size_2-of-12">
+                     <lightning-input disabled={isSubmit} value={score.maxScore} name="maxscore" label="Max Score" data-score-seq={score.seq} type="number" onblur={handleChange}></lightning-input>
+                 </div>
+                 <div class="slds-col slds-size_2-of-12">
+                     <lightning-combobox
+                                 name="color"
+                                 label="Select Color"
+                                 disabled={isSubmit}
+                                 value={score.color}
+                                 placeholder="Select color to be updated"
+                                 options={colorOptions}
+                                 data-score-seq={score.seq}
+                                 onchange={handleChange} ></lightning-combobox>
+                 </div>
+                 <div class="slds-col slds-size_2-of-12">
+                     <lightning-input disabled={isSubmit} value={score.status} name="status" label="Status" type="text" data-score-seq={score.seq} onblur={handleChange}></lightning-input>
+                 </div>
+                 <div if:false={isSubmit} class="slds-col slds-m-top_large slds-size_1-of-12">
+                     <lightning-button-icon variant="border-filled" icon-name="utility:delete" alternative-text="Delete" data-id={score.seq} title="Delete" onclick={deleteRow}></lightning-button-icon>
+                 </div>
+                 <div if:false={isSubmit} class="slds-col slds-m-top_large slds-size_2-of-12">
+                     <lightning-button-icon variant="border-filled" icon-name="utility:add" alternative-text="Add" title="Add" onclick={addRow}></lightning-button-icon>
+                 </div>
+            </div>
+        </div>
+     </template>
+</template>

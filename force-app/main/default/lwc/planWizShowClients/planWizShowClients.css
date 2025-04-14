@@ -1,0 +1,44 @@
+.head {
+    border-radius: 10px;
+    height: 40px;
+    border: 2px solid #122a3f;
+    background-color: #122a3f;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 5px;
+    color:white;
+}
+
+.sectionHeader {
+    background-color: #4468AB;
+    color: white;
+}
+
+.blueBackground {
+    background:#97B9F9;
+}
+
+.disabledBackground {
+    background:#97B9F9;
+    filter: grayscale(1);
+}
+
+lightning-button.button {
+	--sds-c-button-brand-color-background: #132A3F;
+    --sds-c-button-brand-color-border: #132A3F;
+    --sds-c-button-text-color: white;
+    --sds-c-button-brand-spacing-inline-start: 0.3rem !important;
+    --sds-c-button-brand-spacing-inline-end: 0.3rem !important;
+}
+
+.slds-modal__container
+{ 
+    width: 175vh !important;
+    max-width: 600vh !important;
+    height: 107vh !important;
+}
+.modal-body, .slds-modal__content
+{ 
+    height : 200vh !important; 
+    max-height: 200vh !important; 
+}

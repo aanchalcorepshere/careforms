@@ -1,0 +1,20 @@
+<template>
+    <template if:true={isAssessmentDetails}>
+        <c-assessment-wizard-name-screen is-submit={isSubmit} previous-data={assessmentDetails} onassessmentdetails={handleData}></c-assessment-wizard-name-screen>
+    </template>
+    <template if:true={isCreateSections}>
+        <c-create-sections is-submit={isSubmit} existing-sections={sections} onsectiondetails={handleData}></c-create-sections>
+    </template>
+    <template if:true={isSectionHandler}>
+        <c-assessment-wizard-section-handler is-submit={isSubmit} existing-section-data={sectionData} assessment-details={assessmentDetails} selected-sections={selectedSections} onsectiondata={handleData} onaqtobedeleted={handleData}></c-assessment-wizard-section-handler>
+    </template>
+    <template if:true={isOnCompletion}>
+        <c-assessment-wizard-on-completion-field-update is-submit={isSubmit} existing-field-update={fieldUpdate} object-name={assessmentDetails.objectName} oncompletionfieldupdate={handleData}></c-assessment-wizard-on-completion-field-update>
+    </template>
+    <template if:true={isScoreTranslation}>
+        <c-assessment-wizard-score-translation is-submit={isSubmit} existing-scores={scoringData} onscoringdata={handleData}></c-assessment-wizard-score-translation>
+    </template>
+    <template if:true={isSummary}>
+        <c-assessment-wizard-summary is-submit={isSubmit} assessment-details={assessmentDetails} sections-data={sections} questions-data={sectionData} field-update-data={fieldUpdate} scoring-data={scoringData} oneditstep={handleEdit}></c-assessment-wizard-summary>
+    </template>
+</template>

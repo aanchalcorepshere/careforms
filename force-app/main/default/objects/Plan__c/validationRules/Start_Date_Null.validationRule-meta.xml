@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Start_Date_Null</fullName>
+    <active>true</active>
+    <errorConditionFormula>Plan_Start_Date__c = null || ISNULL(Plan_Start_Date__c) || ISBLANK(Plan_Start_Date__c)</errorConditionFormula>
+    <errorMessage>Plan Start Date cannot be empty.</errorMessage>
+</ValidationRule>

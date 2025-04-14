@@ -1,0 +1,50 @@
+<template>
+    <p><strong>{quesSequence}. &nbsp; {quesText} <template if:true={isRequired}><span
+                    style="color:red;">*</span></template></strong></p>
+    <div class="slds-m-around_medium">
+        <template if:true={isText}>
+            <lightning-input disabled={isSubmit} value={textValue} type="text" variant="label-hidden" name={assQuesId}
+                onblur={handleResponse}></lightning-input>
+        </template>
+        <template if:true={isLongText}>
+            <lightning-textarea disabled={isSubmit} value={longTextValue} type="text" variant="label-hidden" name={assQuesId} onblur={handleResponse} style="height:auto"></lightning-textarea>
+        </template>
+        <template if:true={isNumber}>
+            <lightning-input disabled={isSubmit} value={numberValue} type="number" variant="label-hidden"
+                name={assQuesId} onblur={handleResponse}></lightning-input>
+        </template>
+        <template if:true={isDate}>
+            <lightning-input disabled={isSubmit} value={numberValue} type="date" variant="label-hidden" name={assQuesId} onblur={handleResponse}></lightning-input>
+        </template>
+        <template if:true={isCurrency}>
+            <lightning-input disabled={isSubmit} value={numberValue} type="number" step=".01" formatter="currency" variant="label-hidden" name={assQuesId} onblur={handleResponse}></lightning-input>
+        </template>
+        <template if:true={isPhone}>
+            <lightning-input disabled={isSubmit} value={textValue} placeholder="123-456-7890" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" type="tel" variant="label-hidden" name={assQuesId} onblur={handleResponse}></lightning-input>
+        </template>
+
+
+        <template if:true={isRadio}>
+            <template if:false={isOutcomeView}>
+                <lightning-radio-group name={assQuesId} disabled={isSubmit} variant="label-hidden" options={options}
+                    value={radioValue} onchange={handleResponse}></lightning-radio-group>
+            </template>
+            <template if:true={isOutcomeView}>
+                <template for:each={localAnsOps} for:item="option">
+                    <input disabled class="slds-radio_faux slds-m-right_medium slds-m-top_xxx-small"
+                        key={localAnsOps} type="radio" checked={option.class}>
+                    <span key={localAnsOps} class={option.class}>{option.label}</span><br key={localAnsOps} />
+                </template>
+            </template>
+        </template>
+
+        <template if:true={isCheckbox}>
+            <lightning-checkbox-group name={assQuesId} disabled={isSubmit} variant="label-hidden" options={options}
+                value={checkboxValue} onchange={handleResponse}></lightning-checkbox-group>
+        </template>
+        <template if:true={isCombobox}>
+            <lightning-combobox name={assQuesId} disabled={isSubmit} options={options} variant="label-hidden"
+                value={comboboxValue} placeholder="Select Value" onchange={handleResponse}></lightning-combobox>
+        </template>
+    </div>
+</template>

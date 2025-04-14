@@ -1,0 +1,35 @@
+<template>
+    <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+    </template>
+    <!-- <template if:true={objectList} iterator:object={objectList}>
+        <div key={object.value.label}>{object.value.label}</div>
+    </template> -->
+    <div class="slds-box slds-m-around_medium">
+        <div style="width:50%">
+            <c-custom-combo-with-search 
+            placeholder = "Select Primary Object"
+            field-label = "Primary Object"
+            options={dataStructure.objectList}
+            onchange={handleOnChange}
+            type = {dataStructure.type}
+            unqiue = {dataStructure.unique}
+            ></c-custom-combo-with-search>
+            <template if:true={dataStructure.relatedObjectList} iterator:relativeofprimary={dataStructure.relatedObjectList}>
+                <template if:true={relativeofprimary.value.showRelated}>
+                    <div key={relativeofprimary.value.unique} class={relativeofprimary.value.level}>
+                        <c-custom-combo-with-category-and-search
+                            key={relativeofprimary.value.unique}
+                            placeholder = "Select Primary Object"
+                            field-label = "Primary Object"
+                            options={relativeofprimary.value.objectList}
+                            onchange={handleOnChange}
+                            type = {relativeofprimary.value.type}
+                            unqiue = {relativeofprimary.value.unique}
+                            ></c-custom-combo-with-category-and-search>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </div>
+</template>

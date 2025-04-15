@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
-  <type>
-    <member>State</member>
-    <name>GlobalValueSet</name>
-  </type>
   <types>
     <members>AnswerSelectionController</members>
     <members>AnswerSelectionControllerTest</members>
@@ -386,6 +382,7 @@
     <members>Placement_Type</members>
     <members>Plan_Types</members>
     <members>Service_Plan_Status</members>
+    <members>State</members>
     <name>GlobalValueSet</name>
   </types>
   <types>

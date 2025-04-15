@@ -1,4 +1,3 @@
-//changed on 14th april 2025
 public with sharing class AnswerSelectionController {
     @AuraEnabled(cacheable=true)
     public static List<Answer__c> getActiveAnswers(String searchTerm){

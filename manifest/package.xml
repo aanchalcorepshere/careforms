@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
+  <type>
+    <member>State</member>
+    <name>GlobalValueSet</name>
+  </type>
   <types>
     <members>AnswerSelectionController</members>
     <members>AnswerSelectionControllerTest</members>
@@ -490,11 +494,15 @@
     <name>ValidationRule</name>
   </types>
   <types>
-    <members>Form__c.Launch_Form_List_View</members>
+    
     <members>caresp__Form__c.Launch_Form</members>
     <members>caresp__Outcome__c.PDF_View</members>
     <members>caresp__Plan_Template__c.Create_Field_Blueprint</members>
-    <name>WebLink</name>
+    <name>QuickAction</name>
+  </types>
+  <types>
+    <members>Form__c.Launch_Form_List_View</members>
+    <name>weblink</name>
   </types>
   <types>
     <members>childicon</members>

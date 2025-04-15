@@ -1,7 +1,21 @@
 @isTest
 public with sharing class AnswerTriggerHandlerTest {
     @isTest static void testcheckAnswerInUse(){
-        
+         Profile adminProfile = [SELECT Id FROM Profile WHERE Name = 'System Administrator' LIMIT 1];
+        User adminUser = new User(
+            Alias = 'sysadmin',
+            Email = 'sysadmin@example.com',
+            EmailEncodingKey = 'UTF-8',
+            LastName = 'Admin',
+            LanguageLocaleKey = 'en_US',
+            LocaleSidKey = 'en_US',
+            ProfileId = adminProfile.Id,
+            TimeZoneSidKey = 'America/New_York',
+            UserName = 'sysadmin.' + DateTime.now().getTime() + '@example.com'
+        );
+        insert adminUser;
+        System.runAs(adminUser) {
+
         Question_Bank__c questionBank = testFactory.createQuestionBank('Demo question', null, true);
         Question__c ques = testFactory.createQuestion(questionBank.Id, null, null, true);
         Answer__c ans1 = testFactory.createAnswer(null, 'Demo answer text234', true, true);
@@ -45,6 +59,9 @@ public with sharing class AnswerTriggerHandlerTest {
         
        		delete ans2;
 	        undelete ans2; 
+        }
         
     }
+        
+        
 }

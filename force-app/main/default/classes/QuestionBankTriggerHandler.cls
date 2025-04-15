@@ -2,17 +2,17 @@ public with sharing class QuestionBankTriggerHandler implements ITriggerHandler
 {
     public void BeforeInsert(List<SObject> newItems)
     {
-        checkDuplicateQuestion((List<Question_Bank__c>)newItems);
+        checkDuplicateQuestion((List<caresp__Question_Bank__c>)newItems);
     }
     
     public void BeforeUpdate(Map<Id, SObject> newItems, Map<Id, SObject> oldItems){
-        checkQuestionInUse((Map<Id, Question_Bank__c>)newItems,  (Map<Id, Question_Bank__c>)oldItems);
-        checkDuplicateQuestion((List<Question_Bank__c>)newItems.values());
+        checkQuestionInUse((Map<Id, caresp__Question_Bank__c>)newItems,  (Map<Id, caresp__Question_Bank__c>)oldItems);
+        checkDuplicateQuestion((List<caresp__Question_Bank__c>)newItems.values());
     }  
     
     public void BeforeDelete(Map<Id, SObject> oldItems)
     {
-        checkQuestionInUse((Map<Id, Question_Bank__c>)oldItems, new Map<Id, Question_Bank__c>());
+        checkQuestionInUse((Map<Id, caresp__Question_Bank__c>)oldItems, new Map<Id, caresp__Question_Bank__c>());
     }
     
     public void AfterInsert(Map<Id, SObject> newItems)
@@ -27,9 +27,9 @@ public with sharing class QuestionBankTriggerHandler implements ITriggerHandler
     public void AfterUndelete(Map<Id, SObject> oldItems)
     {}
     
-    public static void checkDuplicateQuestion(List<Question_Bank__c> listOfQusBank)
+    public static void checkDuplicateQuestion(List<caresp__Question_Bank__c> listOfQusBank)
     {
-        List<caresp__Question_Bank__c> existingQuesBank = [select Id, Question_Text__c from Question_Bank__c WITH SECURITY_ENFORCED LIMIT 50000];
+        List<caresp__Question_Bank__c> existingQuesBank = [select Id, caresp__Question_Text__c from caresp__Question_Bank__c WITH SECURITY_ENFORCED LIMIT 50000];
 
             for(caresp__Question_Bank__c rec:listOfQusBank){
                 if(String.isBlank(rec.caresp__Question_Text__c)){
@@ -49,7 +49,7 @@ public with sharing class QuestionBankTriggerHandler implements ITriggerHandler
 
     public static void checkQuestionInUse(Map<Id, caresp__Question_Bank__c> mapOfQuesBank, Map<Id, caresp__Question_Bank__c> oldItems){
         if(Trigger.isUpdate){
-            List<caresp__Question__c> quesList = [select Id, Question_Bank__c from Question__c where Question_Bank__c in :mapOfQuesBank.keySet() WITH SECURITY_ENFORCED];
+            List<caresp__Question__c> quesList = [select Id, caresp__Question_Bank__c from caresp__Question__c where caresp__Question_Bank__c in :mapOfQuesBank.keySet() WITH SECURITY_ENFORCED];
 
             for(caresp__Question__c ques:quesList){
                 for(caresp__Question_Bank__c qb : mapOfQuesBank.values()){
@@ -63,7 +63,7 @@ public with sharing class QuestionBankTriggerHandler implements ITriggerHandler
                 }
             }
         }else if(Trigger.isDelete){
-            List<caresp__Question__c> quesList = [select Id, Question_Bank__c from Question__c where Question_Bank__c in :mapOfQuesBank.keySet() WITH SECURITY_ENFORCED];
+            List<caresp__Question__c> quesList = [select Id, caresp__Question_Bank__c from caresp__Question__c where caresp__Question_Bank__c in :mapOfQuesBank.keySet() WITH SECURITY_ENFORCED];
             
             for(caresp__Question__c ques:quesList){
                 for(caresp__Question_Bank__c qb : mapOfQuesBank.values()){

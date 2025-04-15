@@ -7,12 +7,24 @@
       "versionName": "ver 0.1",
       "versionNumber": "0.1.0.NEXT",
       "versionDescription": ""
+    },
+    {
+      "path": "force-app",
+      "package": "secondversion",
+      "versionName": "ver 0.1",
+      "versionNumber": "0.1.0.NEXT",
+      "default": false,
+      "apexTestAccess": {
+        "permissionSets": ["Assessment_Module_Admin", "Forms_Module_Admin", "Plans_Module_Admin"],
+        "permissionSetLicenses":""
+      }
     }
   ],
   "namespace": "caresp",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "63.0",
   "packageAliases": {
-    "initialversion": "0Hoao0000002V7lCAE"
+    "initialversion": "0Hoao0000002V7lCAE",
+    "secondversion": "0Hoao0000002V9NCAU"
   }
 }

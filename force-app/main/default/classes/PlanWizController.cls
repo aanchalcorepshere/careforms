@@ -189,41 +189,36 @@ public with sharing class PlanWizController
     
     
     
-    @AuraEnabled(cacheable=true) // created by Shudhanshu Gupta
-    public static List<ServicePlanWizClientsWrapper> getClientsDynamically (String asID, Id planId , String objectApiName, Boolean isGoalNStepTempCreated)
-    {   
+    @AuraEnabled(cacheable=true)
+    public static List<ServicePlanWizClientsWrapper> getClientsDynamically(String asID, Id planId, String objectApiName, Boolean isGoalNStepTempCreated) {   
         System.debug('asID>>' + asID);
         List<sObject> planRecList = new List<sObject>();
         String parentObjName;
-        if(objectApiName == 'caresp__Plan__c')
-        {
+        if(objectApiName == 'caresp__Plan__c') {
             List<String> fieldNames = getFieldNames('caresp__Plan__c');
             String query = 'SELECT ' + String.join(fieldNames, ', ') + ' FROM caresp__Plan__c WHERE Id =: escapedAsId WITH SECURITY_ENFORCED';
             String escapedAsId = String.escapeSingleQuotes(asID);
             planRecList = Database.query(query.replace(':escapedAsId', '\'' + escapedAsId + '\''));
             parentObjName = (String.valueOf(planRecList[0].get('caresp__Parent_Child_Name__c'))).split('-')[0];
-            
-        } else
-        {
+        } else {
             parentObjName = objectApiName;
-            
         }
         
         Set<Id> setIdsChildsParentRec = new Set<Id>();
         List<ServicePlanWizClientsWrapper> listCW = new List<ServicePlanWizClientsWrapper>();
         List<sObject> finalFetchedDataChild = new List<sObject>();
-        Dynamic_Plan_Parent_Obj_Configuration__mdt planObjConfig = [SELECT Label, Child_s_parent_Filter_Field_API_Name__c, Child_s_Parent_Obj_API_Name__c, Child_Filter_Field_API_Name__c, Child_Obj_API_Name__c, Goal_s_Filter_Field_API_Name__c, Is_Junction_Exist__c, Parent_Obj_API_Name__c, Object_Fields_To_Display_List__c, Wrapper_Field_List__c, Obj_fields_for_wrapper_fields__c, Filter_Filed_Name_Plan_Obj__c FROM Dynamic_Plan_Parent_Obj_Configuration__mdt WHERE Parent_Obj_API_Name__c =: parentObjName AND Is_Active__c = true WITH SECURITY_ENFORCED LIMIT 1];
-        asID = objectApiName == 'caresp__Plan__c' ? String.valueOf(planRecList[0].get(planObjConfig.Filter_Filed_Name_Plan_Obj__c)): asID;
-        planObjConfigGlobal = planObjConfig != null ? planObjConfig  : null;
-        String finalChildOfParent = (planObjConfig.Is_Junction_Exist__c !=null && planObjConfig.Is_Junction_Exist__c) ? planObjConfig.Child_s_Parent_Obj_API_Name__c : planObjConfig.Child_Obj_API_Name__c;
+        Dynamic_Plan_Parent_Obj_Configuration__mdt planObjConfig = [SELECT Label, caresp__Child_s_parent_Filter_Field_API_Name__c, caresp__Child_s_Parent_Obj_API_Name__c, caresp__Child_Filter_Field_API_Name__c, caresp__Child_Obj_API_Name__c, caresp__Goal_s_Filter_Field_API_Name__c, caresp__Is_Junction_Exist__c, caresp__Parent_Obj_API_Name__c, caresp__Object_Fields_To_Display_List__c, caresp__Wrapper_Field_List__c, caresp__Obj_fields_for_wrapper_fields__c, caresp__Filter_Filed_Name_Plan_Obj__c FROM Dynamic_Plan_Parent_Obj_Configuration__mdt WHERE caresp__Parent_Obj_API_Name__c =: parentObjName AND caresp__Is_Active__c = true WITH SECURITY_ENFORCED LIMIT 1];
+        
+        asID = objectApiName == 'caresp__Plan__c' ? String.valueOf(planRecList[0].get(planObjConfig.caresp__Filter_Filed_Name_Plan_Obj__c)): asID;
+        planObjConfigGlobal = planObjConfig != null ? planObjConfig : null;
+        String finalChildOfParent = (planObjConfig.caresp__Is_Junction_Exist__c != null && planObjConfig.caresp__Is_Junction_Exist__c) ? planObjConfig.caresp__Child_s_Parent_Obj_API_Name__c : planObjConfig.caresp__Child_Obj_API_Name__c;
         Map<String, Schema.SObjectField> fieldMapChild = new Map<String, Schema.SObjectField>();
         Map<String, ServicePlanWizClientsWrapper> mapChildIdToCWRec = new Map<String, ServicePlanWizClientsWrapper>();
         Map<String, List<ServicePlanWizClientsWrapper.Goals>> mapChildIdToGoals = new Map<String, List<ServicePlanWizClientsWrapper.Goals>>();
         Map<Id, List<ServicePlanWizClientsWrapper.Steps>> mapGoalIdSteps = new Map<Id, List<ServicePlanWizClientsWrapper.Steps>>();
         Set<Id> setGoalId = new Set<Id>();
-        //fieldMapChild = Schema.getGlobalDescribe().get(planObjConfig.Child_Obj_API_Name__c).getDescribe().fields.getMap();
         
-       Map<String, Schema.SObjectField> allFieldsMap = Schema.getGlobalDescribe().get(planObjConfig.Child_Obj_API_Name__c).getDescribe().fields.getMap();
+        Map<String, Schema.SObjectField> allFieldsMap = Schema.getGlobalDescribe().get(planObjConfig.caresp__Child_Obj_API_Name__c).getDescribe().fields.getMap();
         System.debug('allFieldsMap>>> ' + allFieldsMap);
         
         for (String fieldName : allFieldsMap.keySet()) {
@@ -232,53 +227,46 @@ public with sharing class PlanWizController
                 fieldMapChild.put(fieldName, allFieldsMap.get(fieldName));
             }
         }
-        String query = '';
         
-        query = 'SELECT ' + String.Join(fieldMapChild.keySet(), ', ') + ' FROM ' + planObjConfig.Child_Obj_API_Name__c + ' WHERE ' + planObjConfig.Child_Filter_Field_API_Name__c + ' = :escapedAsId WITH SECURITY_ENFORCED ORDER BY Name';
+        String query = 'SELECT ' + String.Join(fieldMapChild.keySet(), ', ') + ' FROM ' + planObjConfig.caresp__Child_Obj_API_Name__c + ' WHERE ' + planObjConfig.caresp__Child_Filter_Field_API_Name__c + ' = :escapedAsId WITH SECURITY_ENFORCED ORDER BY Name';
         String escapedAsId = String.escapeSingleQuotes(asID);
         finalFetchedDataChild = Database.query(query.replace(':escapedAsId', '\'' + escapedAsId + '\''));
         
         ProcessJunctionObjReturnWrapper processJunctionObjReturnWrapper = processForJunctionObj(finalFetchedDataChild, planObjConfig);
         finalFetchedDataChild = processJunctionObjReturnWrapper.finalFetchedDataChild;
         setIdsChildsParentRec = processJunctionObjReturnWrapper.setIdsChildsParentRec;
+        
         List<String> lstObjFieldForWrapperField = new list<String>();
-        if(planObjConfig.Obj_fields_for_wrapper_fields__c != null)
-        {
-            lstObjFieldForWrapperField = planObjConfig.Obj_fields_for_wrapper_fields__c.split(',');
-            
+        if(planObjConfig.caresp__Obj_fields_for_wrapper_fields__c != null) {
+            lstObjFieldForWrapperField = planObjConfig.caresp__Obj_fields_for_wrapper_fields__c.split(',');
         }
         
         List<String> lstWrapperFieldName = new List<String>();
-        if(planObjConfig.Wrapper_Field_List__c != null)
-        {
-            lstWrapperFieldName = planObjConfig.Wrapper_Field_List__c.split(','); // same sequence as in lstObjFieldForWrapperField no need for map
-            
+        if(planObjConfig.caresp__Wrapper_Field_List__c != null) {
+            lstWrapperFieldName = planObjConfig.caresp__Wrapper_Field_List__c.split(',');
         }
         
         List<String> lstFieldToDisplay = new List<String>();
-        if(planObjConfig.Object_Fields_To_Display_List__c != null) 
-        {
-            lstFieldToDisplay = planObjConfig.Object_Fields_To_Display_List__c.split('-');
-            
+        if(planObjConfig.caresp__Object_Fields_To_Display_List__c != null) {
+            lstFieldToDisplay = planObjConfig.caresp__Object_Fields_To_Display_List__c.split('-');
         }
         
         setIdsChildsParentRec.clear();
         
-       
-        ProcessJunctionObjReturnWrapper processJunctionObjReturnWrapper1 = prepareMapChildIdToCWRec(finalFetchedDataChild,lstWrapperFieldName, lstFieldToDisplay, planObjConfig, lstObjFieldForWrapperField);
+        ProcessJunctionObjReturnWrapper processJunctionObjReturnWrapper1 = prepareMapChildIdToCWRec(finalFetchedDataChild, lstWrapperFieldName, lstFieldToDisplay, planObjConfig, lstObjFieldForWrapperField);
         mapChildIdToCWRec = processJunctionObjReturnWrapper1.mapChildIdToCWRec;
         setIdsChildsParentRec = processJunctionObjReturnWrapper1.setIdsChildsParentRec;
         system.debug('mapChildIdToCWRec = >'+mapChildIdToCWRec);
+        
         List<caresp__Goal__c> listGoals = new List<caresp__Goal__c>();
-        Map<String, Goal__c> mapGoalIdToGoalRec = new Map<String, Goal__c>();
-        String mdtQuery = 'select Id, caresp__Plan__c, Name, caresp__Description__c, caresp__Start_Date__c, caresp__Target_Date__c, caresp__Status__c, caresp__Goal_Type__c, caresp__Domain__c , ' + planObjConfig.Goal_s_Filter_Field_API_Name__c + ' from caresp__Goal__c where caresp__Plan__c = :escapedPlanId AND ' + planObjConfig.Goal_s_Filter_Field_API_Name__c + ' IN :setIdsChildsParentRecTemp WITH SECURITY_ENFORCED ORDER By CreatedDate';
+        Map<String, caresp__Goal__c> mapGoalIdToGoalRec = new Map<String, caresp__Goal__c>();
+        String mdtQuery = 'select Id, caresp__Plan__c, Name, caresp__Description__c, caresp__Start_Date__c, caresp__Target_Date__c, caresp__Status__c, caresp__Goal_Type__c, caresp__Domain__c , ' + planObjConfig.caresp__Goal_s_Filter_Field_API_Name__c + ' from caresp__Goal__c where caresp__Plan__c = :escapedPlanId AND ' + planObjConfig.caresp__Goal_s_Filter_Field_API_Name__c + ' IN :setIdsChildsParentRecTemp WITH SECURITY_ENFORCED ORDER By CreatedDate';
         String escapedPlanId = String.escapeSingleQuotes(planId);
         String formattedIds = '(';
         for (String id : setIdsChildsParentRec) {
             formattedIds += '\'' + id + '\', ';
         }
         
-        // Remove the trailing comma and space, and add the closing parenthesis
         if (formattedIds.endsWith(', ')) {
             formattedIds = formattedIds.substring(0, formattedIds.length() - 2);
         }
@@ -286,23 +274,22 @@ public with sharing class PlanWizController
         
         System.debug('setIdsChildsParentRec>>> ' + (mdtQuery.replace(':escapedPlanId','\'' + escapedPlanId + '\'')).replace(':setIdsChildsParentRecTemp', formattedIds));
         listGoals = Database.query((mdtQuery.replace(':escapedPlanId','\'' + escapedPlanId + '\'')).replace(':setIdsChildsParentRecTemp', formattedIds));
+        
         ProcessGoalsReturnWrapper processGoalsReturnWrapper = processGoalsDynamic(mapChildIdToGoals, planObjConfig, listGoals, setGoalId);
         mapChildIdToGoals = processGoalsReturnWrapper.mapChildIdToGoals;
         mapGoalIdToGoalRec = processGoalsReturnWrapper.mapGoalIdToGoalRec;   
         setGoalId = processGoalsReturnWrapper.setGoalId;     
         
-        for(String childId : mapChildIdToCWRec.keySet())
-        {
+        for(String childId : mapChildIdToCWRec.keySet()) {
             ServicePlanWizClientsWrapper servicePlanWizClientsWrapper = mapChildIdToCWRec.get(childId);
             List<ServicePlanWizClientsWrapper.Goals> listGoal = mapChildIdToGoals.get(childId);
             servicePlanWizClientsWrapper.put('listGoals', listGoal);
             mapChildIdToCWRec.put(childId, servicePlanWizClientsWrapper);
         }
         
-        
         //Get Steps
         List<caresp__Step__c> listSteps = new List<caresp__Step__c>();
-        listSteps = Database.query('select Id, Name,caresp__Type_of_Action__c, caresp__Step_Type__c, caresp__Goal__c,  caresp__Description__c, caresp__Start_Date__c, caresp__Target_Date__c, caresp__Assigned_To__c, caresp__Status__c, caresp__Step_Num__c from caresp__Step__c where caresp__Goal__c IN :setGoalId WITH SECURITY_ENFORCED ORDER By caresp__Step_Num__c');
+        listSteps = Database.query('select Id, Name, caresp__Type_of_Action__c, caresp__Step_Type__c, caresp__Goal__c, caresp__Description__c, caresp__Start_Date__c, caresp__Target_Date__c, caresp__Assigned_To__c, caresp__Status__c, caresp__Step_Num__c from caresp__Step__c where caresp__Goal__c IN :setGoalId WITH SECURITY_ENFORCED ORDER By caresp__Step_Num__c');
         mapGoalIdSteps = processStepsDynamic(mapGoalIdSteps, listSteps, planObjConfig, mapGoalIdToGoalRec);
         
         mapChildIdToCWRec = updateMapChildIdToCWRecWithStepList(mapChildIdToCWRec, mapChildIdToGoals, mapGoalIdSteps, listSteps);
@@ -355,10 +342,10 @@ public with sharing class PlanWizController
         processJunctionObjReturnWrapper.mapChildIdToCWRec = mapChildIdToCWRec;
         processJunctionObjReturnWrapper.setIdsChildsParentRec = setIdsChildsParentRec;
         return processJunctionObjReturnWrapper;
-
+        
     }
-
-
+    
+    
     Private static Map<String, ServicePlanWizClientsWrapper> updateMapChildIdToCWRecWithStepList(Map<String, ServicePlanWizClientsWrapper> mapChildIdToCWRec,  Map<String, List<ServicePlanWizClientsWrapper.Goals>> mapChildIdToGoals, Map<Id, List<ServicePlanWizClientsWrapper.Steps>> mapGoalIdSteps, List<caresp__Step__c> listSteps)
     {
         if(listSteps.size()>0)
@@ -383,13 +370,13 @@ public with sharing class PlanWizController
             }
         }
         return mapChildIdToCWRec;
-
+        
     }
-
+    
     Private static ProcessJunctionObjReturnWrapper processForJunctionObj(List<sObject> finalFetchedDataChild,Dynamic_Plan_Parent_Obj_Configuration__mdt planObjConfig)
     {
         Set<Id> setIdsChildsParentRec = new Set<Id>();
-         if(planObjConfig.Is_Junction_Exist__c)
+        if(planObjConfig.Is_Junction_Exist__c)
         {
             if(finalFetchedDataChild != null && finalFetchedDataChild.size()>0)
             {
@@ -576,10 +563,10 @@ public with sharing class PlanWizController
     private static List<caresp__Goal__c> insertGoals(List<caresp__Goal__c> listGoalToCreate) {
         List<SObject> inseratableGoals = Security.stripInaccessible(AccessType.CREATABLE, listGoalToCreate).getRecords();
         if (Schema.sObjectType.caresp__Goal__c.isCreateable() && Schema.sObjectType.caresp__Goal__c.fields.caresp__Plan__c.isCreateable() && Schema.sObjectType.caresp__Goal__c.fields.caresp__Goal_Template__c.isCreateable() && Schema.sObjectType.caresp__Goal__c.fields.caresp__Status__c.isCreateable()
-        && Schema.sObjectType.caresp__Goal__c.fields.caresp__Start_Date__c.isCreateable() && Schema.sObjectType.caresp__Goal__c.fields.caresp__Domain__c.isCreateable() && Schema.sObjectType.caresp__Goal__c.fields.caresp__Stuck_Reason__c.isCreateable()
-        && Schema.sObjectType.caresp__Goal__c.fields.caresp__Target_Date__c.isCreateable() && Schema.sObjectType.caresp__Goal__c.fields.caresp__Description__c.isCreateable() && Schema.sObjectType.caresp__Goal__c.fields.caresp__Goal_Type__c.isCreateable()) {
-            insert as user inseratableGoals;
-        }
+            && Schema.sObjectType.caresp__Goal__c.fields.caresp__Start_Date__c.isCreateable() && Schema.sObjectType.caresp__Goal__c.fields.caresp__Domain__c.isCreateable() && Schema.sObjectType.caresp__Goal__c.fields.caresp__Stuck_Reason__c.isCreateable()
+            && Schema.sObjectType.caresp__Goal__c.fields.caresp__Target_Date__c.isCreateable() && Schema.sObjectType.caresp__Goal__c.fields.caresp__Description__c.isCreateable() && Schema.sObjectType.caresp__Goal__c.fields.caresp__Goal_Type__c.isCreateable()) {
+                insert as user inseratableGoals;
+            }
         return inseratableGoals;
     }
     
@@ -860,34 +847,34 @@ public with sharing class PlanWizController
                 for (caresp__Step__c step : listSteps)
                 {
                     if( Schema.sObjectType.caresp__Step__c.isCreateable () && Schema.sObjectType.caresp__Step__c.fields.caresp__Goal__c.isCreateable () && 
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Description__c.isCreateable () && Schema.sObjectType.caresp__Step__c.fields.caresp__Start_Date__c.isCreateable () && 
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Target_Date__c.isCreateable  () && Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Num__c.isCreateable  () && 
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Assessment__c.isCreateable  () && Schema.sObjectType.caresp__Step__c.fields.caresp__Document_Type__c.isCreateable  () && 
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Type__c.isCreateable  () && Schema.sObjectType.caresp__Step__c.fields.caresp__Type_of_Action__c.isCreateable  () &&
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Description__c.isCreateable () && Schema.sObjectType.caresp__Step__c.fields.caresp__Start_Date__c.isCreateable () && 
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Target_Date__c.isCreateable  () && Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Num__c.isCreateable  () && 
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Assessment__c.isCreateable  () && Schema.sObjectType.caresp__Step__c.fields.caresp__Document_Type__c.isCreateable  () && 
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Type__c.isCreateable  () && Schema.sObjectType.caresp__Step__c.fields.caresp__Type_of_Action__c.isCreateable  () &&
                        Schema.sObjectType.caresp__Step__c.fields.caresp__Status__c.isCreateable  () && Schema.sObjectType.caresp__Step__c.fields.caresp__Assigned_To__c.isCreateable  () ){
                            caresp__Step__c s = new caresp__Step__c();
-                            if (step.Id != null)    //Old Step
-                            {
-                                s.Id = step.Id;
-                            }
-                            else    //New Step
-                            {
-                                s.caresp__Goal__c = gId;
-                            }
-                             // Apply FLS checks before assigning values
-                            s.caresp__Description__c = step.caresp__Description__c;
-                            s.caresp__Start_Date__c = step.caresp__Start_Date__c;
-                            s.caresp__Target_Date__c = step.caresp__Target_Date__c;
-                            s.caresp__Step_Num__c = step.caresp__Step_Num__c;
-                            s.caresp__Assessment__c = step.caresp__Assessment__c;
-                            s.caresp__Document_Type__c = step.caresp__Document_Type__c;
-                            s.caresp__Step_Type__c = step.caresp__Step_Type__c;
-                            s.caresp__Type_of_Action__c = step.caresp__Type_of_Action__c;
-                            s.caresp__Status__c = step.caresp__Status__c;
-                            s.caresp__Assigned_To__c = String.isNotBlank(step.caresp__Assigned_To__c) 
-                                ? step.caresp__Assigned_To__c 
-                                : OwnerName;
-                            listStepsToSave.add(s);
+                           if (step.Id != null)    //Old Step
+                           {
+                               s.Id = step.Id;
+                           }
+                           else    //New Step
+                           {
+                               s.caresp__Goal__c = gId;
+                           }
+                           // Apply FLS checks before assigning values
+                           s.caresp__Description__c = step.caresp__Description__c;
+                           s.caresp__Start_Date__c = step.caresp__Start_Date__c;
+                           s.caresp__Target_Date__c = step.caresp__Target_Date__c;
+                           s.caresp__Step_Num__c = step.caresp__Step_Num__c;
+                           s.caresp__Assessment__c = step.caresp__Assessment__c;
+                           s.caresp__Document_Type__c = step.caresp__Document_Type__c;
+                           s.caresp__Step_Type__c = step.caresp__Step_Type__c;
+                           s.caresp__Type_of_Action__c = step.caresp__Type_of_Action__c;
+                           s.caresp__Status__c = step.caresp__Status__c;
+                           s.caresp__Assigned_To__c = String.isNotBlank(step.caresp__Assigned_To__c) 
+                               ? step.caresp__Assigned_To__c 
+                               : OwnerName;
+                           listStepsToSave.add(s);
                        }                    
                 }
             }
@@ -910,15 +897,15 @@ public with sharing class PlanWizController
                 // Handle existing records - UPDATABLE
                 if(!existingRecords.isEmpty()) {
                     List<SObject> updatableRecords = Security.stripInaccessible(AccessType.UPDATABLE, existingRecords).getRecords();
-                   if( Schema.sObjectType.caresp__Step__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Goal__c.isUpdateable() && 
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Description__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Start_Date__c.isUpdateable() && 
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Target_Date__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Num__c.isUpdateable() && 
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Assessment__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Document_Type__c.isUpdateable() && 
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Type__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Type_of_Action__c.isUpdateable() &&
-                     Schema.sObjectType.caresp__Step__c.fields.caresp__Status__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Assigned_To__c.isUpdateable() && !updatableRecords.isEmpty()) {                   
-                        update as user updatableRecords;
-                        accessibleGoals.addAll(updatableRecords);
-                    }
+                    if( Schema.sObjectType.caresp__Step__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Goal__c.isUpdateable() && 
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Description__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Start_Date__c.isUpdateable() && 
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Target_Date__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Num__c.isUpdateable() && 
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Assessment__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Document_Type__c.isUpdateable() && 
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Type__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Type_of_Action__c.isUpdateable() &&
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Status__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Assigned_To__c.isUpdateable() && !updatableRecords.isEmpty()) {                   
+                           update as user updatableRecords;
+                           accessibleGoals.addAll(updatableRecords);
+                       }
                     
                 }
                 
@@ -926,14 +913,14 @@ public with sharing class PlanWizController
                 if(!newRecords.isEmpty()) {
                     List<SObject> creatableRecords = Security.stripInaccessible( AccessType.CREATABLE,  newRecords).getRecords();
                     if(Schema.sObjectType.caresp__Step__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Goal__c.isCreateable() &&
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Description__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Start_Date__c.isCreateable() &&
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Target_Date__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Num__c.isCreateable() &&
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Assessment__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Document_Type__c.isCreateable() &&
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Type__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Type_of_Action__c.isCreateable() &&
-                    Schema.sObjectType.caresp__Step__c.fields.caresp__Status__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Assigned_To__c.isCreateable() && !creatableRecords.isEmpty()) {
-                            insert as user creatableRecords;
-                            accessibleGoals.addAll(creatableRecords);
-                    }
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Description__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Start_Date__c.isCreateable() &&
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Target_Date__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Num__c.isCreateable() &&
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Assessment__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Document_Type__c.isCreateable() &&
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Type__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Type_of_Action__c.isCreateable() &&
+                       Schema.sObjectType.caresp__Step__c.fields.caresp__Status__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Assigned_To__c.isCreateable() && !creatableRecords.isEmpty()) {
+                           insert as user creatableRecords;
+                           accessibleGoals.addAll(creatableRecords);
+                       }
                     
                 }
                 System.debug('accessibleSteps>>>' +  accessibleGoals);
@@ -1015,61 +1002,61 @@ public with sharing class PlanWizController
     
     
     @AuraEnabled
-public static void submitPlan(Id asId, Id planId, String objApiName) {
-    System.debug('in submit>>> ');
-    
-    // Ensure we are fetching data efficiently
-    List<ServicePlanWizClientsWrapper> lstClientGoalAndStep = 
-        getClientsDynamically(asId, planId, objApiName, false);
-    
-    System.debug('lstClientGoalAndStep in submit>>> ' + lstClientGoalAndStep);
-    
-    // Fetch Plan__c safely
-    List<caresp__Plan__c> planList = [
-        SELECT Id, Name, Plan_Start_Date__c, Plan_Type_Txt__c, Plan_End_Date__c, 
-               Plan_Name__c, Plan_Status__c, Plan_Date_Accepted__c, 
-               Plan_Description__c, Plan_Version__c, Parent_Plan__r.Plan_Name__c, 
-               Progress_Status__c
-        FROM caresp__Plan__c 
-        WHERE Id = :planId WITH SECURITY_ENFORCED
-    ];
-
-    if (planList.isEmpty()) {
-        System.debug('No plan found for the given ID.');
-        return;
+    public static void submitPlan(Id asId, Id planId, String objApiName) {
+        System.debug('in submit>>> ');
+        
+        // Ensure we are fetching data efficiently
+        List<ServicePlanWizClientsWrapper> lstClientGoalAndStep = 
+            getClientsDynamically(asId, planId, objApiName, false);
+        
+        System.debug('lstClientGoalAndStep in submit>>> ' + lstClientGoalAndStep);
+        
+        // Fetch Plan__c safely
+        List<caresp__Plan__c> planList = [
+            SELECT Id, Name, Plan_Start_Date__c, Plan_Type_Txt__c, Plan_End_Date__c, 
+            Plan_Name__c, Plan_Status__c, Plan_Date_Accepted__c, 
+            Plan_Description__c, Plan_Version__c, Parent_Plan__r.Plan_Name__c, 
+            Progress_Status__c
+            FROM caresp__Plan__c 
+            WHERE Id = :planId WITH SECURITY_ENFORCED
+        ];
+        
+        if (planList.isEmpty()) {
+            System.debug('No plan found for the given ID.');
+            return;
+        }
+        
+        caresp__Plan__c plan = planList[0]; // Assign first record safely
+        ServicePlanWizClientsWrapper.PlanWrapper planWrapperRec = preparePlanWrapperForsubmitPlan(plan);
+        
+        // Optimize clientWrapperList processing
+        List<ServicePlanWizClientsWrapper.ClientWrapper> clientWrapperList = 
+            new List<ServicePlanWizClientsWrapper.ClientWrapper>();
+        
+        for (ServicePlanWizClientsWrapper clientData : lstClientGoalAndStep) {
+            ServicePlanWizClientsWrapper.ClientWrapper clWrap = new ServicePlanWizClientsWrapper.ClientWrapper();
+            clWrap.attributes = clientData.attributes; // Assign attributes explicitly
+            clientWrapperList.add(clWrap);
+        }
+        
+        
+        planWrapperRec.clients = clientWrapperList;
+        
+        // Prepare for bulk update
+        List<caresp__Plan__c> plansToUpdate = new List<caresp__Plan__c>();
+        
+        plan.caresp__Plan_Status__c = 'Accepted - New';
+        plan.caresp__Data_Json_for_Signature_Request__c = JSON.serialize(planWrapperRec);
+        plansToUpdate.add(plan);
+        
+        // Perform a single bulk update
+        if (!plansToUpdate.isEmpty()) {
+            update as user Security.stripInaccessible(AccessType.UPDATABLE, plansToUpdate).getRecords();
+        }
     }
-
-    caresp__Plan__c plan = planList[0]; // Assign first record safely
-    ServicePlanWizClientsWrapper.PlanWrapper planWrapperRec = preparePlanWrapperForsubmitPlan(plan);
-
-    // Optimize clientWrapperList processing
-    List<ServicePlanWizClientsWrapper.ClientWrapper> clientWrapperList = 
-    new List<ServicePlanWizClientsWrapper.ClientWrapper>();
-
-for (ServicePlanWizClientsWrapper clientData : lstClientGoalAndStep) {
-    ServicePlanWizClientsWrapper.ClientWrapper clWrap = new ServicePlanWizClientsWrapper.ClientWrapper();
-    clWrap.attributes = clientData.attributes; // Assign attributes explicitly
-    clientWrapperList.add(clWrap);
-}
-
-
-    planWrapperRec.clients = clientWrapperList;
-
-    // Prepare for bulk update
-    List<caresp__Plan__c> plansToUpdate = new List<caresp__Plan__c>();
-
-    plan.caresp__Plan_Status__c = 'Accepted - New';
-    plan.caresp__Data_Json_for_Signature_Request__c = JSON.serialize(planWrapperRec);
-    plansToUpdate.add(plan);
-
-    // Perform a single bulk update
-    if (!plansToUpdate.isEmpty()) {
-        update as user Security.stripInaccessible(AccessType.UPDATABLE, plansToUpdate).getRecords();
-    }
-}
-
     
-
+    
+    
     private static ServicePlanWizClientsWrapper.PlanWrapper preparePlanWrapperForsubmitPlan(caresp__Plan__c plan)
     {
         ServicePlanWizClientsWrapper.PlanWrapper planWrapperRec = new ServicePlanWizClientsWrapper.PlanWrapper();          
@@ -1118,12 +1105,12 @@ for (ServicePlanWizClientsWrapper clientData : lstClientGoalAndStep) {
             List<caresp__Plan__c> updatableRecords = new List<caresp__Plan__c>();
             //
             if (Schema.sObjectType.caresp__Plan__c.isUpdateable()) {
-            updatableRecords = Security.stripInaccessible(AccessType.UPDATABLE, new List<caresp__Plan__c>{plan}).getRecords();
-            if(!updatableRecords.isEmpty()){
-            update as user updatableRecords;
-            }
+                updatableRecords = Security.stripInaccessible(AccessType.UPDATABLE, new List<caresp__Plan__c>{plan}).getRecords();
+                if(!updatableRecords.isEmpty()){
+                    update as user updatableRecords;
+                }
             }                   //
-
+            
             // update plan; //Update Old Plan
             List<caresp__Plan__c> insertableRecords = new List<caresp__Plan__c>();
             caresp__Plan__c newPlan = updatableRecords[0].clone(false, true, false, false);

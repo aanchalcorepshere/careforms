@@ -4,7 +4,7 @@ public class PlanWizControllerTest {
         
         // Create common test accounts
         caresp__Plan__c Plan = new caresp__Plan__c(
-            Plan_Status__c = 'Draft',
+            caresp__Plan_Status__c = 'Draft',
             caresp__Plan_Start_Date__c =system.today(),
             caresp__Parent_Child_Name__c='Account-Contact'
         );
@@ -249,7 +249,7 @@ public class PlanWizControllerTest {
     Public static void testCreateGoalStepTempAndCheckGoals()
     {
         caresp__Plan__c Plan = new caresp__Plan__c(
-            Plan_Status__c = 'Draft',
+            caresp__Plan_Status__c = 'Draft',
             caresp__Plan_Start_Date__c =system.today(),
             caresp__Parent_Child_Name__c='Account-Contact'
         );
@@ -273,7 +273,7 @@ public class PlanWizControllerTest {
         Insert con;
         
         caresp__Plan_Template__c parentPlanTemplate = new caresp__Plan_Template__c(
-            Parent_Child_Relation__c = 'Account-Contact',
+            caresp__Parent_Child_Relation__c = 'Account-Contact',
             caresp__No_of_days_to_add_in_date__c = 1,
             caresp__Parent_Date_Field__c = 'Test_Field__c',
             caresp__Plan_template_Name__c = 'Test Template',
@@ -318,7 +318,7 @@ public class PlanWizControllerTest {
     public static void testSaveGoal()
     {
         caresp__Plan__c Plan = new caresp__Plan__c(
-            Plan_Status__c = 'Draft',
+            caresp__Plan_Status__c = 'Draft',
             caresp__Plan_Start_Date__c =system.today(),
             caresp__Parent_Child_Name__c='Account-Contact'
         );
@@ -355,7 +355,7 @@ public class PlanWizControllerTest {
     Public static void testDeleteGoals()
     {
         caresp__Plan__c Plan = new caresp__Plan__c(
-            Plan_Status__c = 'Draft',
+            caresp__Plan_Status__c = 'Draft',
             caresp__Plan_Start_Date__c =system.today(),
             caresp__Parent_Child_Name__c='Account-Contact'
         );

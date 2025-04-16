@@ -4,10 +4,15 @@ public class PlanTemplateTriggerHelperTest {
     @testSetup
     static void setupData() {
         // Setup any labels or required data for the tests
-      //  System.Label.Field_Blueprint_Default_Section_Fields = 'caresp__Plan_Start_Date__c,caresp__Plan_End_Date__c';
-
+        //  System.Label.Field_Blueprint_Default_Section_Fields = 'caresp__Plan_Start_Date__c,caresp__Plan_End_Date__c';
+        
         // Insert necessary data or mock metadata info
-        Plan_Template__c parentPlanTemplate = new Plan_Template__c( Parent_Child_Relation__c = 'Parent-Child',caresp__No_of_days_to_add_in_date__c =1, caresp__Parent_Date_Field__c='1', caresp__Plan_template_Name__c='test');
+        caresp__Plan_Template__c parentPlanTemplate = new caresp__Plan_Template__c( 
+            caresp__Parent_Child_Relation__c = 'Parent-Child',
+            caresp__No_of_days_to_add_in_date__c = 1, 
+            caresp__Parent_Date_Field__c = '1', 
+            caresp__Plan_template_Name__c = 'test'
+        );
         
         insert parentPlanTemplate;
     }

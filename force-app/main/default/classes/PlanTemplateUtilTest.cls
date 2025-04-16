@@ -7,7 +7,7 @@ public class PlanTemplateUtilTest {
             insert acc;
 			String parentChildRelName ='Account-Contact';
             caresp__Plan_Template__c parentPlanTemplate = new caresp__Plan_Template__c(
-                Parent_Child_Relation__c = parentChildRelName,
+                caresp__Parent_Child_Relation__c = parentChildRelName,
                 caresp__No_of_days_to_add_in_date__c = 1,
                 caresp__Parent_Date_Field__c = 'Test_Field__c',
                 caresp__Plan_template_Name__c = 'Test Template',

@@ -96,12 +96,12 @@ public with sharing class AssessmentQuestionnaireControllerTest {
     } */
     
     static testMethod void testSaveResponses(){
-    	List<Assessment_Question__c> assessQuesList = [select Id, Sequence__c, Dependent_Sequence__c from Assessment_Question__c];
-        List<Question_Answer_Option__c> quesAnsList = [select Id from Question_Answer_Option__c];
+    	List<caresp__Assessment_Question__c> assessQuesList = [select Id, caresp__Sequence__c, caresp__Dependent_Sequence__c from caresp__Assessment_Question__c];
+        List<caresp__Question_Answer_Option__c> quesAnsList = [select Id from caresp__Question_Answer_Option__c];
  //       Referral__c ref = [select Id from Referral__c limit 1];
 //        Client__c client = [select Id from Client__c limit 1];
-        Assessment__c assessment = [select Id, Name from Assessment__c limit 1];
-        Outcome__c outcome = [select Id, Draft_Responses__c from Outcome__c limit 1];
+        caresp__Assessment__c assessment = [select Id, Name from caresp__Assessment__c limit 1];
+        caresp__Outcome__c outcome = [select Id, caresp__Draft_Responses__c from caresp__Outcome__c limit 1];
         
         //assert statement
         System.assertNotEquals(assessment, null, 'Assessment record should exist.');
@@ -110,12 +110,12 @@ public with sharing class AssessmentQuestionnaireControllerTest {
         String parentAssessQues;
         String childAssessQues;
         String grandChildAssessQues;
-        for(Assessment_Question__c aq:assessQuesList){
-            if(aq.Sequence__c != null && aq.Sequence__c == 1){
+        for(caresp__Assessment_Question__c aq:assessQuesList){
+            if(aq.caresp__Sequence__c != null && aq.caresp__Sequence__c == 1){
                 parentAssessQues = aq.Id;
-            }else if(String.isNotBlank(aq.Dependent_Sequence__c) && aq.Dependent_Sequence__c == 'A'){
+            }else if(String.isNotBlank(aq.caresp__Dependent_Sequence__c) && aq.caresp__Dependent_Sequence__c == 'A'){
                 childAssessQues = aq.Id;
-            }else if(String.isNotBlank(aq.Dependent_Sequence__c) && aq.Dependent_Sequence__c == 'i'){
+            }else if(String.isNotBlank(aq.caresp__Dependent_Sequence__c) && aq.caresp__Dependent_Sequence__c == 'i'){
                 grandChildAssessQues = aq.Id;
             }
         }
@@ -123,12 +123,12 @@ public with sharing class AssessmentQuestionnaireControllerTest {
 		String jsonStr = '[{"sequence":"1","sectionSequence":1,"section":"Default Section","response":"Not at all","required":false,"quesText":"Poor appetite or overeating?","quesId":"'+parentAssessQues+'","quesAnsList":[{"value":"'+quesAnsList[0].Id+'|Not at all","label":"Not at all"},{"value":"'+quesAnsList[1].Id+'|Several Days","label":"Several Days"},{"value":"'+quesAnsList[2].Id+'|More than half the days","label":"More than half the days"},{"value":"'+quesAnsList[3].Id+'|Nearly every day","label":"Nearly every day"}],"parent":null,"level":"level1","isText":false,"isRadio":true,"isNumber":false,"isCombobox":false,"isCheckbox":false,"grandParent":null,"fieldUpdate":"","dataType":"Radio Box","assessmentQuesId":"'+parentAssessQues+'","responseId":"'+quesAnsList[0].Id+'","selectedValue":"'+quesAnsList[0].Id+'|Not at all","dependentQuestions":[{"sequence":"A","sectionSequence":null,"section":null,"response":"Not at all","required":false,"quesText":"Feeling tired or having little","quesId":"'+childAssessQues+'","quesAnsList":[{"value":"'+quesAnsList[4].Id+'|Not at all","label":"Not at all"},{"value":"'+quesAnsList[5].Id+'|Several Days","label":"Several Days"},{"value":"'+quesAnsList[6].Id+'|More than half the days","label":"More than half the days"},{"value":"'+quesAnsList[7].Id+'|Nearly every day","label":"Nearly every day"}],"parent":"'+parentAssessQues+'","level":"level2","isText":false,"isRadio":false,"isNumber":false,"isCombobox":true,"isCheckbox":false,"grandParent":null,"fieldUpdate":"","dataType":"Picklist","assessmentQuesId":"'+childAssessQues+'","selectedValue":"'+quesAnsList[4].Id+'|Not at all","dependentDependentQuestions":[{"sequence":"i","sectionSequence":null,"section":null,"response":"Software Engineer","required":false,"quesText":"What is your occupation?","quesId":"'+grandChildAssessQues+'","quesAnsList":null,"parent":"'+childAssessQues+'","level":"level3","isText":true,"isRadio":false,"isNumber":false,"isCombobox":false,"isCheckbox":false,"grandParent":"'+parentAssessQues+'","fieldUpdate":"","dataType":"Text","assessmentQuesId":"'+grandChildAssessQues+'","selectedValue":"Software Engineer"}]}]}]';
         //jsonStr = jsonStr.escapeHtml4();
         System.debug('jsonStr >> '+jsonStr);
-        outcome.Draft_Responses__c = jsonStr;
+        outcome.caresp__Draft_Responses__c = jsonStr;
         update outcome;
-        Assessment__c assessments = [select Id, Name from Assessment__c limit 1];
-        Outcome__c outcomes = [select Id, Draft_Responses__c from Outcome__c limit 1];
-        System.assertNotEquals(outcomes.Draft_Responses__c, null, 'Draft_Responses__c should be updated in Outcome.');
-        AssessmentQuestionnaireController.saveResponses(null, 'Account',assessments.Id, assessments.Name, outcomes.Draft_Responses__c, System.today(), null);
+        caresp__Assessment__c assessments = [select Id, Name from caresp__Assessment__c limit 1];
+        caresp__Outcome__c outcomes = [select Id, caresp__Draft_Responses__c from caresp__Outcome__c limit 1];
+        System.assertNotEquals(outcomes.caresp__Draft_Responses__c, null, 'Draft_Responses__c should be updated in Outcome.');
+        AssessmentQuestionnaireController.saveResponses(null, 'Account',assessments.Id, assessments.Name, outcomes.caresp__Draft_Responses__c, System.today(), null);
        
     }
     

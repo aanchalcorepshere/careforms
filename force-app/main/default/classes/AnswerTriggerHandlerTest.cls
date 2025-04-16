@@ -14,6 +14,31 @@ public with sharing class AnswerTriggerHandlerTest {
             UserName = 'sysadmin.' + DateTime.now().getTime() + '@example.com'
         );
         insert adminUser;
+        
+        
+        List<String> permSetNames = new List<String>{
+            'Assessment_Module_Admin',
+                'Forms_Module_Admin',
+                'Plans_Module_Admin'
+                };
+                    
+        List<PermissionSetAssignment> psaList = new List<PermissionSetAssignment>();
+        
+        for (PermissionSet ps : [
+            SELECT Id, Name FROM PermissionSet WHERE Name IN :permSetNames
+        ]) {
+            psaList.add(new PermissionSetAssignment(
+                AssigneeId = adminUser.Id,
+                PermissionSetId = ps.Id
+            ));
+        }
+        
+        if (!psaList.isEmpty()) {
+            insert psaList;
+            System.debug('Permission sets assigned successfully');
+        } else {
+            System.debug('No matching permission sets found');
+        }
         System.runAs(adminUser) {
             caresp__Question_Bank__c questionBank = testFactory.createQuestionBank('Demo question', null, true);
             caresp__Question__c ques = testFactory.createQuestion(questionBank.Id, null, null, true);
@@ -33,16 +58,16 @@ public with sharing class AnswerTriggerHandlerTest {
             {
                 System.Assert(e.getMessage().contains('This Answer cannot be edited.'));
             } 
-        
+            
             try
             {  
-                 delete ans1;
+                delete ans1;
             }
             catch(Exception e)
             {
                 System.Assert(e.getMessage().contains('This Answer cannot be deleted.'));
             } 
-        
+            
             try
             {
                 ans1.caresp__Answer_Text__c = 'Demo answer text234';
@@ -54,9 +79,9 @@ public with sharing class AnswerTriggerHandlerTest {
                 system.debug(e);
                 System.Assert(e.getMessage().contains('This Answer cannot be de-activated.'));
             } 
-       		
+            
             delete ans2;
-	        undelete ans2; 
+            undelete ans2; 
         }
     }     
 }

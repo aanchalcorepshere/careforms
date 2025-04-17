@@ -103,6 +103,7 @@
     <members>Trigger_Setting.Question_Bank_Trigger</members>
     <members>Trigger_Setting.Question_Trigger</members>
     <members>Trigger_Setting.Response_Trigger</members>
+    <members>Dynamic_Plans_Restriction_Setttings.Setting_1</members>
     <name>CustomMetadata</name>
   </types>
   <types>

@@ -282,7 +282,8 @@ System.debug('JSON.serialize(wrapperList)>>> ' + JSON.serialize(wrapperList));
             return outcomeId;
         } catch (Exception ex) {
             System.debug('Error in saveResponses: ' + ex.getMessage());
-            throw new AuraHandledException('An error occurred while saving responses: ' + ex.getMessage());
+            return '';
+           // throw new AuraHandledException('An error occurred while saving responses: ' + ex.getMessage());
         }
     }
 

@@ -83,7 +83,7 @@ public class PlanWizControllerTest {
         caresp__Plan__c testPlan = new caresp__Plan__c(
             //    Name = 'Test Plan',
             //   Plan_Type_F__c = 'Test Type',
-            Plan_Status__c = 'Draft',
+            Caresp__Plan_Status__c = 'Draft',
             caresp__Plan_Start_Date__c =system.today()
         );
         
@@ -114,7 +114,7 @@ public class PlanWizControllerTest {
         Contact con = new Contact(LastName = 'test', AccountId = testAccount.id);
         Insert con;
         caresp__Plan__c Plan = new caresp__Plan__c(
-            Plan_Status__c = 'Draft',
+            Caresp__Plan_Status__c = 'Draft',
             caresp__Plan_Start_Date__c =system.today(),
             caresp__Parent_Child_Name__c='Account-Contact',
             caresp__Plan_Version__c = 'Version 1',
@@ -277,7 +277,7 @@ public class PlanWizControllerTest {
             caresp__No_of_days_to_add_in_date__c = 1,
             caresp__Parent_Date_Field__c = 'Test_Field__c',
             caresp__Plan_template_Name__c = 'Test Template',
-            isActive__c = true
+            Caresp__isActive__c = true
         );
         insert parentPlanTemplate;
         
@@ -345,7 +345,7 @@ public class PlanWizControllerTest {
         System.debug('Goals Found: ' + goalList.size());
         //assert
         System.assertEquals(1, goalList.size(), 'Goal should be inserted');
-        System.assertEquals('On Hold', goalList[0].Status__c, 'Status should match input data');
+        System.assertEquals('On Hold', goalList[0].Caresp__Status__c, 'Status should match input data');
         
     }
     

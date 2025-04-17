@@ -26,7 +26,7 @@ public with sharing class PlanTemplateTriggerHelper implements ITriggerHandler
         
         List<Map<String, String>> jsonDefault = new List<Map<String, String>>();
         caresp__Dynamic_Plans_Restriction_Setttings__mdt activeSetting = PlanTemplateUtil.getDynamicPlanRestrictionSettings();
-        List<String> lstFieldsForDefaultSection = activeSetting.Field_Blueprint_Default_Section_Fields__c != null ? activeSetting.Field_Blueprint_Default_Section_Fields__c.split(',') :new List<String>();
+        List<String> lstFieldsForDefaultSection = activeSetting.caresp__Field_Blueprint_Default_Section_Fields__c != null ? activeSetting.caresp__Field_Blueprint_Default_Section_Fields__c.split(',') :new List<String>();
         PlanWizController.MetadataInfoWrapper metadataInfo = PlanWizController.getMetadataInfo(String.valueOf(newItems[0].get('caresp__Parent_Child_Relation__c')).split('-')[0], null);
         List<Map<String, String>> mapPlanFieldProp = PlanTemplateUtil.getFieldNames('caresp__Plan__c');
        

@@ -275,4 +275,49 @@ public with sharing class testFactory{
         if (create) insert scoringRec;
         return scoringRec;
     }
+    
+    
+    //create test class user
+    Public static User getTestClassUser()
+    {
+         Profile adminProfile = [SELECT Id FROM Profile WHERE Name = 'System Administrator' LIMIT 1];
+        User adminUser = new User(
+            Alias = 'sysadmin',
+            Email = 'sysadmin@example.com',
+            EmailEncodingKey = 'UTF-8',
+            LastName = 'Admin',
+            LanguageLocaleKey = 'en_US',
+            LocaleSidKey = 'en_US',
+            ProfileId = adminProfile.Id,
+            TimeZoneSidKey = 'America/New_York',
+            UserName = 'sysadmin.' + DateTime.now().getTime() + '@example.com'
+        );
+        insert adminUser;
+        
+        
+        List<String> permSetNames = new List<String>{
+            'Assessment_Module_Admin',
+                'Forms_Module_Admin',
+                'Plans_Module_Admin'
+                };
+                    
+        List<PermissionSetAssignment> psaList = new List<PermissionSetAssignment>();
+        
+        for (PermissionSet ps : [
+            SELECT Id, Name FROM PermissionSet WHERE Name IN :permSetNames
+        ]) {
+            psaList.add(new PermissionSetAssignment(
+                AssigneeId = adminUser.Id,
+                PermissionSetId = ps.Id
+            ));
+        }
+        
+        if (!psaList.isEmpty()) {
+            insert psaList;
+            System.debug('Permission sets assigned successfully');
+        } else {
+            System.debug('No matching permission sets found');
+        }
+        return adminUser;
+    }
 }

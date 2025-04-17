@@ -26,6 +26,10 @@
     </customMetadataTypeAccesses>
     <customMetadataTypeAccesses>
         <enabled>true</enabled>
+        <name>Dynamic_Plans_Restriction_Setttings__mdt</name>
+    </customMetadataTypeAccesses>
+    <customMetadataTypeAccesses>
+        <enabled>true</enabled>
         <name>Trigger_Setting__mdt</name>
     </customMetadataTypeAccesses>
     <fieldPermissions>

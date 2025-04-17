@@ -88,6 +88,10 @@
         <apexClass>iTriggerHandler</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <customMetadataTypeAccesses>
+        <enabled>true</enabled>
+        <name>Forms_Setting__mdt</name>
+    </customMetadataTypeAccesses>
     <description>Admin Permission for Forms Module</description>
     <fieldPermissions>
         <editable>true</editable>

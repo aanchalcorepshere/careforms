@@ -53,8 +53,6 @@
     <members>ServicePlanWizClientsWrapper</members>
     <members>SignatureController</members>
     <members>SignatureControllerTest</members>
-    <members>TaskTemplateController</members>
-    <members>TaskTemplateControllerTest</members>
     <members>testFactory</members>
     <members>TriggerDispatcher</members>
     <name>ApexClass</name>
@@ -325,17 +323,6 @@
     <members>Step_Template__c.Step__c</members>
     <members>Step_Template__c.Step_Type__c</members>
     <members>Step_Template__c.Type_of_Action__c</members>
-    <members>Task_Detail__c.Assigned_To__c</members>
-    <members>Task_Detail__c.Parent_Task__c</members>
-    <members>Task_Detail__c.Sub_Type__c</members>
-    <members>Task_Detail__c.Task_Description__c</members>
-    <members>Task_Detail__c.Task_Name__c</members>
-    <members>Task_Detail__c.Task_Template__c</members>
-    <members>Task_Detail__c.Type__c</members>
-    <members>Task_Template__c.Record_Type_Name__c</members>
-    <members>Task_Template__c.Related_Object__c</members>
-    <members>Task_Template__c.Template_Description__c</members>
-    <members>Task_Template__c.Template_Name__c</members>
     <members>Trigger_Setting__mdt.Helper_Class__c</members>
     <members>Trigger_Setting__mdt.isActive__c</members>
     <members>Trigger_Setting__mdt.Object_Name__c</members>
@@ -410,8 +397,6 @@
     <members>Scoring__c</members>
     <members>Step__c</members>
     <members>Step_Template__c</members>
-    <members>Task_Detail__c</members>
-    <members>Task_Template__c</members>
     <members>Trigger_Setting__mdt</members>
     <name>CustomObject</name>
   </types>
@@ -434,7 +419,6 @@
     <members>createNewQuestion</members>
     <members>createPlanTempFieldBlueprint</members>
     <members>createSections</members>
-    <members>createTaskTemplate</members>
     <members>customComboWithCategoryAndSearch</members>
     <members>customComboWithSearch</members>
     <members>customFormInputContainer</members>
@@ -446,7 +430,6 @@
     <members>customLookupLwc</members>
     <members>customMultiselectPicklist</members>
     <members>docCollectionPublic</members>
-    <members>executeTaskContainer</members>
     <members>fileUploadMultiLWC</members>
     <members>formsContainer</members>
     <members>formsCreateFormScreen</members>
@@ -480,7 +463,6 @@
     <members>questions</members>
     <members>questionsPage</members>
     <members>signatureCmpForForms</members>
-    <members>taskDetail</members>
     <name>LightningComponentBundle</name>
   </types>
   <types>
@@ -551,8 +533,6 @@
     <members>caresp__Scoring__c-Scoring Layout</members>
     <members>caresp__Step__c-Step Layout</members>
     <members>caresp__Step_Template__c-Step Template Layout</members>
-    <members>caresp__Task_Detail__c-Task Detail Layout</members>
-    <members>caresp__Task_Template__c-Task Template Layout</members>
     <members>caresp__Trigger_Setting__mdt-Trigger Setting Layout</members>
     <name>Layout</name>
   </types>

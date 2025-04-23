@@ -492,6 +492,12 @@
     <name>ValidationRule</name>
   </types>
   <types>
+    <name>CustomApplication</name>
+    <members>Assessments</members>
+    <members>Forms</members>
+    <members>Plans</members>
+  </types>
+  <types>
     
     <members>caresp__Form__c.Launch_Form</members>
     <members>caresp__Outcome__c.PDF_View</members>
@@ -519,6 +525,36 @@
     <members>Forms_Module_Admin</members>
     <members>Plans_Module_Admin</members>
     <name>PermissionSet</name>
+  </types>
+  <types>
+    <members>caresp__Assessment__c-Assessment Layout</members>
+    <members>caresp__Answer__c-Answer Bank Layout</members>
+    <members>caresp__Assessment_Question__c-Assessment Question Layout</members>
+    <members>caresp__Dependent_Forms_Tracker__c-Dependent Forms Tracker Layout</members>
+    <members>caresp__Dependent_Question__c-Dependent Question Layout</members>
+    <members>caresp__Doc_Category_Help_Text__mdt-Doc Category Help Text Layout</members>
+    <members>caresp__Dynamic_Plan_Parent_Obj_Configuration__mdt-Dynamic Plan Parent Obj Configuration Layout</members>
+    <members>caresp__Dynamic_Plans_Restriction_Setttings__mdt-Dynamic Plans Restriction Settting Layout</members>
+    <members>caresp__Form__c-Form Layout</members>
+    <members>caresp__Forms_Setting__mdt-Forms Setting Layout</members>
+    <members>caresp__Goal__c-Goal Layout</members>
+    <members>caresp__Goal_Template__c-Goal Template Layout</members>
+    <members>caresp__Outcome__c-Outcome Layout</members>
+    <members>caresp__Plan__c-Plan Layout</members>
+    <members>caresp__Plan__c-Service Plan Layout</members>
+    <members>caresp__Plan_Template__c-Plan Template Layout</members>
+    <members>caresp__Plan_Template_Field_Blueprint__c-Plan Template Field Blueprint Layout</members>
+    <members>caresp__Question_Answer_Option__c-Question Answer Option Layout</members>
+    <members>caresp__Question_Bank__c-Question Bank Layout</members>
+    <members>caresp__Question__c-Question Layout</members>
+    <members>caresp__Response__c-Response Layout</members>
+    <members>caresp__Scoring__c-Scoring Layout</members>
+    <members>caresp__Step__c-Step Layout</members>
+    <members>caresp__Step_Template__c-Step Template Layout</members>
+    <members>caresp__Task_Detail__c-Task Detail Layout</members>
+    <members>caresp__Task_Template__c-Task Template Layout</members>
+    <members>caresp__Trigger_Setting__mdt-Trigger Setting Layout</members>
+    <name>Layout</name>
   </types>
   <version>61.0</version>
 </Package>

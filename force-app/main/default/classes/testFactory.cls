@@ -321,5 +321,21 @@ public with sharing class testFactory{
         return adminUser;
     }
     
-  
+  public static Dynamic_Plan_Parent_Obj_Configuration__mdt getParentObjConfigMdtPlans(String parentObjName)
+  {
+      Dynamic_Plan_Parent_Obj_Configuration__mdt dummy = new Dynamic_Plan_Parent_Obj_Configuration__mdt(
+            Label = parentObjName + '-Contact',
+            caresp__Child_Filter_Field_API_Name__c = 'AccountId',
+            caresp__Child_Obj_API_Name__c = 'Contact',
+            caresp__Goal_s_Filter_Field_API_Name__c = 'caresp__Contact__c',
+            caresp__Is_Junction_Exist__c = false,
+            caresp__Is_Active__c = true,
+            caresp__Parent_Obj_API_Name__c = parentObjName,
+            caresp__Object_Fields_To_Display_List__c = 'Name-Title-Phone',
+            caresp__Wrapper_Field_List__c = 'clientName,clientId',
+            caresp__Obj_fields_for_wrapper_fields__c = 'Name,Id',
+            caresp__Filter_Filed_Name_Plan_Obj__c = 'caresp__Placement_Agency_City__c'
+        );
+        return dummy;
+  }
 }

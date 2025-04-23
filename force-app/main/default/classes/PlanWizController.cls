@@ -207,7 +207,8 @@ public with sharing class PlanWizController
         Set<Id> setIdsChildsParentRec = new Set<Id>();
         List<ServicePlanWizClientsWrapper> listCW = new List<ServicePlanWizClientsWrapper>();
         List<sObject> finalFetchedDataChild = new List<sObject>();
-        Dynamic_Plan_Parent_Obj_Configuration__mdt planObjConfig = [SELECT Label, caresp__Child_s_parent_Filter_Field_API_Name__c, caresp__Child_s_Parent_Obj_API_Name__c, caresp__Child_Filter_Field_API_Name__c, caresp__Child_Obj_API_Name__c, caresp__Goal_s_Filter_Field_API_Name__c, caresp__Is_Junction_Exist__c, caresp__Parent_Obj_API_Name__c, caresp__Object_Fields_To_Display_List__c, caresp__Wrapper_Field_List__c, caresp__Obj_fields_for_wrapper_fields__c, caresp__Filter_Filed_Name_Plan_Obj__c FROM Dynamic_Plan_Parent_Obj_Configuration__mdt WHERE caresp__Parent_Obj_API_Name__c =: parentObjName AND caresp__Is_Active__c = true WITH SECURITY_ENFORCED LIMIT 1];
+        caresp__Dynamic_Plan_Parent_Obj_Configuration__mdt planObjConfig = Test.isRunningTest()?testFactory.getParentObjConfigMdtPlans(parentObjName):
+            [SELECT Label, caresp__Child_s_parent_Filter_Field_API_Name__c, caresp__Child_s_Parent_Obj_API_Name__c, caresp__Child_Filter_Field_API_Name__c, caresp__Child_Obj_API_Name__c, caresp__Goal_s_Filter_Field_API_Name__c, caresp__Is_Junction_Exist__c, caresp__Parent_Obj_API_Name__c, caresp__Object_Fields_To_Display_List__c, caresp__Wrapper_Field_List__c, caresp__Obj_fields_for_wrapper_fields__c, caresp__Filter_Filed_Name_Plan_Obj__c FROM caresp__Dynamic_Plan_Parent_Obj_Configuration__mdt WHERE caresp__Parent_Obj_API_Name__c =: parentObjName AND caresp__Is_Active__c = true WITH SECURITY_ENFORCED LIMIT 1];
         
         asID = objectApiName == 'caresp__Plan__c' ? String.valueOf(planRecList[0].get(planObjConfig.caresp__Filter_Filed_Name_Plan_Obj__c)): asID;
         planObjConfigGlobal = planObjConfig != null ? planObjConfig : null;

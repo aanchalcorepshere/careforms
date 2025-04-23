@@ -362,6 +362,8 @@
     <members>Plan_Template_Record_Page</members>
     <members>Question_Bank_Record_Page</members>
     <members>Step_Template_Record_Page</members>
+    <members>Caresphere_Plus_Forms_UtilityBar</members>
+    <members>Caresphere_Plus_Plans_UtilityBar</members>
     <name>FlexiPage</name>
   </types>
   <types>

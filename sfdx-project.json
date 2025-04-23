@@ -37,6 +37,21 @@
         ],
         "permissionSetLicenses": ""
       }
+    },
+    {
+      "path": "force-app",
+      "package": "Version1",
+      "versionName": "ver 0.1",
+      "versionNumber": "0.1.0.NEXT",
+      "default": false,
+      "apexTestAccess": {
+        "permissionSets": [
+          "Assessment_Module_Admin",
+          "Forms_Module_Admin",
+          "Plans_Module_Admin"
+        ],
+        "permissionSetLicenses": ""
+      }
     }
   ],
   "namespace": "caresp",
@@ -47,6 +62,7 @@
     "secondversion": "0Hoao0000002V9NCAU",
     "thirdversion": "0Hoao0000002VAzCAM",
     "thirdversion@0.1.0-1": "04tao0000011fWnAAI",
-    "thirdversion@0.1.0-2": "04tao0000011gsfAAA"
+    "thirdversion@0.1.0-2": "04tao0000011gsfAAA",
+    "Version1": "0Hoao0000002VNtCAM"
   }
 }

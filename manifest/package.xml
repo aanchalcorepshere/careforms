@@ -347,6 +347,7 @@
     <members>Question_Bank__c</members>
     <members>Response__c</members>
     <members>Step__c</members>
+    <members>Scoring__c</members>
     <name>CustomTab</name>
   </types>
   <types>

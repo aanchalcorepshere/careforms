@@ -120,19 +120,19 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
             .then(result => {
                 this.editAssessmentData = result;
                 console.log("editAssessmentData >> ",JSON.stringify(this.editAssessmentData));
-                this.assessmentDetails = JSON.parse(this.editAssessmentData.caresp__Assessment_Detail_JSON__c);
+                this.assessmentDetails = JSON.parse(this.editAssessmentData.Assessment_Detail_JSON__c);
                 this.handleAssessmentDetails(this.assessmentDetails);
-                if(this.editAssessmentData.caresp__Field_Update_JSON__c){
-                    this.completionFieldData = JSON.parse(this.editAssessmentData.caresp__Field_Update_JSON__c);
+                if(this.editAssessmentData.Field_Update_JSON__c){
+                    this.completionFieldData = JSON.parse(this.editAssessmentData.Field_Update_JSON__c);
                 }
-                this.questionsList = JSON.parse(this.editAssessmentData.caresp__Questions_JSON__c);
+                this.questionsList = JSON.parse(this.editAssessmentData.Questions_JSON__c);
                 console.log('this.questionsList >> ',JSON.stringify(this.questionsList));
-                if(this.editAssessmentData.caresp__Section_JSON__c){
-                    this.sections = JSON.parse(this.editAssessmentData.caresp__Section_JSON__c);
+                if(this.editAssessmentData.Section_JSON__c){
+                    this.sections = JSON.parse(this.editAssessmentData.Section_JSON__c);
                     console.log("sections >> ",JSON.stringify(this.sections));
                 }
-                if(this.editAssessmentData.caresp__Scoring_JSON__c){
-                    this.scoringData = JSON.parse(this.editAssessmentData.caresp__Scoring_JSON__c);
+                if(this.editAssessmentData.Scoring_JSON__c){
+                    this.scoringData = JSON.parse(this.editAssessmentData.Scoring_JSON__c);
                 }
             })
             .catch(error => {
@@ -481,13 +481,13 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
                 console.log("finalQuesList >> ",JSON.stringify(finalQuesList));
                 saveQuestions({assessmentId:assessmentId,quesData:JSON.stringify(finalQuesList), editAssessmentId : this.editAssessmentId, aqToBeDeleted : this.assessmentQuesToBeDeleted})
                 .then(result => {
-                    console.log("result >> ",JSON.stringify(result));
+                    
                     let quesResult = JSON.parse(JSON.stringify(result));
                     let tempQuesList = JSON.parse(JSON.stringify(this.questionsList));
                     quesResult.forEach(savedQues => {
                         tempQuesList.forEach(section => {
                             section.questionData.forEach(ques => {
-                                if(ques.unique == savedQues.caresp__unique_id__c){
+                                if(ques.unique == savedQues.unique_id__c){
                                     ques.aqId = savedQues.Id;
                                 }
                                 if(ques.dependentQuesData && ques.dependentQuesData.length){
@@ -496,7 +496,7 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
                                         if(depData.dependentQuesList && depData.dependentQuesList.length){
                                             depData.dependentQuesList.forEach(depQues => {
                                                 console.log("3");
-                                                if(depQues.unique == savedQues.caresp__unique_id__c){
+                                                if(depQues.unique == savedQues.unique_id__c){
                                                     depQues.aqId = savedQues.Id;
                                                 }
                                                 if(depQues.dependentQuesData && depQues.dependentQuesData.length){
@@ -505,7 +505,7 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
                                                         if(depDepData.dependentQuesList && depDepData.dependentQuesList.length){
                                                             depDepData.dependentQuesList.forEach(depDepQues => {
                                                                 console.log("5");
-                                                                if(depDepQues.unique == savedQues.caresp__unique_id__c){
+                                                                if(depDepQues.unique == savedQues.unique_id__c){
                                                                     depDepQues.aqId = savedQues.Id;
                                                                 }
                                                             })
@@ -523,18 +523,18 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
                     
                     let assessmentList = [];
                     if(this.questionsList){
-                        let assessRec = { 'sobjectType': 'caresp__Assessment__c' };
+                        let assessRec = { 'sobjectType': 'Assessment__c' };
                         assessRec.Id = assessmentId;
-                        assessRec.caresp__Assessment_Detail_JSON__c = JSON.stringify(this.assessmentDetails);
-                        assessRec.caresp__Questions_JSON__c = JSON.stringify(tempQuesList);
+                        assessRec.Assessment_Detail_JSON__c = JSON.stringify(this.assessmentDetails);
+                        assessRec.Questions_JSON__c = JSON.stringify(tempQuesList);
                         if(this.completionFieldData){
-                            assessRec.caresp__Field_Update_JSON__c = JSON.stringify(this.completionFieldData);
+                            assessRec.Field_Update_JSON__c = JSON.stringify(this.completionFieldData);
                         }
                         if(this.scoringData){
-                            assessRec.caresp__Scoring_JSON__c = JSON.stringify(this.scoringData);
+                            assessRec.Scoring_JSON__c = JSON.stringify(this.scoringData);
                         }
                         if(this.sections){
-                            assessRec.caresp__Section_JSON__c = JSON.stringify(this.sections);
+                            assessRec.Section_JSON__c = JSON.stringify(this.sections);
                         }
                         console.log("assessRec >> ",JSON.stringify(assessRec));
                         assessmentList.push(assessRec);
@@ -560,25 +560,26 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
                     if(this.scoringData && this.scoringData.length && this.assessmentDetails.needScoring){
                         let scoringList = [];
                         this.scoringData.forEach(score => {
-                            let scoreRec = { 'sobjectType': 'caresp__Scoring__c' };
-                            scoreRec.caresp__Assessment__c = assessmentId;
-                            scoreRec.caresp__Min_Score__c = score.minScore;
-                            scoreRec.caresp__Max_Score__c = score.maxScore;
-                            scoreRec.caresp__Color__c = score.color;
-                            scoreRec.caresp__Status__c = score.status;
+                            let scoreRec = { 'sobjectType': 'Scoring__c' };
+                            scoreRec.Assessment__c = assessmentId;
+                            scoreRec.Min_Score__c = score.minScore;
+                            scoreRec.Max_Score__c = score.maxScore;
+                            scoreRec.Color__c = score.color;
+                            scoreRec.Status__c = score.status;
                             scoringList.push(scoreRec)
                         })
                         createScoringRecords({scoringList : scoringList, editAssessmentId : this.editAssessmentId})
                         .then(result => {
                             var wizurl = '/'+assessmentId;
-                            window.open(wizurl,'_parent')
+                            //window.open(wizurl,'_parent')
+                            window.open('/lightning/r/caresp__Assessment__c/'+assessmentId+'/view', '_self');
                         })
                         .catch(error =>{
                             this.error = JSON.stringify(error);
                         })
                     }else{
                         var wizurl = '/'+assessmentId;
-                        window.open(wizurl,'_parent')
+                        window.open('/lightning/r/caresp__Assessment__c/'+assessmentId+'/view', '_self');
                     }
                     
                 })

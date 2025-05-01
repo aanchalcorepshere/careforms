@@ -274,7 +274,6 @@
     <members>Question_Answer_Option__c.Question_Type__c</members>
     <members>Question_Answer_Option__c.Score__c</members>
     <members>Question_Answer_Option__c.Sequence__c</members>
-    <members>Question_Bank__c.Active__c</members>
     <members>Question_Bank__c.InActive__c</members>
     <members>Question_Bank__c.Question_Text__c</members>
     <members>Question__c.Active__c</members>

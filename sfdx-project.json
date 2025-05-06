@@ -67,6 +67,22 @@
         ],
         "permissionSetLicenses": ""
       }
+    },
+    {
+      "path": "force-app",
+      "package": "caresphere_plus",
+      "versionName": "ver 0.1",
+      "versionNumber": "1.0.0.0",
+      "default": false,
+      "ancestorVersion": "HIGHEST",
+      "apexTestAccess": {
+        "permissionSets": [
+          "Assessment_Module_Admin",
+          "Forms_Module_Admin",
+          "Plans_Module_Admin"
+        ],
+        "permissionSetLicenses": ""
+      }
     }
   ],
   "namespace": "caresp",
@@ -82,6 +98,10 @@
     "Version1@0.1.0-1": "04tao0000011ncPAAQ",
     "Version1@0.1.0-2": "04tao0000011pEPAAY",
     "Version2": "0Hoao0000002VfdCAE",
-    "Version2@0.1.0-1": "04tao0000011sx3AAA"
+    "Version2@0.1.0-1": "04tao0000011sx3AAA",
+    "caresphere_plus": "0Hoao0000002VirCAE",
+    "caresphere_plus@0.1.0-1": "04tao0000011xThAAI",
+    "caresphere_plus@0.1.0-2": "04tao00000122TNAAY",
+    "caresphere_plus@1.0.0": "04tao00000122UzAAI"
   }
 }

@@ -9,7 +9,9 @@
 	</c-plan-signature-email-modal>
 </template--><!--commented for later purpose-->
 <!--sign modal end-->
-
+<template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+    </template>
 <!--Page 1 plan type or existing plan-->
 <div if:true={selectType}>
 	<div class="head">

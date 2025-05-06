@@ -70,12 +70,12 @@
               </div>
             </template>
             <template if:true={page.isSummary}>
-              <c-input-form-summary-page
+              <c-custom-form-input-summary-page
                 key={page.pageName}
                 page-data={pageData}
                 uploaded-documents={uploadedDocuments}
                 oneditpage={handleEditPage}
-              ></c-input-form-summary-page>
+              ></c-custom-form-input-summary-page>
             </template>
             <!-- <template if:true={page.dependentForms}>
               <div

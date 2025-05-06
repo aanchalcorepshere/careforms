@@ -78,8 +78,8 @@ public with sharing class PlanWizController
         
         try {
             // Query the Plan__c record
-            plan = [SELECT Id, Name, Plan_Type_F__c, Field_Blueprint_JSON__c, Case__c, Plan_Signed_Date__c, Plan_Version__c, Plan_Status__c, Parent_Plan__c, Plan_Start_Date__c, Progress_Status__c 
-                    FROM Plan__c 
+            plan = [SELECT Id, Name, caresp__Plan_Type_F__c, caresp__Field_Blueprint_JSON__c, caresp__Plan_Signed_Date__c, caresp__Plan_Version__c, caresp__Plan_Status__c, caresp__Parent_Plan__c, caresp__Plan_Start_Date__c, caresp__Progress_Status__c 
+                    FROM caresp__Plan__c 
                     WHERE Id = :planId WITH SECURITY_ENFORCED
                     LIMIT 1];
             

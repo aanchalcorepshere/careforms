@@ -220,7 +220,6 @@
     <members>Outcome__c.Status__c</members>
     <members>Outcome__c.Total_Max_Score__c</members>
     <members>Outcome__c.Total_Score__c</members>
-    <members>Plan__c.Case__c</members>
     <members>Plan__c.Circumstances__c</members>
     <members>Plan__c.Consequences__c</members>
     <members>Plan__c.Data_Json_for_Signature_Request__c</members>

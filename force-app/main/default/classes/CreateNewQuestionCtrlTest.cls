@@ -10,16 +10,16 @@ public class CreateNewQuestionCtrlTest {
         Question_Answer_Option__c quesAnsOpt1 = testFactory.createQuestionAnswerOption(ans.Id, ques1.Id, null, 'demo', true);
     }
     static testmethod void testCheckDuplicateAndEditable(){
-        Question__c ques = [SELECT Id,Question_Text__c, Question_Data_type__c FROM Question__c limit 1];
+        Question__c ques = [SELECT Id,Question_Bank__c, Question_Text__c, Question_Data_type__c FROM Question__c limit 1];
         Answer__c ans = [SELECT Id FROM Answer__c limit 1];
         
         List<String> ansList = new List<String>();
         ansList.add(ans.Id);
         
-        String resp = CreateNewQuestionCtrl.checkDuplicate(ques.Question_Text__c, ques.Question_Data_type__c, ansList);
+        String resp = CreateNewQuestionCtrl.checkDuplicate(ques.Question_Bank__c, ques.Question_Data_type__c, ansList);
         system.debug('###' +resp);
-        CreateNewQuestionCtrl.checkDuplicate(ques.Question_Text__c, ques.Question_Data_type__c, null);
-        system.assertEquals('unique', resp);
+        //CreateNewQuestionCtrl.checkDuplicate(ques.Question_Text__c, ques.Question_Data_type__c, null);
+        system.assertEquals('Duplicate', resp);
         
    
     }

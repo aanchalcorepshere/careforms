@@ -263,10 +263,10 @@ public class PlanWizControllerTest {
         caresp__Step__c step1 = new caresp__Step__c( caresp__Goal__c = goal1.Id,caresp__Description__c='test');
         //caresp__Step__c step2 = new caresp__Step__c( caresp__Goal__c = goal2.Id,caresp__Description__c='Test');
         insert new List<caresp__Step__c> { step1};
-        
-        Account testAccount = new Account(
-            Name = 'Test Account'
-        );
+            
+            Account testAccount = new Account(
+                Name = 'Test Account'
+            );
         insert testAccount;
         
         Contact con = new Contact(LastName = 'test', AccountId = testAccount.id);
@@ -338,10 +338,10 @@ public class PlanWizControllerTest {
         String jsonString = '{"childId":"003Hs00004qN79RIAS","description":"test","domain":"Child Care","goalFilterFieldName":"caresp__Contact__c","goalId":null,"isHH":false,"planId":"a0IHs00001dxGeJMAU","reason":null,"startDate":null,"status":"Not Started"}';
         Map<String, Object> inputData = (Map<String, Object>) JSON.deserializeUntyped(jsonString);
         
-       
+        
         
         PlanWizController.saveGoal(inputData, new List<Id>{con.Id});
-       
+        
         System.debug('Goals Found: ' + goalList.size());
         //assert
         System.assertEquals(1, goalList.size(), 'Goal should be inserted');
@@ -365,15 +365,139 @@ public class PlanWizControllerTest {
         caresp__Goal__c goal1 = new caresp__Goal__c( caresp__Plan__c = plan.Id,caresp__Domain__c='Food');
         caresp__Goal__c goal2 = new caresp__Goal__c( caresp__Plan__c = plan.Id,caresp__Domain__c='Food');
         List<caresp__Goal__c> goalList = new List<caresp__Goal__c> { goal1, goal2 };
-        insert goalList;
+            insert goalList;
         //assert
         System.assertEquals(2, [SELECT COUNT() FROM caresp__Goal__c WHERE caresp__Plan__c = :Plan.Id]);
-
+        
         PlanWizController.deleteGoal(goalList[0].Id);
         //assert
         List<caresp__Goal__c> deletedGoal = [SELECT Id FROM caresp__Goal__c WHERE Id = :goalList[0].Id ALL ROWS];
         System.assertEquals(1, deletedGoal.size(), 'The goal should be deleted');
         
     }
+    @isTest
+    static void testGetClientsDynamically_Covers_Internal_Pipelines() {
+        // Parent Account
+        Account acc = new Account(Name='Pipeline Test Acc');
+        insert acc;
+        
+        // Child Contact (filter field = AccountId)
+        Contact con = new Contact(LastName='PipelineCon', AccountId=acc.Id);
+        insert con;
+        
+        // Plan: set the plan filter field (Placement_Agency_City__c) to the Account Id
+        caresp__Plan__c plan = new caresp__Plan__c(
+            caresp__Plan_Status__c = 'Draft',
+            caresp__Plan_Start_Date__c = Date.today(),
+            caresp__Parent_Child_Name__c = 'Account-Contact',
+            caresp__Placement_Agency_City__c = acc.Id 
+        );
+        insert plan;
+        
+        // Goal: link to the Contact via the correct goal filter field (caresp__Contact__c)
+        caresp__Goal__c goal = new caresp__Goal__c(
+            caresp__Plan__c = plan.Id,
+            caresp__Domain__c = 'Child Care',
+            caresp__Status__c = 'Work in Progress',
+            caresp__Contact__c = con.Id 
+        );
+        insert goal;
+        
+        // Two Steps to cover both branches (Step vs Actionable Task)
+        insert new List<caresp__Step__c>{
+            new caresp__Step__c(
+                caresp__Goal__c = goal.Id,
+                caresp__Description__c = 'Plain step',
+                caresp__Step_Type__c = 'Step'
+            ),
+                new caresp__Step__c(
+                    caresp__Goal__c = goal.Id,
+                    caresp__Description__c = 'Actionable',
+                    caresp__Step_Type__c = 'Actionable Task',
+                    caresp__Type_of_Action__c = 'Upload Document'
+                )
+                };
+                    
+                    Test.startTest();
+        List<ServicePlanWizClientsWrapper> wrappers =
+            PlanWizController.getClientsDynamically(plan.Id, plan.Id, 'caresp__Plan__c', false);
+        Test.stopTest();
+        
+        System.assertNotEquals(null, wrappers, 'Wrappers should not be null');
+        System.assertEquals(1, wrappers.size(), 'Expected one client wrapper');
+    }
+    
+    @isTest
+    static void testCreateGoalStepTemp_Creates_Goals_And_Steps() {
+        Account a = new Account(Name='TempAcc'); insert a;
+        Contact c = new Contact(LastName='TempCon', AccountId=a.Id); insert c;
+        
+        caresp__Plan__c p = new caresp__Plan__c(
+            caresp__Plan_Status__c = 'Draft',
+            caresp__Plan_Start_Date__c = Date.today(),
+            caresp__Parent_Child_Name__c='Account-Contact'
+        );
+        insert p;
+        
+        caresp__Plan_Template__c planT = new caresp__Plan_Template__c(
+            caresp__Parent_Child_Relation__c = 'Account-Contact',
+            caresp__Plan_template_Name__c = 'Template',
+            caresp__No_of_days_to_add_in_date__c = 1,
+            caresp__Parent_Date_Field__c = 'Test_Field__c',
+            caresp__isActive__c = true
+        );
+        insert planT;
+        
+        caresp__Goal_Template__c goalT = new caresp__Goal_Template__c(
+            caresp__Plan_Template__c = planT.Id,
+            caresp__isActive__c = true,
+            caresp__Status__c = 'Not Started',
+            caresp__Domain__c = 'Parenting',
+            caresp__Description__c = 'testGoal',
+            caresp__Client_Name__c = 'TestClient'
+        );
+        insert goalT;
+        
+        caresp__Step_Template__c stepT = new caresp__Step_Template__c(
+            caresp__Goal_Template__c = goalT.Id,
+            caresp__isActive__c = true,
+            caresp__Step_Type__c = 'Actionable Task',
+            caresp__Type_of_Action__c = 'Create Referral',
+            caresp__Description__c = 'testStep'
+        );
+        insert stepT;
+        
+        // Correct date keys!
+        Map<String, Object> paramMap = new Map<String, Object>{
+            'asID' => a.Id,
+                'planId' => p.Id,
+                'objectApiName' => 'Account',
+                'planTempId' => planT.Id,
+                'defaultDateValues' => new Map<String, Object>{
+                    'goalStepStartDate' => String.valueOf(Date.today()),
+                        'goalStepTargetDate' => String.valueOf(Date.today().addDays(7))
+                        }
+        };
+            
+            Test.startTest();
+        Boolean ok = PlanWizController.createGoalStepTemp(JSON.serialize(paramMap));
+        Test.stopTest();
+        
+        System.assertEquals(true, ok, 'Controller should return true');
+        
+        List<caresp__Goal__c> createdGoals = [
+            SELECT Id FROM caresp__Goal__c WHERE caresp__Plan__c = :p.Id
+        ];
+        System.assertEquals(1, createdGoals.size(), 'One goal should be created');
+        
+        List<caresp__Step__c> createdSteps = [
+            SELECT Id, caresp__Step_Type__c
+            FROM caresp__Step__c
+            WHERE caresp__Goal__c IN :createdGoals
+        ];
+        System.assertEquals(1, createdSteps.size(), 'One step should be created');
+        System.assertEquals('Actionable Task', createdSteps[0].caresp__Step_Type__c);
+    }
+    
     
 }

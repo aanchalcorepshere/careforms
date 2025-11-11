@@ -1,3 +1,4 @@
+// Represents a standardized Aura response structure for Lightning components
 public with sharing class AuraResponse {
     @AuraEnabled 
     public Boolean isSuccess{get; set;}
@@ -23,8 +24,8 @@ public with sharing class AuraResponse {
     @AuraEnabled 
     public String parentObjectApiName{get; set;}
     
+    // Constructor to initialize all fields of the AuraResponse
     public AuraResponse(Boolean isSuccess, String message, String response, String objectApiName, SObject sObjectDetails, String fieldApiName, String grandChildObjectApiName, String childObjectApiName, String primaryObjectApiName, String parentObjectApiName){
-    //, List<SObject> listSObjectDetails) {
         this.isSuccess = isSuccess;
         this.message   = message;
         this.response  = response;

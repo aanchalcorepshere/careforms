@@ -3,78 +3,11 @@
     {
       "path": "force-app",
       "default": true,
-      "package": "initialversion",
-      "versionName": "ver 0.1",
-      "versionNumber": "0.1.0.NEXT",
-      "versionDescription": ""
-    },
-    {
-      "path": "force-app",
-      "package": "secondversion",
-      "versionName": "ver 0.1",
-      "versionNumber": "0.1.0.NEXT",
-      "default": false,
-      "apexTestAccess": {
-        "permissionSets": [
-          "Assessment_Module_Admin",
-          "Forms_Module_Admin",
-          "Plans_Module_Admin"
-        ],
-        "permissionSetLicenses": ""
-      }
-    },
-    {
-      "path": "force-app",
-      "package": "thirdversion",
-      "versionName": "ver 0.1",
-      "versionNumber": "0.1.0.NEXT",
-      "default": false,
-      "apexTestAccess": {
-        "permissionSets": [
-          "Assessment_Module_Admin",
-          "Forms_Module_Admin",
-          "Plans_Module_Admin"
-        ],
-        "permissionSetLicenses": ""
-      }
-    },
-    {
-      "path": "force-app",
-      "package": "Version1",
-      "versionName": "ver 0.1",
-      "versionNumber": "0.1.0.NEXT",
-      "default": false,
-      "apexTestAccess": {
-        "permissionSets": [
-          "Assessment_Module_Admin",
-          "Forms_Module_Admin",
-          "Plans_Module_Admin"
-        ],
-        "permissionSetLicenses": ""
-      }
-    },
-    {
-      "path": "force-app",
-      "package": "Version2",
-      "versionName": "ver 0.1",
-      "versionNumber": "0.1.0.NEXT",
-      "default": false,
-      "apexTestAccess": {
-        "permissionSets": [
-          "Assessment_Module_Admin",
-          "Forms_Module_Admin",
-          "Plans_Module_Admin"
-        ],
-        "permissionSetLicenses": ""
-      }
-    },
-    {
-      "path": "force-app",
-      "package": "caresphere_plus",
-      "versionName": "ver 0.1",
-      "versionNumber": "1.0.0.0",
-      "default": false,
       "ancestorVersion": "HIGHEST",
+      "package": "coresphereplus_2g",
+      "versionName": "ver 0.1",
+      "versionNumber": "1.1.0.0",
+      "versionDescription": "",
       "apexTestAccess": {
         "permissionSets": [
           "Assessment_Module_Admin",
@@ -85,23 +18,14 @@
       }
     }
   ],
+  "name": "",
   "namespace": "caresp",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "63.0",
   "packageAliases": {
-    "initialversion": "0Hoao0000002V7lCAE",
-    "secondversion": "0Hoao0000002V9NCAU",
-    "thirdversion": "0Hoao0000002VAzCAM",
-    "thirdversion@0.1.0-1": "04tao0000011fWnAAI",
-    "thirdversion@0.1.0-2": "04tao0000011gsfAAA",
-    "Version1": "0Hoao0000002VNtCAM",
-    "Version1@0.1.0-1": "04tao0000011ncPAAQ",
-    "Version1@0.1.0-2": "04tao0000011pEPAAY",
-    "Version2": "0Hoao0000002VfdCAE",
-    "Version2@0.1.0-1": "04tao0000011sx3AAA",
-    "caresphere_plus": "0Hoao0000002VirCAE",
-    "caresphere_plus@0.1.0-1": "04tao0000011xThAAI",
-    "caresphere_plus@0.1.0-2": "04tao00000122TNAAY",
-    "caresphere_plus@1.0.0": "04tao00000122UzAAI"
+    "coresphereplus_2g": "0HoUK00000001k50AA",
+    "coresphereplus_2g@0.1.0-1": "04tUK00000017FZYAY",
+    "coresphereplus_2g@1.0.0": "04tUK0000001JYTYA2",
+    "coresphereplus_2g@1.1.0": "04tUK0000001Ja5YAE"
   }
 }

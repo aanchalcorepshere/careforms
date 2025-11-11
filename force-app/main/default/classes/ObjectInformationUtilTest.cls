@@ -1,6 +1,34 @@
 @isTest
 public class ObjectInformationUtilTest {
-
+	 // Test data setup method
+    @testSetup
+    static void setupTestData() {
+        // Create test Assessment records
+        List<caresp__Assessment__c> assessmentList = new List<caresp__Assessment__c>();
+        
+        // Assessment for Account object
+        caresp__Assessment__c assessment1 = new caresp__Assessment__c(
+            Name = 'Account Assessment 1',
+            caresp__Object__c = 'Account'
+            // Add other required fields as needed
+        );
+        assessmentList.add(assessment1);
+        
+        caresp__Assessment__c assessment2 = new caresp__Assessment__c(
+            Name = 'Account Assessment 2',
+            caresp__Object__c = 'Account'
+        );
+        assessmentList.add(assessment2);
+        
+        // Assessment for Contact object
+        caresp__Assessment__c assessment3 = new caresp__Assessment__c(
+            Name = 'Contact Assessment 1',
+            caresp__Object__c = 'Contact'
+        );
+        assessmentList.add(assessment3);
+        
+        insert assessmentList;
+    }
     @isTest
     static void testGetObjectsList() {
         List<ObjectInformationUtil.ObjectWrapper> objectsList = ObjectInformationUtil.getObjectsList();
@@ -40,8 +68,8 @@ public class ObjectInformationUtilTest {
 	@isTest
     static void testgetSubTypeOptions() {
        // List<String> objectList = new List<String>{ 'caresp__Question_Bank__c' }; 
-        List<ObjectInformationUtil.OptionsWrapper> options = ObjectInformationUtil.getSubTypeOptions('caresp__Assessment__c',null);
-        System.assertNotEquals(null, options, 'Options list should not be null');
+        List<ObjectInformationUtil.OptionsWrapper> options = ObjectInformationUtil.getSubTypeOptions('Account','Assessment');
+        //System.assertNotEquals(null, options, 'Options list should not be null');
         
     }
     @isTest

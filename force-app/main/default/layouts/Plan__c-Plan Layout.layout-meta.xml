@@ -4,6 +4,7 @@
     <excludeButtons>ChangeOwnerOne</excludeButtons>
     <excludeButtons>ChangeRecordType</excludeButtons>
     <excludeButtons>Clone</excludeButtons>
+    <excludeButtons>Delete</excludeButtons>
     <excludeButtons>Edit</excludeButtons>
     <excludeButtons>RecordShareHierarchy</excludeButtons>
     <excludeButtons>Share</excludeButtons>
@@ -58,11 +59,6 @@
     </layoutSections>
     <platformActionList>
         <actionListContext>Record</actionListContext>
-        <platformActionListItems>
-            <actionName>Delete</actionName>
-            <actionType>StandardButton</actionType>
-            <sortOrder>0</sortOrder>
-        </platformActionListItems>
     </platformActionList>
     <relatedLists>
         <relatedList>RelatedFileList</relatedList>
@@ -73,7 +69,7 @@
     <showRunAssignmentRulesCheckbox>false</showRunAssignmentRulesCheckbox>
     <showSubmitAndAttachButton>false</showSubmitAndAttachButton>
     <summaryLayout>
-        <masterLabel>00hDn000004rqSL</masterLabel>
+        <masterLabel>00hHs00000XlIKJ</masterLabel>
         <sizeX>4</sizeX>
         <sizeY>0</sizeY>
         <summaryLayoutStyle>Default</summaryLayoutStyle>

@@ -1,5 +1,8 @@
+// Test class for verifying the functionality of PlanTemplateUtil methods related to field blueprint extraction
 @isTest
 public class PlanTemplateUtilTest {
+
+    // Tests getObjectFieldNames and getPlanTemplates for a valid plan template setup
     @isTest
     static void testGetObjectFieldNames() {
       

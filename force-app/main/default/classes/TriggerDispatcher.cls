@@ -42,13 +42,14 @@ public with sharing class TriggerDispatcher {
       }
     }
   }
-
+//This method edit the Active and Helper Class Fields
   public static void getInfo(String objApiName){
-    List<Trigger_Setting__mdt> settings = [select Id, isActive__c, Helper_Class__c from Trigger_Setting__mdt where Object_Name__c =: objApiName WITH SECURITY_ENFORCED];
+    List<Trigger_Setting__mdt> settings = [select Id, isActive__c, Helper_Class__c from Trigger_Setting__mdt where Object_Name__c =: objApiName WITH USER_MODE];
     if(settings != null && settings.size()>0)
     {
       isActive = settings[0].isActive__c;
       handlerName = settings[0].Helper_Class__c;
     }
-  }
+  }  // end of getInfo() – fetches metadata settings based on object API name and assigns isActive and handler class values
+
 }

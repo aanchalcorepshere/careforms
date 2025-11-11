@@ -16,6 +16,7 @@ export default class CustomFormInputSummaryPage extends LightningElement {
     @api additionalFields;
 
     connectedCallback(){
+        console.log('uploadedDocuments >> '+JSON.stringify(this.uploadedDocuments));
         if(this.forPrint){
             this.sectionWidth = 'slds-col slds-size_12-of-12';
         }else{

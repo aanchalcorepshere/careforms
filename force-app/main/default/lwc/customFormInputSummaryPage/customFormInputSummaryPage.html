@@ -42,8 +42,8 @@
                                             <template if:true={uploadedDocuments} for:each={uploadedDocuments} for:item="doc">
                                                 <tr key={doc.index}>
                                                     <td>{doc.index}</td>
-                                                    <td>{doc.fileCategory}</td>
-                                                    <td>{doc.notes}</td>
+                                                    <td>{doc.fileName}</td>
+                                                    <td>{doc.description}</td>
                                                     <td><lightning-icon icon-name={doc.fileTypeIcon} alternative-text="Approved" title="Approved"></lightning-icon>
                                                         {doc.fileUploadName}</td>
                                                     <!-- <td>

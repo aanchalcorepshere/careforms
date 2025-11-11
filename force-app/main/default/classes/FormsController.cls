@@ -14,7 +14,7 @@
 #############################################################################
 */
 
-public with sharing class FormsController {
+
   /*
       # Author      : Ankit Chowhan
       # Date        : 24th Feb, 2022
@@ -62,140 +62,142 @@ public with sharing class FormsController {
       # Return      : List<ObjectWrapperCategory>
       # Change Log  : 
   */
-  @AuraEnabled
-  public static List<ObjectWrapperCategory> getRelatedObjectsList(
-    String parentObjectName
-  ) {
-    List<ObjectWrapperCategory> respList = new List<ObjectWrapperCategory>();
-
-    Map<string, string> objectRelationshipMap = new Map<string, string>();
-
-    List<caresp__Forms_Setting__mdt> restrictedList = [select Id, caresp__Restricted_Object_List__c from caresp__Forms_Setting__mdt With SECURITY_ENFORCED limit 1];
-
-    String restrictedSObjectListString = restrictedList[0].caresp__Restricted_Object_List__c;
-    List<String> restrictedSObjectList = restrictedSObjectListString.split(',');
-
-    Map<String, Schema.SObjectType> schemaMap = Schema.getGlobalDescribe();
-
-    List<String> uniqueChildList;
-    List<String> uniqueParentList;
-
-    for (String ss1 : schemaMap.keyset()) {
-      Schema.SObjectType objToken = schemaMap.get(ss1);
-
-      if (ss1.equalsignorecase(parentObjectName)) {
-        //find details about sobject
-        Schema.DescribeSObjectResult objDescribe = objToken.getdescribe();
-        List<Schema.ChildRelationship> childRelationshipList = objDescribe.getChildRelationships();
-        uniqueChildList = new List<String>();
-        uniqueParentList = new List<String>();
-
-        ObjectWrapperCategory objWrapChildRec = new ObjectWrapperCategory();
-        objWrapChildRec.categoryName = 'Children';
-        List<ObjectWrapper> childObjList = new List<ObjectWrapper>();
-
-        // Getting child objects
-        for (Schema.ChildRelationship ss : childRelationshipList) {
-          String parentLabelOnChild = ss.getField().getDescribe().getLabel();
-          String parentApiOnChild = ss.getField().getDescribe().getName();
-          Schema.SObjectType childObjectApi = ss.getChildSObject();
-          String childObjectApiString = String.valueOf(ss.getChildSObject());
-          String childObjectLabel = ss.getChildSObject()
-            .getDescribe()
-            .getLabel();
-          if (!restrictedSObjectList.contains(childObjectLabel) && parentApiOnChild != 'WhoId' &&
-            parentApiOnChild != 'LinkedEntityId' &&
-            !childObjectApiString.containsignorecase('__share') &&
-            !childObjectApiString.containsignorecase('__ChangeEvent') &&
-            !childObjectApiString.containsignorecase('__feed') &&
-            !childObjectApiString.containsignorecase('__history') &&
-            !childObjectApiString.containsignorecase('__tag') &&
-            childObjectApi.getDescribe().isCreateable() &&
-            !childObjectApiString.equalsignorecase('User')
-          ) {
-            ObjectWrapper newObj = new ObjectWrapper();
-            newObj.label = String.valueOf(
-              childObjectLabel +
-                '(' +
-                parentObjectName +
-                '-' +
-                parentLabelOnChild +
-                ')'
-            );
-            //as this same object can be used multiple times so for differentiation making unique name identifier by adding relationship fields to the object name
-            newObj.value = String.valueOf(
-              childObjectApi + '|' + parentObjectName + '|' + parentApiOnChild
-            );
-            newObj.isCustom = childObjectApi.getDescribe().isCustom();
-            newObj.relation = 'child';
-            childObjList.add(newObj);
-          }
-        }
-        objWrapChildRec.objectList = childObjList;
-
-        if (objWrapChildRec != null) respList.add(objWrapChildRec);
-
-        //Getting parent(lookup) objects
-        ObjectWrapperCategory objWrapParentRec = new ObjectWrapperCategory();
-        objWrapParentRec.categoryName = 'Lookup(Parent)';
-        List<ObjectWrapper> parentObjList = new List<ObjectWrapper>();
-
-        for (
-          Schema.SobjectField strFld : objDescribe.fields.getMap().Values()
-        ) {
-          if (strFld.getDescribe().getType() == Schema.DisplayType.REFERENCE) {
-            String parentFieldLabel = strFld.getDescribe().getLabel();
-            String parentFieldApi = strFld.getDescribe().getName();
-            String objectLabel = strFld.getDescribe().getReferenceTo()[0]
-              .getDescribe()
-              .getLabel();
-            String objectApiString = strFld.getDescribe().getReferenceTo()[0]
-              .getDescribe()
-              .getName();
-            Schema.SObjectType objectApi = strFld.getDescribe()
-                .getReferenceTo()[0]
-              .getDescribe()
-              .getSObjectType();
-            if (
-              !restrictedSObjectList.contains(objectLabel) &&
-              !objectApiString.containsignorecase('history') &&
-              !objectApiString.containsignorecase('tag') &&
-              !objectApiString.containsignorecase('share') &&
-              !objectApiString.containsignorecase('feed') &&
-              !objectApiString.containsignorecase('ChangeEvent') &&
-              !objectApiString.equalsignorecase('User')
-            ) {
-              ObjectWrapper newObj = new ObjectWrapper();
-              newObj.label =
-                objectLabel +
-                '(' +
-                parentObjectName +
-                '-' +
-                parentFieldLabel +
-                ')';
-              //as this same object can be used multiple times so for differentiation making unique name identifier by adding relationship fields to the object name
-              newObj.value =
-                objectApiString +
-                '|' +
-                parentObjectName +
-                '|' +
-                parentFieldApi;
-              newObj.isCustom = objectApi.getDescribe().isCustom();
-              newObj.relation = 'parent';
-              parentObjList.add(newObj);
+    public with sharing class FormsController {
+    
+      @AuraEnabled
+      public static List<ObjectWrapperCategory> getRelatedObjectsList(
+        String parentObjectName
+      ) {
+        List<ObjectWrapperCategory> respList = new List<ObjectWrapperCategory>();
+    
+        Map<string, string> objectRelationshipMap = new Map<string, string>();
+    
+        List<caresp__Forms_Setting__mdt> restrictedList = [select Id, caresp__Restricted_Object_List__c from caresp__Forms_Setting__mdt WITH USER_MODE limit 1];
+    
+        String restrictedSObjectListString = restrictedList[0].caresp__Restricted_Object_List__c;
+        List<String> restrictedSObjectList = restrictedSObjectListString.split(',');
+    
+        Map<String, Schema.SObjectType> schemaMap = Schema.getGlobalDescribe();
+    
+        List<String> uniqueChildList;
+        List<String> uniqueParentList;
+    
+        for (String ss1 : schemaMap.keyset()) {
+          Schema.SObjectType objToken = schemaMap.get(ss1);
+    
+          if (ss1.equalsignorecase(parentObjectName)) {
+            //find details about sobject
+            Schema.DescribeSObjectResult objDescribe = objToken.getdescribe();
+            List<Schema.ChildRelationship> childRelationshipList = objDescribe.getChildRelationships();
+            uniqueChildList = new List<String>();
+            uniqueParentList = new List<String>();
+    
+            ObjectWrapperCategory objWrapChildRec = new ObjectWrapperCategory();
+            objWrapChildRec.categoryName = 'Children';
+            List<ObjectWrapper> childObjList = new List<ObjectWrapper>();
+    
+            // Getting child objects
+            for (Schema.ChildRelationship ss : childRelationshipList) {
+              String parentLabelOnChild = ss.getField().getDescribe().getLabel();
+              String parentApiOnChild = ss.getField().getDescribe().getName();
+              Schema.SObjectType childObjectApi = ss.getChildSObject();
+              String childObjectApiString = String.valueOf(ss.getChildSObject());
+              String childObjectLabel = ss.getChildSObject()
+                .getDescribe()
+                .getLabel();
+              if (!restrictedSObjectList.contains(childObjectLabel) && parentApiOnChild != 'WhoId' &&
+                parentApiOnChild != 'LinkedEntityId' &&
+                !childObjectApiString.containsignorecase('__share') &&
+                !childObjectApiString.containsignorecase('__ChangeEvent') &&
+                !childObjectApiString.containsignorecase('__feed') &&
+                !childObjectApiString.containsignorecase('__history') &&
+                !childObjectApiString.containsignorecase('__tag') &&
+                childObjectApi.getDescribe().isCreateable() &&
+                !childObjectApiString.equalsignorecase('User')
+              ) {
+                ObjectWrapper newObj = new ObjectWrapper();
+                newObj.label = String.valueOf(
+                  childObjectLabel +
+                    '(' +
+                    parentObjectName +
+                    '-' +
+                    parentLabelOnChild +
+                    ')'
+                );
+                //as this same object can be used multiple times so for differentiation making unique name identifier by adding relationship fields to the object name
+                newObj.value = String.valueOf(
+                  childObjectApi + '|' + parentObjectName + '|' + parentApiOnChild
+                );
+                newObj.isCustom = childObjectApi.getDescribe().isCustom();
+                newObj.relation = 'child';
+                childObjList.add(newObj);
+              }
             }
+            objWrapChildRec.objectList = childObjList;
+    
+            if (objWrapChildRec != null) respList.add(objWrapChildRec);
+    
+            //Getting parent(lookup) objects
+            ObjectWrapperCategory objWrapParentRec = new ObjectWrapperCategory();
+            objWrapParentRec.categoryName = 'Lookup(Parent)';
+            List<ObjectWrapper> parentObjList = new List<ObjectWrapper>();
+    
+            for (
+              Schema.SobjectField strFld : objDescribe.fields.getMap().Values()
+            ) {
+              if (strFld.getDescribe().getType() == Schema.DisplayType.REFERENCE) {
+                String parentFieldLabel = strFld.getDescribe().getLabel();
+                String parentFieldApi = strFld.getDescribe().getName();
+                String objectLabel = strFld.getDescribe().getReferenceTo()[0]
+                  .getDescribe()
+                  .getLabel();
+                String objectApiString = strFld.getDescribe().getReferenceTo()[0]
+                  .getDescribe()
+                  .getName();
+                Schema.SObjectType objectApi = strFld.getDescribe()
+                    .getReferenceTo()[0]
+                  .getDescribe()
+                  .getSObjectType();
+                if (
+                  !restrictedSObjectList.contains(objectLabel) &&
+                  !objectApiString.containsignorecase('history') &&
+                  !objectApiString.containsignorecase('tag') &&
+                  !objectApiString.containsignorecase('share') &&
+                  !objectApiString.containsignorecase('feed') &&
+                  !objectApiString.containsignorecase('ChangeEvent') &&
+                  !objectApiString.equalsignorecase('User')
+                ) {
+                  ObjectWrapper newObj = new ObjectWrapper();
+                  newObj.label =
+                    objectLabel +
+                    '(' +
+                    parentObjectName +
+                    '-' +
+                    parentFieldLabel +
+                    ')';
+                  //as this same object can be used multiple times so for differentiation making unique name identifier by adding relationship fields to the object name
+                  newObj.value =
+                    objectApiString +
+                    '|' +
+                    parentObjectName +
+                    '|' +
+                    parentFieldApi;
+                  newObj.isCustom = objectApi.getDescribe().isCustom();
+                  newObj.relation = 'parent';
+                  parentObjList.add(newObj);
+                }
+              }
+            }
+    
+            objWrapParentRec.objectList = parentObjList;
+    
+            if (objWrapParentRec != null)
+              respList.add(objWrapParentRec);
           }
         }
-
-        objWrapParentRec.objectList = parentObjList;
-
-        if (objWrapParentRec != null)
-          respList.add(objWrapParentRec);
+        system.debug(LoggingLevel.Error ,'respList ' + respList);
+        return respList;
       }
-    }
-    system.debug('respList ' + respList);
-    return respList;
-  }
 
   /*
       # Author      : Ankit Chowhan
@@ -207,206 +209,206 @@ public with sharing class FormsController {
       # Return      : List < FieldsWrapper >
       # Change Log  : 
   */
-  @AuraEnabled
-  public static List<FieldsWrapper> getFieldsData(
-    List<String> objectList,
-    Boolean prefillFields
-  ) {
-    List<FieldsWrapper> fieldsWrapperList = new List<FieldsWrapper>();
-    System.debug('objectList - ' + objectList);
-
-    List<String> listOfRestrictedObjectLookup = new List<String>();
-    for (String objectString : objectList) {
-      String objectNameString = objectString.subStringBefore('#');
-      if (objectNameString.countMatches('|') == 2) {
-        String restrictedLookupField = objectNameString.substringAfterLast('|');
-        Boolean isChild = Boolean.valueOf(
-          objectString.subStringAfter('#').subStringBefore('#')
-        );
-        String isMulti = objectString.subStringAfter('#').subStringAfter('#');
-        String objectName = '';
-        if (!isChild) {
-          objectName = objectNameString.substringBeforeLast('|').substringAfter('|');
-        } else {
-          objectName = objectNameString.substringBeforeLast('|')
-            .substringBefore('|');
-        }
-        listOfRestrictedObjectLookup.add(
-          objectName + '|' + restrictedLookupField + '#' + isMulti
-        );
-        System.System.debug(
-          'listOfRestrictedObjectLookup - ' + listOfRestrictedObjectLookup
-        );
-      }
-    }
-
-    for (String objectString : objectList) {
-      String objectName = objectString.subStringBefore('#');
-      String type = objectName.subStringBefore('|');
-      System.debug('type - ' + type);
-      Map<String, Schema.SObjectType> schemaMap = Schema.getGlobalDescribe();
-      Schema.SObjectType objSchema = schemaMap.get(type);
-      Map<String, Schema.SObjectField> fieldMap = objSchema.getDescribe()
-        .fields.getMap();
-
-      FieldsWrapper fieldsWrpObj = new FieldsWrapper();
-      fieldsWrpObj.objectName = objSchema.getDescribe().getName();
-      fieldsWrpObj.objectLabel = objSchema.getDescribe().getLabel();
-      fieldsWrpObj.objectUniqueName = objectName;
-
-      //checking if the object selected is marked as 'multi'
-      fieldsWrpObj.isChild = Boolean.valueOf(
-        objectString.subStringAfter('#').subStringBefore('#')
-      );
-      fieldsWrpObj.isMulti = Boolean.valueOf(
-        objectString.subStringAfter('#').subStringAfter('#')
-      );
-      String objApi = objSchema.getDescribe().getName();
-      fieldsWrpObj.fields = new List<Fields>();
-
-      for (String fieldName : fieldMap.keySet()) {
-        //getting all the fields that are creatable by current user except for OwnerId field. May also implement restricted field list in this method in future.
-        if (prefillFields) {
-          if (
-            fieldMap.get(fieldName).getDescribe().getName() != 'OwnerId' &&
-            fieldMap.get(fieldName).getDescribe().getName() != 'CreatedById' &&
-            fieldMap.get(fieldName).getDescribe().getName() != 'CreatedDate' &&
-            fieldMap.get(fieldName).getDescribe().getName() !=
-            'LastModifiedById' &&
-            fieldMap.get(fieldName).getDescribe().getName() !=
-            'LastModifiedDate' &&
-            fieldMap.get(fieldName).getDescribe().getName() !=
-            'SystemModstamp' &&
-            fieldMap.get(fieldName).getDescribe().getName() != 'Id' &&
-            !fieldMap.get(fieldName).getDescribe().isAutoNumber()
-          ) {
-            System.debug('fieldName >>' + fieldName);
-            System.debug(
-              'isAutoNumber >>' +
-              fieldMap.get(fieldName).getDescribe().isAutoNumber()
+      @AuraEnabled
+      public static List<FieldsWrapper> getFieldsData(
+        List<String> objectList,
+        Boolean prefillFields
+      ) {
+        List<FieldsWrapper> fieldsWrapperList = new List<FieldsWrapper>();
+        System.debug(LoggingLevel.Error ,'objectList - ' + objectList);
+    
+        List<String> listOfRestrictedObjectLookup = new List<String>();
+        for (String objectString : objectList) {
+          String objectNameString = objectString.subStringBefore('#');
+          if (objectNameString.countMatches('|') == 2) {
+            String restrictedLookupField = objectNameString.substringAfterLast('|');
+            Boolean isChild = Boolean.valueOf(
+              objectString.subStringAfter('#').subStringBefore('#')
             );
-            Boolean isLookupRestricted = false;
-            if (!listOfRestrictedObjectLookup.isEmpty()) {
-              for (
-                String eachLookupObjectString : listOfRestrictedObjectLookup
-              ) {
-                if (
-                  type.equals(eachLookupObjectString.substringBefore('|')) &&
-                  fieldMap.get(fieldName)
-                    .getDescribe()
-                    .getName()
-                    .equals(
-                      eachLookupObjectString.substringAfter('|')
-                        .substringBefore('#')
-                    ) &&
-                  Boolean.valueOf(eachLookupObjectString.substringAfter('#')) == fieldsWrpObj.isMulti
-                ) {
-                  isLookupRestricted = true;
-                }
-              }
+            String isMulti = objectString.subStringAfter('#').subStringAfter('#');
+            String objectName = '';
+            if (!isChild) {
+              objectName = objectNameString.substringBeforeLast('|').substringAfter('|');
+            } else {
+              objectName = objectNameString.substringBeforeLast('|')
+                .substringBefore('|');
             }
-            if (!isLookupRestricted) {
-              Fields fieldsObj = new Fields();
-              fieldsObj.fieldName = fieldMap.get(fieldName)
-                .getDescribe()
-                .getLabel();
-              fieldsObj.fieldApi = fieldMap.get(fieldName)
-                .getDescribe()
-                .getName();
-              fieldsObj.isFormulaField = fieldMap.get(fieldName)
-                .getDescribe()
-                .isCalculated();
-              fieldsObj.objectName = objectName;
-              //fieldsObj.fieldUniqueName = objLabel.replaceAll(' ','_')+'_'+(fieldsObj.fieldApi);
-              fieldsObj.fieldUniqueName = objApi + '::' + (fieldsObj.fieldApi);
-              fieldsObj.dataType = String.valueOf(
-                fieldMap.get(fieldName).getDescribe().getType()
-              );
-              if (fieldsObj.dataType != 'BOOLEAN') {
-                fieldsObj.required = !fieldMap.get(fieldName)
-                  .getDescribe()
-                  .isNillable();
-                fieldsObj.isNotNillable = !fieldMap.get(fieldName)
-                  .getDescribe()
-                  .isNillable();
-              } else {
-                fieldsObj.required = false;
-                fieldsObj.isNotNillable = false;
-              }
-              fieldsObj.isDependentPicklist = fieldMap.get(fieldName)
-                .getDescribe()
-                .isDependentPicklist();
-              if (fieldsObj.isDependentPicklist) {
-                fieldsObj.controllingField = fieldMap.get(fieldName).getDescribe().getController().getDescribe().getName();
-                fieldsObj.controllingFieldValue = '';
-              }
-              fieldsObj.customlabel = '';
-              /* System.debug('fieldName >> '+fieldsObj.fieldName);
-               System.debug('default value >> '+String.valueOf(fieldMap.get(fieldName).getDescribe().getDefaultValue())); */
-              fieldsObj.defaultValue = String.valueOf(
-                fieldMap.get(fieldName).getDescribe().getDefaultValue()
-              );
-              fieldsObj.isLabelEdit = false;
-              fieldsObj.isQuestion = false;
-              fieldsObj.inputValue = '';
-              fieldsObj.identifier = 'Record1'; //this identifier will help in identification of records in case 'multi' is seleted.
-              fieldsWrpObj.fields.add(fieldsObj);
-            }
-          }
-        } else {
-          System.debug(
-            'prefill Fields >> ' +
-            fieldMap.get(fieldName).getDescribe().isCreateable()
-          );
-          System.debug(
-            'Field Name >> ' + fieldMap.get(fieldName).getDescribe().getName()
-          );
-          if (fieldMap.get(fieldName).getDescribe().isCreateable() == true &&fieldMap.get(fieldName).getDescribe().getName() != 'OwnerId') {
-            Boolean isLookupRestricted = false;
-            if (!listOfRestrictedObjectLookup.isEmpty()) {
-              for (String eachLookupObjectString : listOfRestrictedObjectLookup) {
-                if (type.equals(eachLookupObjectString.substringBefore('|')) && fieldMap.get(fieldName).getDescribe().getName().equals(eachLookupObjectString.substringAfter('|').substringBefore('#')) &&Boolean.valueOf(eachLookupObjectString.substringAfter('#')) ==fieldsWrpObj.isMulti) {
-                  isLookupRestricted = true;
-                }
-              }
-            }
-            if (!isLookupRestricted) {
-              Fields fieldsObj = new Fields();
-              fieldsObj.fieldName = fieldMap.get(fieldName).getDescribe().getLabel();
-              fieldsObj.fieldApi = fieldMap.get(fieldName).getDescribe().getName();
-              fieldsObj.objectName = objectName;
-              //fieldsObj.fieldUniqueName = objLabel.replaceAll(' ','_')+'_'+(fieldsObj.fieldApi);
-              fieldsObj.fieldUniqueName = objApi + '::' + (fieldsObj.fieldApi);
-              fieldsObj.dataType = String.valueOf(fieldMap.get(fieldName).getDescribe().getType());
-              if (fieldsObj.dataType != 'BOOLEAN') {
-                fieldsObj.required = !fieldMap.get(fieldName).getDescribe().isNillable();
-                fieldsObj.isNotNillable = !fieldMap.get(fieldName).getDescribe().isNillable();
-              } else {
-                fieldsObj.required = false;
-                fieldsObj.isNotNillable = false;
-              }
-              fieldsObj.isDependentPicklist = fieldMap.get(fieldName).getDescribe().isDependentPicklist();
-              if (fieldsObj.isDependentPicklist) {
-                fieldsObj.controllingField = fieldMap.get(fieldName).getDescribe().getController().getDescribe().getName();
-                fieldsObj.controllingFieldValue = '';
-              }
-              fieldsObj.customlabel = '';
-              /* System.debug('fieldName >> '+fieldsObj.fieldName);
-               System.debug('default value >> '+String.valueOf(fieldMap.get(fieldName).getDescribe().getDefaultValue())); */
-              fieldsObj.defaultValue = String.valueOf(
-                fieldMap.get(fieldName).getDescribe().getDefaultValue()
-              );
-              fieldsObj.isLabelEdit = false;
-              fieldsObj.isQuestion = false;
-              fieldsObj.inputValue = '';
-              fieldsObj.identifier = 'Record1'; //this identifier will help in identification of records in case 'multi' is seleted.
-              fieldsWrpObj.fields.add(fieldsObj);
-            }
+            listOfRestrictedObjectLookup.add(
+              objectName + '|' + restrictedLookupField + '#' + isMulti
+            );
+            System.System.debug(LoggingLevel.Error ,
+              'listOfRestrictedObjectLookup - ' + listOfRestrictedObjectLookup
+            );
           }
         }
-      }
-      fieldsWrapperList.add(fieldsWrpObj);
-    }
+    
+        for (String objectString : objectList) {
+          String objectName = objectString.subStringBefore('#');
+          String type = objectName.subStringBefore('|');
+          System.debug(LoggingLevel.Error ,'type - ' + type);
+          Map<String, Schema.SObjectType> schemaMap = Schema.getGlobalDescribe();
+          Schema.SObjectType objSchema = schemaMap.get(type);
+          Map<String, Schema.SObjectField> fieldMap = objSchema.getDescribe()
+            .fields.getMap();
+    
+          FieldsWrapper fieldsWrpObj = new FieldsWrapper();
+          fieldsWrpObj.objectName = objSchema.getDescribe().getName();
+          fieldsWrpObj.objectLabel = objSchema.getDescribe().getLabel();
+          fieldsWrpObj.objectUniqueName = objectName;
+    
+          //checking if the object selected is marked as 'multi'
+          fieldsWrpObj.isChild = Boolean.valueOf(
+            objectString.subStringAfter('#').subStringBefore('#')
+          );
+          fieldsWrpObj.isMulti = Boolean.valueOf(
+            objectString.subStringAfter('#').subStringAfter('#')
+          );
+          String objApi = objSchema.getDescribe().getName();
+          fieldsWrpObj.fields = new List<Fields>();
+    
+          for (String fieldName : fieldMap.keySet()) {
+            //getting all the fields that are creatable by current user except for OwnerId field. May also implement restricted field list in this method in future.
+            if (prefillFields) {
+              if (
+                fieldMap.get(fieldName).getDescribe().getName() != 'OwnerId' &&
+                fieldMap.get(fieldName).getDescribe().getName() != 'CreatedById' &&
+                fieldMap.get(fieldName).getDescribe().getName() != 'CreatedDate' &&
+                fieldMap.get(fieldName).getDescribe().getName() !=
+                'LastModifiedById' &&
+                fieldMap.get(fieldName).getDescribe().getName() !=
+                'LastModifiedDate' &&
+                fieldMap.get(fieldName).getDescribe().getName() !=
+                'SystemModstamp' &&
+                fieldMap.get(fieldName).getDescribe().getName() != 'Id' &&
+                !fieldMap.get(fieldName).getDescribe().isAutoNumber()
+              ) {
+                System.debug(LoggingLevel.Error ,'fieldName >>' + fieldName);
+                System.debug(LoggingLevel.Error ,
+                  'isAutoNumber >>' +
+                  fieldMap.get(fieldName).getDescribe().isAutoNumber()
+                );
+                Boolean isLookupRestricted = false;
+                if (!listOfRestrictedObjectLookup.isEmpty()) {
+                  for (
+                    String eachLookupObjectString : listOfRestrictedObjectLookup
+                  ) {
+                    if (
+                      type.equals(eachLookupObjectString.substringBefore('|')) &&
+                      fieldMap.get(fieldName)
+                        .getDescribe()
+                        .getName()
+                        .equals(
+                          eachLookupObjectString.substringAfter('|')
+                            .substringBefore('#')
+                        ) &&
+                      Boolean.valueOf(eachLookupObjectString.substringAfter('#')) == fieldsWrpObj.isMulti
+                    ) {
+                      isLookupRestricted = true;
+                    }
+                  }
+                }
+                if (!isLookupRestricted) {
+                  Fields fieldsObj = new Fields();
+                  fieldsObj.fieldName = fieldMap.get(fieldName)
+                    .getDescribe()
+                    .getLabel();
+                  fieldsObj.fieldApi = fieldMap.get(fieldName)
+                    .getDescribe()
+                    .getName();
+                  fieldsObj.isFormulaField = fieldMap.get(fieldName)
+                    .getDescribe()
+                    .isCalculated();
+                  fieldsObj.objectName = objectName;
+                  //fieldsObj.fieldUniqueName = objLabel.replaceAll(' ','_')+'_'+(fieldsObj.fieldApi);
+                  fieldsObj.fieldUniqueName = objApi + '::' + (fieldsObj.fieldApi);
+                  fieldsObj.dataType = String.valueOf(
+                    fieldMap.get(fieldName).getDescribe().getType()
+                  );
+                  if (fieldsObj.dataType != 'BOOLEAN') {
+                    fieldsObj.required = !fieldMap.get(fieldName)
+                      .getDescribe()
+                      .isNillable();
+                    fieldsObj.isNotNillable = !fieldMap.get(fieldName)
+                      .getDescribe()
+                      .isNillable();
+                  } else {
+                    fieldsObj.required = false;
+                    fieldsObj.isNotNillable = false;
+                  }
+                  fieldsObj.isDependentPicklist = fieldMap.get(fieldName)
+                    .getDescribe()
+                    .isDependentPicklist();
+                  if (fieldsObj.isDependentPicklist) {
+                    fieldsObj.controllingField = fieldMap.get(fieldName).getDescribe().getController().getDescribe().getName();
+                    fieldsObj.controllingFieldValue = '';
+                  }
+                  fieldsObj.customlabel = '';
+                  /* System.debug('fieldName >> '+fieldsObj.fieldName);
+                   System.debug('default value >> '+String.valueOf(fieldMap.get(fieldName).getDescribe().getDefaultValue())); */
+                  fieldsObj.defaultValue = String.valueOf(
+                    fieldMap.get(fieldName).getDescribe().getDefaultValue()
+                  );
+                  fieldsObj.isLabelEdit = false;
+                  fieldsObj.isQuestion = false;
+                  fieldsObj.inputValue = '';
+                  fieldsObj.identifier = 'Record1'; //this identifier will help in identification of records in case 'multi' is seleted.
+                  fieldsWrpObj.fields.add(fieldsObj);
+                }
+              }
+            } else {
+              System.debug(LoggingLevel.Error ,
+                'prefill Fields >> ' +
+                fieldMap.get(fieldName).getDescribe().isCreateable()
+              );
+              System.debug(LoggingLevel.Error ,
+                'Field Name >> ' + fieldMap.get(fieldName).getDescribe().getName()
+              );
+              if (fieldMap.get(fieldName).getDescribe().isAccessible() && fieldMap.get(fieldName).getDescribe().isCreateable() && fieldMap.get(fieldName).getDescribe().getName() != 'OwnerId') {
+                Boolean isLookupRestricted = false;
+                if (!listOfRestrictedObjectLookup.isEmpty()) {
+                  for (String eachLookupObjectString : listOfRestrictedObjectLookup) {
+                    if (type.equals(eachLookupObjectString.substringBefore('|')) && fieldMap.get(fieldName).getDescribe().getName().equals(eachLookupObjectString.substringAfter('|').substringBefore('#')) &&Boolean.valueOf(eachLookupObjectString.substringAfter('#')) ==fieldsWrpObj.isMulti) {
+                      isLookupRestricted = true;
+                    }
+                  }
+                }
+                if (!isLookupRestricted) {
+                  Fields fieldsObj = new Fields();
+                  fieldsObj.fieldName = fieldMap.get(fieldName).getDescribe().getLabel();
+                  fieldsObj.fieldApi = fieldMap.get(fieldName).getDescribe().getName();
+                  fieldsObj.objectName = objectName;
+                  //fieldsObj.fieldUniqueName = objLabel.replaceAll(' ','_')+'_'+(fieldsObj.fieldApi);
+                  fieldsObj.fieldUniqueName = objApi + '::' + (fieldsObj.fieldApi);
+                  fieldsObj.dataType = String.valueOf(fieldMap.get(fieldName).getDescribe().getType());
+                  if (fieldsObj.dataType != 'BOOLEAN') {
+                    fieldsObj.required = !fieldMap.get(fieldName).getDescribe().isNillable();
+                    fieldsObj.isNotNillable = !fieldMap.get(fieldName).getDescribe().isNillable();
+                  } else {
+                    fieldsObj.required = false;
+                    fieldsObj.isNotNillable = false;
+                  }
+                  fieldsObj.isDependentPicklist = fieldMap.get(fieldName).getDescribe().isDependentPicklist();
+                  if (fieldsObj.isDependentPicklist) {
+                    fieldsObj.controllingField = fieldMap.get(fieldName).getDescribe().getController().getDescribe().getName();
+                    fieldsObj.controllingFieldValue = '';
+                  }
+                  fieldsObj.customlabel = '';
+                  /* System.debug('fieldName >> '+fieldsObj.fieldName);
+                   System.debug('default value >> '+String.valueOf(fieldMap.get(fieldName).getDescribe().getDefaultValue())); */
+                  fieldsObj.defaultValue = String.valueOf(
+                    fieldMap.get(fieldName).getDescribe().getDefaultValue()
+                  );
+                  fieldsObj.isLabelEdit = false;
+                  fieldsObj.isQuestion = false;
+                  fieldsObj.inputValue = '';
+                  fieldsObj.identifier = 'Record1'; //this identifier will help in identification of records in case 'multi' is seleted.
+                  fieldsWrpObj.fields.add(fieldsObj);
+                }
+              }
+            }
+          }
+          fieldsWrapperList.add(fieldsWrpObj);
+        }
 
     //no matter what objects are selected, all the questions will always tag along in the field list.
     List<caresp__Question__c> quesList = [
@@ -414,8 +416,8 @@ public with sharing class FormsController {
         Id,
         Question_Text__c,
         Question_Data_type__c,
-        (SELECT Id, Answer_Text__c FROM Answer_Options__r ORDER BY Sequence__c)
-      FROM Question__c WITH SECURITY_ENFORCED LIMIT 50000
+        (SELECT Id, Answer_Text__c FROM Answer_Options__r  ORDER BY Sequence__c)
+      FROM Question__c WITH USER_MODE LIMIT 50000
     ];
 
     if (quesList != null && quesList.size() > 0) {
@@ -462,7 +464,7 @@ public with sharing class FormsController {
         quesObj.isQuestion = true;
         quesObj.inputValue = '';
         quesObj.identifier = 'Record1';
-        System.debug('quesObj >> ' + quesObj);
+        System.debug(LoggingLevel.Error ,'quesObj >> ' + quesObj);
         quesWrpObj.fields.add(quesObj);
       }
       fieldsWrapperList.add(quesWrpObj);
@@ -484,7 +486,7 @@ public with sharing class FormsController {
 
   @AuraEnabled
   public static List<RecordTypeWrapper> getRecordTypes(String objectApiName) {
-    System.debug('objectApiName >> ' + objectApiName);
+    System.debug(LoggingLevel.Error ,'objectApiName >> ' + objectApiName);
     List<RecordTypeWrapper> respList = new List<RecordTypeWrapper>();
     Map<String, Schema.SObjectType> schemaMap = Schema.getGlobalDescribe();
     Schema.SObjectType obj = schemaMap.get(objectApiName);
@@ -512,64 +514,64 @@ public with sharing class FormsController {
       # Return      : String (id of created form)
       # Change Log  : 
   */
- @AuraEnabled
-public static String createFormRecord(String formName, Boolean isEdit, String recordId, String confirmationMessage, Boolean requiresSignature, Boolean requiresTextOnSignaturePage, String signaturePageText, Boolean requiresDocUpload, Boolean showSummary, Boolean generatePDF, Boolean prefillFields, String primaryObjectForPrefillForm, Boolean isPDFOnly) {
-    System.debug('isEdit >> ' + isEdit);
-    System.debug('recordId >> ' + recordId);
-    System.debug('requiresSignature >> ' + requiresSignature);
-    System.debug('requiresTextOnSignaturePage >> ' + requiresTextOnSignaturePage);
-    System.debug('signaturePageText >> ' + signaturePageText);
-    System.debug('generatePDF >> ' + generatePDF);
-    System.debug('requiresDocUpload >> ' + requiresDocUpload);
-    System.debug('showSummary >> ' + showSummary);
-    System.debug('isPDFOnly >> ' + isPDFOnly);
+     @AuraEnabled
+    public static String createFormRecord(String formName, Boolean isEdit, String recordId, String confirmationMessage, Boolean requiresSignature, Boolean requiresTextOnSignaturePage, String signaturePageText, Boolean requiresDocUpload, Boolean showSummary, Boolean generatePDF, Boolean prefillFields, String primaryObjectForPrefillForm, Boolean isPDFOnly) {
+        System.debug(LoggingLevel.Error ,'isEdit >> ' + isEdit);
+        System.debug(LoggingLevel.Error ,'recordId >> ' + recordId);
+        System.debug(LoggingLevel.Error ,'requiresSignature >> ' + requiresSignature);
+        System.debug(LoggingLevel.Error ,'requiresTextOnSignaturePage >> ' + requiresTextOnSignaturePage);
+        System.debug(LoggingLevel.Error ,'signaturePageText >> ' + signaturePageText);
+        System.debug(LoggingLevel.Error ,'generatePDF >> ' + generatePDF);
+        System.debug(LoggingLevel.Error ,'requiresDocUpload >> ' + requiresDocUpload);
+        System.debug(LoggingLevel.Error ,'showSummary >> ' + showSummary);
+        System.debug(LoggingLevel.Error ,'isPDFOnly >> ' + isPDFOnly);
+        
+        // Create new Form__c record or update an existing one
+        caresp__Form__c form = new caresp__Form__c();
+        form.caresp__Form_Name__c = formName;
+        form.caresp__Confirmation_Message__c = confirmationMessage;
+        form.caresp__Requires_Signature__c = requiresSignature == null ? false : requiresSignature;
+        form.caresp__Requires_Text_for_Signature_Page__c = requiresTextOnSignaturePage == null ? false : requiresTextOnSignaturePage;
+        form.caresp__Signature_Page_Text__c = String.isNotBlank(signaturePageText) ? signaturePageText : '';
+        form.caresp__Requires_Document_Upload__c = requiresDocUpload == null ? false : requiresDocUpload;
+        form.caresp__Show_Summary__c = showSummary == null ? false : showSummary;
+        form.caresp__Generate_PDF__c = generatePDF == null ? false : generatePDF;
+        form.caresp__Prefill_Fields__c = prefillFields == null ? false : prefillFields;
+        form.caresp__Create_PDF_Only__c = isPDFOnly == null ? false : isPDFOnly;
+        form.caresp__Object_Name_for_Prefill_Fields__c = String.isNotBlank(primaryObjectForPrefillForm) ? primaryObjectForPrefillForm : '';
     
-    // Create new Form__c record or update an existing one
-    caresp__Form__c form = new caresp__Form__c();
-    form.caresp__Form_Name__c = formName;
-    form.caresp__Confirmation_Message__c = confirmationMessage;
-    form.caresp__Requires_Signature__c = requiresSignature == null ? false : requiresSignature;
-    form.caresp__Requires_Text_for_Signature_Page__c = requiresTextOnSignaturePage == null ? false : requiresTextOnSignaturePage;
-    form.caresp__Signature_Page_Text__c = String.isNotBlank(signaturePageText) ? signaturePageText : '';
-    form.caresp__Requires_Document_Upload__c = requiresDocUpload == null ? false : requiresDocUpload;
-    form.caresp__Show_Summary__c = showSummary == null ? false : showSummary;
-    form.caresp__Generate_PDF__c = generatePDF == null ? false : generatePDF;
-    form.caresp__Prefill_Fields__c = prefillFields == null ? false : prefillFields;
-    form.caresp__Create_PDF_Only__c = isPDFOnly == null ? false : isPDFOnly;
-    form.caresp__Object_Name_for_Prefill_Fields__c = String.isNotBlank(primaryObjectForPrefillForm) ? primaryObjectForPrefillForm : '';
-
-    // If in edit mode, assign the recordId
-    if (isEdit == true) form.Id = recordId;
-
-    System.debug('form.Id >> ' + form.Id);
-
-    try {
-        // Upsert the record and capture the result list
-        List<Database.UpsertResult> results = Database.upsert(Security.stripInaccessible(AccessType.UPSERTABLE, new List<caresp__Form__c>{form}).getRecords(), false, AccessLevel.USER_MODE);
-
-        // Handle the result for a single record
-        if (!results.isEmpty()) {
-            Database.UpsertResult result = results[0];  // Get the first (and only) result
-
-            // Check if the upsert was successful
-            if (result.isSuccess()) {
-                System.debug('Upsert successful. Form Id: ' + result.getId());
-                return result.getId();  // Return the Id of the upserted record
-            } else {
-                // Handle failure
-                for (Database.Error err : result.getErrors()) {
-                    System.debug('Error during upsert: ' + err.getMessage());
-                    throw new AuraHandledException('Upsert failed: ' + err.getMessage());
+        // If in edit mode, assign the recordId
+        if (isEdit == true) form.Id = recordId;
+    
+        System.debug(LoggingLevel.Error ,'form.Id >> ' + form.Id);
+    
+        try {
+            // Upsert the record and capture the result list
+            List<Database.UpsertResult> results = Database.upsert(Security.stripInaccessible(AccessType.UPSERTABLE, new List<caresp__Form__c>{form}).getRecords(), false, AccessLevel.USER_MODE);
+    
+            // Handle the result for a single record
+            if (!results.isEmpty()) {
+                Database.UpsertResult result = results[0];  // Get the first (and only) result
+    
+                // Check if the upsert was successful
+                if (result.isSuccess()) {
+                    System.debug(LoggingLevel.Error ,'Upsert successful. Form Id: ' + result.getId());
+                    return result.getId();  // Return the Id of the upserted record
+                } else {
+                    // Handle failure
+                    for (Database.Error err : result.getErrors()) {
+                        System.debug(LoggingLevel.Error ,'Error during upsert: ' + err.getMessage());
+                        throw new AuraHandledException('Upsert failed: ' + err.getMessage());
+                    }
                 }
             }
+        } catch (Exception ex) {
+            System.debug(LoggingLevel.Error ,'Exception - ' + ex.getMessage());
+            throw new AuraHandledException(ex.getMessage());
         }
-    } catch (Exception ex) {
-        System.debug('Exception - ' + ex.getMessage());
-        throw new AuraHandledException(ex.getMessage());
+    
+        return null;  // In case of failure, return null
     }
-
-    return null;  // In case of failure, return null
-}
 
   /*
         # Author      : Ankit Chowhan
@@ -587,14 +589,14 @@ public static String createFormRecord(String formName, Boolean isEdit, String re
     public static String saveFormData(String recordId, String objectStructureJson, String pageDataJson, String rulesJson, Boolean isEdit) {
         // public static String saveFormData(String recordId, String objectStructureJson, String pageDataJson, String rulesJson, Boolean isEdit, String pageData) {
         // public static String saveFormData(String recordId, String objectStructureJson, String pageDataJson, String rulesJson) { //without Edit
-        System.debug('recordId >> ' + recordId);
-        System.debug('objectStructureJson >> ' + objectStructureJson);
-        System.debug('pageDataJson >> ' + pageDataJson);
-        System.debug('rulesJson >> ' + rulesJson);
-        System.debug('isEdit >> ' + isEdit);
+        System.debug(LoggingLevel.Error ,'recordId >> ' + recordId);
+        System.debug(LoggingLevel.Error ,'objectStructureJson >> ' + objectStructureJson);
+        System.debug(LoggingLevel.Error ,'pageDataJson >> ' + pageDataJson);
+        System.debug(LoggingLevel.Error ,'rulesJson >> ' + rulesJson);
+        System.debug(LoggingLevel.Error ,'isEdit >> ' + isEdit);
 
         if (isEdit) {
-            List < ContentDocumentLink > cdlList = [SELECT LinkedEntityId, ContentDocumentId FROM ContentDocumentLink WHERE LinkedEntityId =: recordId WITH SECURITY_ENFORCED];
+            List < ContentDocumentLink > cdlList = [SELECT LinkedEntityId, ContentDocumentId FROM ContentDocumentLink WHERE LinkedEntityId =: recordId WITH USER_MODE];
             Set < Id > cdConDocIdSet = new Set < Id > ();
             List < ContentDocument > cdConDocIdListToDelete = new List < ContentDocument > ();
             if (cdlList != null && !cdlList.isEmpty()) {
@@ -604,12 +606,12 @@ public static String createFormRecord(String formName, Boolean isEdit, String re
             }
 
             if (cdConDocIdSet != null && !cdConDocIdSet.isEmpty()) {
-                cdConDocIdListToDelete = [SELECT Id FROM ContentDocument WHERE Id IN: cdConDocIdSet WITH SECURITY_ENFORCED];
-                if (cdConDocIdListToDelete != null && !cdConDocIdListToDelete.isEmpty()) {
+                cdConDocIdListToDelete = [SELECT Id FROM ContentDocument WHERE Id IN: cdConDocIdSet WITH USER_MODE];
+                if (cdConDocIdListToDelete != null && !cdConDocIdListToDelete.isEmpty() && ContentDocument.sObjectType.getDescribe().isDeletable()) {
                     try {
                         delete as user cdConDocIdListToDelete;
                     } catch (Exception ex) {
-                        System.debug('Exception - ' + ex.getMessage());
+                        System.debug(LoggingLevel.Error ,'Exception - ' + ex.getMessage());
                         throw new AuraHandledException(ex.getMessage());
                     }
                 }
@@ -650,7 +652,7 @@ public static String createFormRecord(String formName, Boolean isEdit, String re
             try {
                 insert as user cvList;
             } catch (Exception ex) {
-                System.debug('Exception - ' + ex.getMessage());
+                System.debug(LoggingLevel.Error ,'Exception - ' + ex.getMessage());
                 throw new AuraHandledException(ex.getMessage());
             }
 
@@ -660,7 +662,7 @@ public static String createFormRecord(String formName, Boolean isEdit, String re
         }
 
         if (cvIdSet != null && !cvIdSet.isEmpty()) {
-            conVerList = [SELECT ContentDocumentId FROM ContentVersion WHERE Id In: cvIdSet WITH SECURITY_ENFORCED];
+            conVerList = [SELECT ContentDocumentId FROM ContentVersion WHERE Id In: cvIdSet WITH USER_MODE];
         }
 
         if (conVerList != null && !conVerList.isEmpty()) {
@@ -679,7 +681,7 @@ public static String createFormRecord(String formName, Boolean isEdit, String re
             try {
                 insert as user cdlList;
             } catch (Exception ex) {
-                System.debug('Exception - ' + ex.getMessage());
+                System.debug(LoggingLevel.Error ,'Exception - ' + ex.getMessage());
                 throw new AuraHandledException(ex.getMessage());
             }
         }
@@ -699,74 +701,74 @@ public static String createFormRecord(String formName, Boolean isEdit, String re
       # Return      : FormDataWrapper
       # Change Log  : 
   */
-  @AuraEnabled(cacheable=true)
-  public static FormDataWrapper fetchFormData(String formId) {
-    System.debug('formId >> ' + formId);
-    List<String> cDocList = new List<String>();
-    FormDataWrapper formDataWrap = new FormDataWrapper();
-    List<caresp__Form__c> formList = [
-      SELECT
-        Id,
-        Form_Name__c,
-        Confirmation_Message__c,
-        Requires_Signature__c,
-        Requires_Text_for_Signature_Page__c,
-        Signature_Page_Text__c,
-        Generate_PDF__c,
-        Requires_Document_Upload__c,
-        Show_Summary__c,
-        Prefill_Fields__c,
-        Create_PDF_Only__c
-      FROM Form__c 
-      WHERE Id = :formId WITH SECURITY_ENFORCED
-    ];
-    System.debug('Create_PDF_Only__c >> ' + formList[0].caresp__Create_PDF_Only__c);
-    formDataWrap.formName = formList[0].caresp__Form_Name__c;
-    formDataWrap.confirmationMessage = String.isNotBlank(
-        formList[0].caresp__Confirmation_Message__c
-      )
-      ? formList[0].caresp__Confirmation_Message__c: null;
-    formDataWrap.requiresDocUpload = formList[0].caresp__Requires_Document_Upload__c;
-    formDataWrap.generatePDF = formList[0].caresp__Generate_PDF__c;
-    formDataWrap.requiresSignature = formList[0].caresp__Requires_Signature__c;
-    formDataWrap.requiresTextOnSignaturePage = formList[0]
-      .caresp__Requires_Text_for_Signature_Page__c;
-    formDataWrap.signaturePageText = formList[0].caresp__Signature_Page_Text__c;
-    formDataWrap.hasSummary = formList[0].caresp__Show_Summary__c;
-    formDataWrap.prefillFields = formList[0].caresp__Prefill_Fields__c;
-    formDataWrap.pdfOnly = formList[0].caresp__Create_PDF_Only__c;
-    List<ContentDocumentLink> cDocLinkList = [
-      SELECT Id, ContentDocumentId
-      FROM ContentDocumentLink
-      WHERE LinkedEntityId = :formId WITH SECURITY_ENFORCED
-    ];
-
-    if (cDocLinkList != null && cDocLinkList.size() > 0) {
-      for (ContentDocumentLink cDoc : cDocLinkList) {
-        cDocList.add(cDoc.ContentDocumentId);
-      }
-    }
-
-    if (cDocList != null && cDocList.size() > 0) {
-      List<ContentVersion> cVersionList = [SELECT Id, Title, IsLatest, VersionData FROM ContentVersion WHERE ContentDocumentId IN :cDocList AND IsLatest = TRUE WITH SECURITY_ENFORCED];
-
-      for (ContentVersion cVersion : cVersionList) {
-        if (cVersion.Title == 'Object Structure') {
-          formDataWrap.objectStructure = String.valueOf(cVersion.VersionData.toString());
-        } else if (cVersion.Title == 'Page Data') {
-          formDataWrap.pageData = String.valueOf( cVersion.VersionData.toString());
-        } else if (cVersion.Title == 'Rules') {
-          formDataWrap.rules = String.valueOf(cVersion.VersionData.toString());
+      @AuraEnabled(cacheable=true)
+      public static FormDataWrapper fetchFormData(String formId) {
+        System.debug(LoggingLevel.Error ,'formId >> ' + formId);
+        List<String> cDocList = new List<String>();
+        FormDataWrapper formDataWrap = new FormDataWrapper();
+        List<caresp__Form__c> formList = [
+          SELECT
+            Id,
+            Form_Name__c,
+            Confirmation_Message__c,
+            Requires_Signature__c,
+            Requires_Text_for_Signature_Page__c,
+            Signature_Page_Text__c,
+            Generate_PDF__c,
+            Requires_Document_Upload__c,
+            Show_Summary__c,
+            Prefill_Fields__c,
+            Create_PDF_Only__c
+          FROM Form__c 
+          WHERE Id = :formId WITH USER_MODE
+        ];
+        System.debug(LoggingLevel.Error ,'Create_PDF_Only__c >> ' + formList[0].caresp__Create_PDF_Only__c);
+        formDataWrap.formName = formList[0].caresp__Form_Name__c;
+        formDataWrap.confirmationMessage = String.isNotBlank(
+            formList[0].caresp__Confirmation_Message__c
+          )
+          ? formList[0].caresp__Confirmation_Message__c: null;
+        formDataWrap.requiresDocUpload = formList[0].caresp__Requires_Document_Upload__c;
+        formDataWrap.generatePDF = formList[0].caresp__Generate_PDF__c;
+        formDataWrap.requiresSignature = formList[0].caresp__Requires_Signature__c;
+        formDataWrap.requiresTextOnSignaturePage = formList[0]
+          .caresp__Requires_Text_for_Signature_Page__c;
+        formDataWrap.signaturePageText = formList[0].caresp__Signature_Page_Text__c;
+        formDataWrap.hasSummary = formList[0].caresp__Show_Summary__c;
+        formDataWrap.prefillFields = formList[0].caresp__Prefill_Fields__c;
+        formDataWrap.pdfOnly = formList[0].caresp__Create_PDF_Only__c;
+        List<ContentDocumentLink> cDocLinkList = [
+          SELECT Id, ContentDocumentId
+          FROM ContentDocumentLink
+          WHERE LinkedEntityId = :formId WITH USER_MODE
+        ];
+    
+        if (cDocLinkList != null && cDocLinkList.size() > 0) {
+          for (ContentDocumentLink cDoc : cDocLinkList) {
+            cDocList.add(cDoc.ContentDocumentId);
+          }
         }
+    
+        if (cDocList != null && cDocList.size() > 0) {
+          List<ContentVersion> cVersionList = [SELECT Id, Title, IsLatest, VersionData FROM ContentVersion WHERE ContentDocumentId IN :cDocList AND IsLatest = TRUE WITH USER_MODE];
+    
+          for (ContentVersion cVersion : cVersionList) {
+            if (cVersion.Title == 'Object Structure') {
+              formDataWrap.objectStructure = String.valueOf(cVersion.VersionData.toString());
+            } else if (cVersion.Title == 'Page Data') {
+              formDataWrap.pageData = String.valueOf( cVersion.VersionData.toString());
+            } else if (cVersion.Title == 'Rules') {
+              formDataWrap.rules = String.valueOf(cVersion.VersionData.toString());
+            }
+          }
+        }
+    
+        System.debug(LoggingLevel.Error ,'obj st >> ' + formDataWrap.objectStructure);
+        System.debug(LoggingLevel.Error ,'page dt >> ' + formDataWrap.pageData);
+        System.debug(LoggingLevel.Error ,'rules >> ' + formDataWrap.rules);
+    
+        return formDataWrap;
       }
-    }
-
-    System.debug('obj st >> ' + formDataWrap.objectStructure);
-    System.debug('page dt >> ' + formDataWrap.pageData);
-    System.debug('rules >> ' + formDataWrap.rules);
-
-    return formDataWrap;
-  }
 
   /*
       # Author      : Ankit Chowhan
@@ -785,7 +787,7 @@ public static String createFormRecord(String formName, Boolean isEdit, String re
     return [
       SELECT Id, Answer_Text__c
       FROM Question_Answer_Option__c 
-      WHERE Question__c = :quesId WITH SECURITY_ENFORCED
+      WHERE Question__c = :quesId WITH USER_MODE
       ORDER BY Sequence__c
     ];
   }
@@ -942,73 +944,75 @@ public static String createFormRecord(String formName, Boolean isEdit, String re
   public static List<Doc_Category_Help_Text__mdt> getDocumentTypes() {
     return [
       SELECT Id, label, DeveloperName, Help_Text_Value__c
-      FROM Doc_Category_Help_Text__mdt WITH SECURITY_ENFORCED
+      FROM Doc_Category_Help_Text__mdt WITH USER_MODE
       LIMIT 100
     ];
   }
 
   /* @AuraEnabled(cacheable=true)
   public static List<SP_Service__c> getServiceData() {
-    return [SELECT Id, Name FROM SP_Service__c LIMIT 100];
+    return [SELECT Id, Name FROM SP_Service__c WITH USER_MODE LIMIT 100];
   } */
 
-  @AuraEnabled
-  public static PrintWrapper getPrintJson(
+ // Retrieves print JSON data and related signature details for a given record
+@AuraEnabled
+public static PrintWrapper getPrintJson(
     String recordId,
     String printJsonTitle
-  ) {
-    System.debug('printJsonTitle >> ' + printJsonTitle);
+) {
+    System.debug(LoggingLevel.Error ,'printJsonTitle >> ' + printJsonTitle);
     List<String> cDocList = new List<String>();
     PrintWrapper resp = new PrintWrapper();
     List<String> splitPrintJsonTitle = new List<String>();
     splitPrintJsonTitle = printJsonTitle.split('__');
-    System.debug('splitPrintJsonTitle -- ' + splitPrintJsonTitle[0]);
+    System.debug(LoggingLevel.Error ,'splitPrintJsonTitle -- ' + splitPrintJsonTitle[0]);
     String formId = splitPrintJsonTitle[0].split('_')[0];
 
     Form__c formRec = [
-      SELECT Id, Signature_Page_Text__c
-      FROM Form__c 
-      WHERE Id = :formId WITH SECURITY_ENFORCED
+        SELECT Id, Signature_Page_Text__c
+        FROM Form__c 
+        WHERE Id = :formId WITH USER_MODE
     ];
 
     List<ContentDocumentLink> cDocLinkList = [
-      SELECT Id, ContentDocumentId
-      FROM ContentDocumentLink
-      WHERE LinkedEntityId = :recordId WITH SECURITY_ENFORCED
+        SELECT Id, ContentDocumentId
+        FROM ContentDocumentLink
+        WHERE LinkedEntityId = :recordId WITH USER_MODE
     ];
 
     if (cDocLinkList != null && cDocLinkList.size() > 0) {
-      for (ContentDocumentLink cDoc : cDocLinkList) {
-        cDocList.add(cDoc.ContentDocumentId);
-      }
+        for (ContentDocumentLink cDoc : cDocLinkList) {
+            cDocList.add(cDoc.ContentDocumentId);
+        }
     }
 
     if (cDocList != null && cDocList.size() > 0) {
-      List<ContentVersion> cVersionList = [
-        SELECT Id, Title, IsLatest, VersionData
-        FROM ContentVersion 
-        WHERE ContentDocumentId IN :cDocList AND IsLatest = TRUE WITH SECURITY_ENFORCED
-      ];
-      if (cVersionList != null && cVersionList.size() > 0) {
-        for (ContentVersion cv : cVersionList) {
-          if (cv.Title == printJsonTitle) {
-            resp.pageData = String.valueOf(cv.VersionData.toString());
-          } else if (cv.Title.startsWithIgnoreCase(splitPrintJsonTitle[0])) {
-            resp.signature = cv.Id;
-          }
+        List<ContentVersion> cVersionList = [
+            SELECT Id, Title, IsLatest, VersionData
+            FROM ContentVersion 
+            WHERE ContentDocumentId IN :cDocList AND IsLatest = TRUE WITH USER_MODE
+        ];
+        if (cVersionList != null && cVersionList.size() > 0) {
+            for (ContentVersion cv : cVersionList) {
+                if (cv.Title == printJsonTitle) {
+                    resp.pageData = String.valueOf(cv.VersionData.toString());
+                } else if (cv.Title.startsWithIgnoreCase(splitPrintJsonTitle[0])) {
+                    resp.signature = cv.Id;
+                }
+            }
+            if (
+                formRec != null && String.isNotBlank(formRec.caresp__Signature_Page_Text__c)
+            ) {
+                resp.signatureText = formRec.caresp__Signature_Page_Text__c;
+            }
         }
-        if (
-          formRec != null && String.isNotBlank(formRec.caresp__Signature_Page_Text__c)
-        ) {
-          resp.signatureText = formRec.caresp__Signature_Page_Text__c;
-        }
-      }
     }
 
     return resp;
-  }
+}
 
-  @AuraEnabled
+// Retrieves the list of forms available for printing for a given record
+@AuraEnabled
 public static List<FormOptionsWrapper> getFormsAvailableForPrint(String recordId) {
     List<String> cDocList = new List<String>();
     List<FormOptionsWrapper> resp = new List<FormOptionsWrapper>();
@@ -1021,7 +1025,7 @@ public static List<FormOptionsWrapper> getFormsAvailableForPrint(String recordId
         SELECT ContentDocumentId
         FROM ContentDocumentLink
         WHERE LinkedEntityId = :recordId
-        WITH SECURITY_ENFORCED
+        WITH USER_MODE
     ]) {
         cDocList.add(cDoc.ContentDocumentId);
     }
@@ -1032,7 +1036,7 @@ public static List<FormOptionsWrapper> getFormsAvailableForPrint(String recordId
             SELECT Title
             FROM ContentVersion
             WHERE ContentDocumentId IN :cDocList AND IsLatest = TRUE
-            WITH SECURITY_ENFORCED
+            WITH USER_MODE
         ]) {
             if (Schema.sObjectType.ContentVersion.fields.Title.isAccessible() && cv.Title != null && cv.Title.contains('Print_JSON')) {
                 String[] breakName = cv.Title.split('_');
@@ -1050,7 +1054,7 @@ public static List<FormOptionsWrapper> getFormsAvailableForPrint(String recordId
             SELECT Id, careSP__Form_Name__c
             FROM careSP__Form__c
             WHERE Id IN :formIdList
-            WITH SECURITY_ENFORCED
+            WITH USER_MODE
         ]) {
             formIdNameMap.put(formRec.Id, formRec.careSP__Form_Name__c);
         }
@@ -1068,6 +1072,7 @@ public static List<FormOptionsWrapper> getFormsAvailableForPrint(String recordId
     return resp;
 }
 
+// Creates a FormOptionsWrapper instance with label, value, and datetime based on form metadata
 private static FormOptionsWrapper createWrapper(String formDateTimeStr, String formId, Map<String, String> formIdNameMap) {
     FormOptionsWrapper a = new FormOptionsWrapper();
     a.label = formDateTimeStr.replace(formId, formIdNameMap.get(formId));
@@ -1076,11 +1081,13 @@ private static FormOptionsWrapper createWrapper(String formDateTimeStr, String f
     return a;
 }
 
+// Retrieves a list of forms with their Id and Name (limited to 200 records)
+@AuraEnabled(cacheable=true)
+public static List<caresp__Form__c> getFormsList() {
+    return [SELECT Id, Form_Name__c FROM Form__c WITH USER_MODE LIMIT 200];
+}
 
-  @AuraEnabled(cacheable=true)
-  public static List<caresp__Form__c> getFormsList() {
-    return [SELECT Id, Form_Name__c FROM Form__c WITH SECURITY_ENFORCED LIMIT 200];
-  }
+
 
   /*
       # Author      : Ankit Chowhan

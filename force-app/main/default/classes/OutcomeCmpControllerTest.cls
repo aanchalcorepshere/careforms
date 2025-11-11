@@ -13,7 +13,7 @@ public with sharing class OutcomeCmpControllerTest {
         insert outcomeASTestData;
         Outcome__c outcomeRefTestData=TestFactory.createOutcome(null, 'Test Outcome Referral',assessmentTestData.Id,false);
   //      outcomeRefTestData.Record_Id__c=refTestData.Id;
-        outcomeRefTestData.Status__c='Pending';
+        outcomeRefTestData.Status__c='Pending'; 
         outcomeRefTestData.Assessment_Date__c=system.today();
         insert outcomeRefTestData;
 
@@ -46,6 +46,8 @@ public with sharing class OutcomeCmpControllerTest {
     static testMethod void testGetOutcomes()
     {
         Outcome__c outcomeTest= [select id, name, Record_Id__c, Status__c from Outcome__c where name=:'Test Outcome Referral' limit 1];
+        outcomeTest.Record_Id__c = outcomeTest.id;
+        update outcomeTest;
         List <Outcome__c> outcomeList= new List<Outcome__c>();
         outcomeList=OutcomeCmpController.getOutcomes(outcomeTest.Record_Id__c);
         Integer outcomeCount=outcomeList.size();

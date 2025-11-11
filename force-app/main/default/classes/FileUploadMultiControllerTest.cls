@@ -12,13 +12,17 @@ private class FileUploadMultiControllerTest {
     }
 
     @isTest static void testUploadFilesBlankRecordId() {
-        // Test scenario where recordId is blank
+        // Test scenario where recordId is blank - should throw exception
         Test.startTest();
         String fileData = '[{"fileCategory":"SSN Card","notes":"plan docs notes","expiration":"2023-03-22","fileContent":"VGhpcyBpcyBhIHRlc3QgY29udGVudC4=",'
                         + '"fileUploadName":"Rules.txt","fileTypeIcon":"doctype:txt","index":1}]';
-        String result = FileUploadMultiController.uploadFiles('', fileData);
+        try {
+            String result = FileUploadMultiController.uploadFiles('', fileData);
+            System.assert(false, 'Expected exception was not thrown');
+        } catch (AuraHandledException e) {
+            System.assert(e.getMessage().contains('Script-thrown exception'), 'Expected record ID validation message');
+        }
         Test.stopTest();
-        System.assertEquals('record Id is Blank', result);
     }
 
     @isTest static void testUploadFilesInvalidFileData() {
@@ -53,7 +57,7 @@ private class FileUploadMultiControllerTest {
                         + '"fileUploadName":"Rules.txt","fileTypeIcon":"doctype:txt","index":1}]';
         try {
             FileUploadMultiController.uploadFiles(null, fileData); // Null recordId to force exception
-            System.assert(true, 'Expected exception was not thrown');
+            System.assert(false, 'Expected exception was not thrown');
         } catch (Exception e) {
             System.assert(e instanceof AuraHandledException, 'Expected AuraHandledException');
         }

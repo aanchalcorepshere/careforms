@@ -1,266 +1,351 @@
 public with sharing class FormsHelper {
+    private static final String MASTER_RECORD_TYPE_ID = '012000000000000AAA';
+
     @AuraEnabled
-    // Saves the provided object structure after validation and permission checks
     public static InsertResult saveObjectStructure(String params) {
-        // Validate input
-        if (String.isBlank(params)) {
-            throw new AuraHandledException('Input parameters cannot be null or empty.');
-        }
-    
-        Map<String, String> paramData = parseParams(params);
-        RecordData primary = (RecordData) JSON.deserialize(paramData.get('primaryObjectList'), RecordData.class);
-        List<RecordData> children = (List<RecordData>) JSON.deserialize(paramData.get('childObjectsList'), List<RecordData>.class);
-        List<RecordData> parents = (List<RecordData>) JSON.deserialize(paramData.get('parentObjectList'), List<RecordData>.class);
-        List<RecordData> grandchildren = (List<RecordData>) JSON.deserialize(paramData.get('grandChildObjectList'), List<RecordData>.class);
-    
-        // Check CRUD and FLS for all objects involved
-        checkCRUDAndFLS(primary, children, parents, grandchildren);
-    
-        return insertRecordsWithUoW(primary, children, parents, grandchildren);
-    }
-
-
-    private static void checkCRUDAndFLS(RecordData primary, List<RecordData> children, List<RecordData> parents, List<RecordData> grandchildren) {
-        // Check CRUD and FLS for primary object
-        checkObjectAccess(primary.objectName.split('\\|')[0], true, true, true);
-
-        // Check CRUD and FLS for parent objects
-        for (RecordData parent : parents) {
-            checkObjectAccess(parent.objectName.split('\\|')[0], true, true, true);
-        }
-
-        // Check CRUD and FLS for child objects
-        for (RecordData child : children) {
-            checkObjectAccess(child.objectName.split('\\|')[0], true, true, true);
-        }
-
-        // Check CRUD and FLS for grandchild objects
-        for (RecordData grandchild : grandchildren) {
-            checkObjectAccess(grandchild.objectName.split('\\|')[0], true, true, true);
-        }
-    }
-
-  // Checks CRUD permissions for a given object based on provided access flags
-    private static void checkObjectAccess(String objectName, Boolean checkCreate, Boolean checkUpdate, Boolean checkDelete) {
-        Schema.DescribeSObjectResult describe = Schema.getGlobalDescribe().get(objectName).getDescribe();
-        if (checkCreate && !describe.isCreateable()) {
-            throw new SecurityException('Create access denied on object: ' + objectName);
-        }
-        if (checkUpdate && !describe.isUpdateable()) {
-            throw new SecurityException('Update access denied on object: ' + objectName);
-        }
-        if (checkDelete && !describe.isDeletable()) {
-            throw new SecurityException('Delete access denied on object: ' + objectName);
-        }
-    }
- 
-  
-    // Parses the input JSON parameters into a map of key-value pairs
-    public static Map<String, String> parseParams(String params) {
-        Map<String, Object> paramMap = (Map<String, Object>) JSON.deserializeUntyped(params);
-        Map<String, String> result = new Map<String, String>();
-        result.put('parentObjectList', (String)paramMap.get('parentObjectList'));
-        result.put('primaryObjectList', (String)paramMap.get('primaryObjectList'));
-        result.put('childObjectsList', (String)paramMap.get('childObjectsList'));
-        result.put('grandChildObjectList', (String)paramMap.get('grandChildObjectList'));
-        result.put('questionObjectsList', (String)paramMap.get('questionObjectsList'));
-        result.put('formId', (String)paramMap.get('formId'));
-        result.put('isVerifyApplication', String.valueOf(paramMap.get('isVerifyApplication')));
-        return result;
-    }
-
-    // Inserts or updates records in a defined sequence using Unit of Work pattern
-    public static InsertResult insertRecordsWithUoW(RecordData primary, List<RecordData> children, List<RecordData> parents, List<RecordData> grandchildren) {
         InsertResult result = new InsertResult();
-        result.isSuccess = false;
-        Map<String, String> parentIdMap = new Map<String, String>();
-        List<SObject> recordsToInsert;
-    
-        /* try { */
-            // Step 1: Upsert Parents (Account)
-            recordsToInsert = new List<SObject>();
-            for (RecordData parent : parents) {
-                SObject parentRecord = createRecord(parent);
-                recordsToInsert.add(parentRecord);
-            }
-            Database.UpsertResult[] saveResults = Database.upsert(recordsToInsert, true, AccessLevel.USER_MODE);
-            checkErrors(saveResults, recordsToInsert, result);
-            updateParentIdMap(recordsToInsert, parentIdMap); // Map now has Account ID
-    
-            // Step 2: Upsert Primary (Contact)
-            recordsToInsert = new List<SObject>();
-            SObject primaryRecord = createRecord(primary);
-            // Link Contact to Account
-            if (primary.parents != null) {
-                for (ParentData parentData : primary.parents) {
-                    String parentKey = parentData.parentApi.split('\\|')[0]; // "Account"
-                    if (parentIdMap.containsKey(parentKey)) {
-                        String parentField = parentData.parentFieldApi.split('\\|')[1]; // "AccountId"
-                        primaryRecord.put(parentField, parentIdMap.get(parentKey));
-                    }
-                }
-            }
-            recordsToInsert.add(primaryRecord);
-            Schema.SObjectType sObjType = recordsToInsert.getSObjectType();
-            Schema.DescribeSObjectResult describeResult = sObjType.getDescribe();
-
-            // Check object-level permissions
-            if (!describeResult.isCreateable() && !describeResult.isUpdateable()) {
-                throw new SecurityException('You do not have permission to create or update ' + describeResult.getName());
-            }
-            saveResults = Database.upsert(recordsToInsert, true, AccessLevel.USER_MODE);
-            checkErrors(saveResults, recordsToInsert, result);
-            updateParentIdMap(recordsToInsert, parentIdMap); // Map now has Contact ID
-    
-            // Step 3: Upsert Children (Cases)
-            recordsToInsert = new List<SObject>();
-            Map<Integer, RecordData> groupedChildren = groupChildrenByRecordIdentifier(children);
-            for (Integer recordId : groupedChildren.keySet()) {
-                RecordData child = groupedChildren.get(recordId);
-                SObject childRecord = createRecord(child);
-                // Link Case to Contact
-                if (child.parents != null) {
-                    for (ParentData parentData : child.parents) {
-                        String parentKey = parentData.parentApi; // "Contact"
-                        if (parentIdMap.containsKey(parentKey)) {
-                            String parentField = parentData.parentFieldApi.split('\\|')[1]; // "ContactId"
-                            childRecord.put(parentField, parentIdMap.get(parentKey));
-                        }
-                    }
-                }
-                recordsToInsert.add(childRecord);
-            }
-
-            sObjType = recordsToInsert.getSObjectType();
-            describeResult = sObjType.getDescribe();
-
-            // Check object-level permissions
-            if (!describeResult.isCreateable() && !describeResult.isUpdateable()) {
-                throw new SecurityException('You do not have permission to create or update ' + describeResult.getName());
-            }
-        
-            saveResults = Database.upsert(recordsToInsert, true, AccessLevel.USER_MODE);
-            
-            
-            checkErrors(saveResults, recordsToInsert, result);
-    
-            // Success
-            result.isSuccess = true;
-            result.primaryRecordId = parentIdMap.get(primary.objectName); // Contact ID
+        if (String.isBlank(params)) {
+            result.errorMessage = 'Input parameters cannot be null or empty.';
             return result;
-    
-       
+        }
+
+        Savepoint sp = Database.setSavepoint();
+        try {
+            RequestPayload payload = parsePayload(params);
+            validatePayload(payload);
+
+            SchemaCache schemaCache = new SchemaCache();
+            schemaCache.prime(payload);
+
+            InsertRegistry registry = new InsertRegistry();
+
+            if (!payload.parents.isEmpty()) {
+                processRecordBlock(payload.parents, schemaCache, registry);
+            }
+
+            if (payload.primary != null) {
+                processRecordBlock(new List<RecordData>{ payload.primary }, schemaCache, registry);
+            }
+
+            if (!payload.children.isEmpty()) {
+                processRecordBlock(payload.children, schemaCache, registry);
+            }
+
+            if (!payload.grandchildren.isEmpty()) {
+                processRecordBlock(payload.grandchildren, schemaCache, registry);
+            }
+
+            result.isSuccess = true;
+            if (payload.primary != null && !String.isBlank(payload.primary.objectName)) {
+                String primaryObject = normalizeObjectName(payload.primary.objectName);
+                result.primaryRecordId = registry.lookup(primaryObject, payload.primary.recordIdentifier);
+            }
+            result.recordIdsByObject = registry.snapshot();
+            return result;
+        } catch (RecordSaveException rse) {
+            Database.rollback(sp);
+            result.isSuccess = false;
+            result.errorMessage = rse.getMessage();
+            result.failedObjectName = rse.objectName;
+            return result;
+        } catch (Exception e) {
+            Database.rollback(sp);
+            result.isSuccess = false;
+            result.errorMessage = sanitizeException(e);
+            result.failedObjectName = extractFailedObjectName(e);
+            return result;
+        }
     }
 
-    // Helper method to group child records by recordIdentifier
-    public static Map<Integer, RecordData> groupChildrenByRecordIdentifier(List<RecordData> children) {
-        Map<Integer, RecordData> groupedChildren = new Map<Integer, RecordData>();
-        for (RecordData child : children) {
-            for (FieldValue field : child.fieldValue) {
+    private static void processRecordBlock(
+        List<RecordData> definitions,
+        SchemaCache schemaCache,
+        InsertRegistry registry
+    ) {
+        if (definitions == null || definitions.isEmpty()) {
+            return;
+        }
 
-                // Ensure only accessible fields are processed
-            if (!Schema.getGlobalDescribe().containsKey(child.objectName)) {
-                continue; // Skip if object doesn't exist
-            }
+        List<PreparedRecord> preparedRecords = new List<PreparedRecord>();
+        for (RecordData definition : definitions) {
+            preparedRecords.addAll(prepareRecords(definition, schemaCache));
+        }
+        if (preparedRecords.isEmpty()) {
+            return;
+        }
 
-            SObjectType objType = Schema.getGlobalDescribe().get(child.objectName);
-            if (!objType.getDescribe().isCreateable()) {
-                continue; // Skip if object is not creatable
-            }
+        applyParentReferences(preparedRecords, registry, schemaCache);
+        performDml(preparedRecords, registry, schemaCache);
+    }
 
-                if (!groupedChildren.containsKey(field.recordIdentifier)) {
-                    RecordData newChild = new RecordData();
-                    newChild.objectName = child.objectName;
-                    newChild.recordType = child.recordType;
-                    newChild.parents = child.parents;
-                    newChild.fieldValue = new List<FieldValue>();
-                    groupedChildren.put(field.recordIdentifier, newChild);
+    private static void performDml(
+        List<PreparedRecord> preparedRecords,
+        InsertRegistry registry,
+        SchemaCache schemaCache
+    ) {
+        Map<String, List<PreparedRecord>> createGroups = new Map<String, List<PreparedRecord>>();
+        Map<String, List<PreparedRecord>> updateGroups = new Map<String, List<PreparedRecord>>();
+
+        for (PreparedRecord record : preparedRecords) {
+            String objectName = record.getObjectName();
+            if (record.isUpdateOperation()) {
+                if (!updateGroups.containsKey(objectName)) {
+                    updateGroups.put(objectName, new List<PreparedRecord>());
                 }
-                if(field != null){
-                    groupedChildren.get(field.recordIdentifier).fieldValue.add(field);
+                updateGroups.get(objectName).add(record);
+            } else {
+                if (!createGroups.containsKey(objectName)) {
+                    createGroups.put(objectName, new List<PreparedRecord>());
                 }
-                
+                createGroups.get(objectName).add(record);
             }
         }
-        return groupedChildren;
-    }
 
-    // Helper method to update parentIdMap
-    private static void updateParentIdMap(List<SObject> records, Map<String, String> parentIdMap) {
-        for (SObject record : records) {
-            String objectName = record.getSObjectType().getDescribe().getName();
-            parentIdMap.put(objectName, record.Id);
-        }
-    }
-
-    // Helper method to check for errors
-    private static void checkErrors(Database.UpsertResult[] saveResults, List<SObject> records, InsertResult result) {
-        for (Database.UpsertResult sr : saveResults) {
-            if (!sr.isSuccess()) {
-                for (Database.Error err : sr.getErrors()) {
-                    result.errorMessage = err.getMessage();
-                    result.failedObjectName = records[saveResults.indexOf(sr)].getSObjectType().getDescribe().getName();
-                    throw new DmlException(result.errorMessage);
-                }
-            }
-        }
-    }
-
-    // Helper method to create SObject
-    public static SObject createRecord(RecordData recordData) {
-        String objectName = recordData.objectName.split('\\|')[0];
-        System.debug(LoggingLevel.Error ,'recordData >> '+recordData);
-        System.debug(LoggingLevel.Error ,'objectName >> '+objectName);
-        SObject record = Schema.getGlobalDescribe().get(objectName).newSObject();
-        if(recordData.recordType != '012000000000000AAA'){
-            record.put('RecordTypeId', recordData.recordType);
-        }
-
-        Map<String, Schema.SObjectField> fieldMap = Schema.getGlobalDescribe().get(objectName).getDescribe().fields.getMap();
-
-        for (FieldValue fieldValue : recordData.fieldValue) {
-            if (fieldValue.fieldApi.equalsIgnoreCase('Id')) {
-                record.Id = fieldValue.inputValue;
+        for (String objectName : createGroups.keySet()) {
+            enforceObjectAccess(schemaCache.getDescribe(objectName), true, false);
+            List<PreparedRecord> recordGroup = createGroups.get(objectName);
+            List<SObject> records = sanitizeRecordsForDml(recordGroup, AccessType.CREATABLE);
+            if (records.isEmpty()) {
                 continue;
             }
-            // Check if the field is accessible and updateable
-            System.debug(LoggingLevel.Error ,'fieldValue >> '+fieldValue.fieldApi);
-            Schema.DescribeFieldResult fieldDescribe = Schema.getGlobalDescribe().get(objectName).getDescribe().fields.getMap().get(fieldValue.fieldApi).getDescribe();
-            System.debug(LoggingLevel.Error ,'fieldDescribe >> '+fieldDescribe.isAccessible());
-            System.debug(LoggingLevel.Error ,'fieldDescribe >> '+fieldDescribe.isUpdateable());
-            if (fieldDescribe.isAccessible() && fieldDescribe.isUpdateable() && fieldDescribe.isCreateable()) {
-                Schema.SObjectField field = fieldMap.get(fieldValue.fieldApi);
-                if (field != null) {
-                    Schema.DisplayType fieldType = field.getDescribe().getType();
-                    Object typedValue = convertToDataType(fieldValue.inputValue, fieldType);
-                    record.put(fieldValue.fieldApi, typedValue);
-                } else {
-                    throw new IllegalArgumentException('Invalid field: ' + fieldValue.fieldApi);
-                }
-            } else {
-                throw new SecurityException('Field access denied: ' + fieldValue.fieldApi);
-            }
+            Database.SaveResult[] saveResults = Database.insert(records, true);
+            handleDmlResults(saveResults, recordGroup, registry);
         }
-        return record;
+
+        for (String objectName : updateGroups.keySet()) {
+            enforceObjectAccess(schemaCache.getDescribe(objectName), false, true);
+            List<PreparedRecord> recordGroup = updateGroups.get(objectName);
+            List<SObject> records = sanitizeRecordsForDml(recordGroup, AccessType.UPDATABLE);
+            if (records.isEmpty()) {
+                continue;
+            }
+            Database.SaveResult[] saveResults = Database.update(records, true);
+            handleDmlResults(saveResults, recordGroup, registry);
+        }
     }
 
-    // Helper method to convert inputValue to the correct data type
-    public static Object convertToDataType(String inputValue, Schema.DisplayType fieldType) {
-        if (inputValue == null || inputValue == '') {
+    private static void handleDmlResults(
+        Database.SaveResult[] saveResults,
+        List<PreparedRecord> recordGroup,
+        InsertRegistry registry
+    ) {
+        for (Integer i = 0; i < saveResults.size(); i++) {
+            Database.SaveResult sr = saveResults[i];
+            PreparedRecord prepared = recordGroup[i];
+            if (!sr.isSuccess()) {
+                Database.Error firstError = sr.getErrors()[0];
+                throw new RecordSaveException(
+                    prepared.getObjectName(),
+                    firstError != null ? firstError.getMessage() : 'Unexpected error while saving records.'
+                );
+            }
+            Id savedId = sr.getId();
+            prepared.record.put('Id', savedId);
+            registry.register(prepared.getObjectName(), prepared.identifier, savedId);
+        }
+    }
+
+    private static List<SObject> collectForDml(List<PreparedRecord> recordGroup) {
+        List<SObject> records = new List<SObject>();
+        for (PreparedRecord prepared : recordGroup) {
+            records.add(prepared.record);
+        }
+        return records;
+    }
+
+    private static List<SObject> sanitizeRecordsForDml(
+        List<PreparedRecord> recordGroup,
+        AccessType accessType
+    ) {
+        if (recordGroup == null || recordGroup.isEmpty()) {
+            return new List<SObject>();
+        }
+
+        List<SObject> records = collectForDml(recordGroup);
+        SObjectAccessDecision accessDecision = Security.stripInaccessible(accessType, records);
+        List<SObject> sanitizedRecords = accessDecision.getRecords();
+
+        if (!accessDecision.getRemovedFields().isEmpty()) {
+            throw new SecurityException('Insufficient field-level access to save records.');
+        }
+
+        for (Integer index = 0; index < sanitizedRecords.size(); index++) {
+            recordGroup[index].record = sanitizedRecords[index];
+        }
+
+        return sanitizedRecords;
+    }
+
+    private static void applyParentReferences(
+        List<PreparedRecord> preparedRecords,
+        InsertRegistry registry,
+        SchemaCache schemaCache
+    ) {
+        for (PreparedRecord prepared : preparedRecords) {
+            if (prepared.source.parents == null) {
+                continue;
+            }
+
+            Map<String, Schema.SObjectField> fieldMap = schemaCache.getFieldMap(prepared.getObjectName());
+            for (ParentData parentData : prepared.source.parents) {
+                if (parentData == null || String.isBlank(parentData.parentApi)) {
+                    continue;
+                }
+
+                String fieldApi = extractFieldApi(parentData.parentFieldApi);
+                if (String.isBlank(fieldApi)) {
+                    continue;
+                }
+
+                Schema.SObjectField fieldRef = fieldMap.get(fieldApi);
+                if (fieldRef == null) {
+                    throw new AuraHandledException(
+                        'Invalid relationship field ' + fieldApi + ' on ' + prepared.getObjectName()
+                    );
+                }
+
+                Id parentId = resolveParentId(parentData, registry, prepared.identifier);
+                if (parentId == null) {
+                    throw new AuraHandledException(
+                        'Unable to resolve parent Id for ' + parentData.parentApi + ' while creating ' + prepared.getObjectName()
+                    );
+                }
+                prepared.record.put(fieldApi, parentId);
+            }
+        }
+    }
+
+    private static Id resolveParentId(
+        ParentData parentData,
+        InsertRegistry registry,
+        Integer fallbackIdentifier
+    ) {
+        if (parentData == null) {
             return null;
+        }
+        if (!String.isBlank(parentData.parentId)) {
+            return parseId(parentData.parentId);
+        }
+
+        String parentObject = normalizeObjectName(parentData.parentApi);
+        Integer identifier = parentData.parentRecordIdentifier != null
+            ? parentData.parentRecordIdentifier
+            : fallbackIdentifier;
+
+        Id resolved = registry.lookup(parentObject, identifier);
+        if (resolved == null && identifier != null) {
+            resolved = registry.lookup(parentObject, null);
+        }
+        return resolved;
+    }
+
+    private static List<PreparedRecord> prepareRecords(RecordData data, SchemaCache schemaCache) {
+        List<PreparedRecord> results = new List<PreparedRecord>();
+        if (data == null || String.isBlank(data.objectName)) {
+            return results;
+        }
+
+        String objectName = normalizeObjectName(data.objectName);
+        Schema.SObjectType sobjectType = schemaCache.getType(objectName);
+        Map<String, Schema.SObjectField> fieldMap = schemaCache.getFieldMap(objectName);
+
+        Map<Integer, PreparedRecord> grouped = new Map<Integer, PreparedRecord>();
+
+        if (data.fieldValue != null && !data.fieldValue.isEmpty()) {
+            for (FieldValue fieldValue : data.fieldValue) {
+                Integer identifier = resolveIdentifier(fieldValue != null ? fieldValue.recordIdentifier : null, data.recordIdentifier);
+                PreparedRecord prepared = grouped.get(identifier);
+                if (prepared == null) {
+                    prepared = new PreparedRecord();
+                    prepared.record = sobjectType.newSObject();
+                    prepared.type = sobjectType;
+                    prepared.source = data;
+                    prepared.identifier = identifier;
+                    applyRecordType(prepared, data);
+                    grouped.put(identifier, prepared);
+                }
+                applyFieldValue(prepared, fieldValue, fieldMap);
+            }
+        }
+
+        if (grouped.isEmpty()) {
+            Integer identifier = resolveIdentifier(null, data.recordIdentifier);
+            PreparedRecord prepared = new PreparedRecord();
+            prepared.record = sobjectType.newSObject();
+            prepared.type = sobjectType;
+            prepared.source = data;
+            prepared.identifier = identifier;
+            applyRecordType(prepared, data);
+            grouped.put(identifier, prepared);
+        }
+
+        results.addAll(grouped.values());
+        return results;
+    }
+
+    private static void applyRecordType(PreparedRecord prepared, RecordData data) {
+        if (prepared == null || data == null) {
+            return;
+        }
+        if (!String.isBlank(data.recordType) && data.recordType != MASTER_RECORD_TYPE_ID) {
+            prepared.record.put('RecordTypeId', data.recordType);
+        }
+    }
+
+    private static void applyFieldValue(
+        PreparedRecord prepared,
+        FieldValue fieldValue,
+        Map<String, Schema.SObjectField> fieldMap
+    ) {
+        if (prepared == null || fieldValue == null || String.isBlank(fieldValue.fieldApi)) {
+            return;
+        }
+
+        if ('Id'.equalsIgnoreCase(fieldValue.fieldApi)) {
+            if (!String.isBlank(fieldValue.inputValue)) {
+                prepared.record.put('Id', parseId(fieldValue.inputValue));
+            }
+            return;
+        }
+
+        Schema.SObjectField fieldToken = fieldMap.get(fieldValue.fieldApi);
+        if (fieldToken == null) {
+            throw new AuraHandledException(
+                'Invalid field ' + fieldValue.fieldApi + ' on ' + prepared.getObjectName()
+            );
+        }
+
+        Schema.DescribeFieldResult describeField = fieldToken.getDescribe();
+        Object typedValue = convertValue(fieldValue.inputValue, describeField.getType());
+        prepared.record.put(fieldValue.fieldApi, typedValue);
+    }
+
+    private static void enforceObjectAccess(
+        Schema.DescribeSObjectResult describe,
+        Boolean requiresCreate,
+        Boolean requiresUpdate
+    ) {
+        if (describe == null) {
+            throw new AuraHandledException('Unable to resolve described object.');
+        }
+        if (requiresCreate && !describe.isCreateable()) {
+            throw new SecurityException('Insufficient privileges to create ' + describe.getName() + ' records.');
+        }
+        if (requiresUpdate && !describe.isUpdateable()) {
+            throw new SecurityException('Insufficient privileges to update ' + describe.getName() + ' records.');
+        }
+    }
+
+    private static Object convertValue(String inputValue, Schema.DisplayType fieldType) {
+        if (fieldType == null || String.isBlank(inputValue)) {
+            return String.isBlank(inputValue) ? null : inputValue;
         }
 
         switch on fieldType {
             when BOOLEAN {
                 return Boolean.valueOf(inputValue);
             }
-            when DATE {
-                return Date.valueOf(inputValue);
-            }
-            when DATETIME {
-                return DateTime.valueOfGmt(inputValue);
-            }
-            when DOUBLE, CURRENCY, PERCENT {
+            when CURRENCY, DOUBLE, PERCENT {
                 return Decimal.valueOf(inputValue);
             }
             when INTEGER {
@@ -269,19 +354,321 @@ public with sharing class FormsHelper {
             when LONG {
                 return Long.valueOf(inputValue);
             }
+            when DATE {
+                return Date.valueOf(inputValue);
+            }
+            when DATETIME {
+                return DateTime.valueOfGmt(inputValue);
+            }
             when TIME {
-                return Time.newInstance(
-                    Integer.valueOf(inputValue.substring(0, 2)), // Hours
-                    Integer.valueOf(inputValue.substring(3, 5)), // Minutes
-                    Integer.valueOf(inputValue.substring(6, 8)), // Seconds
-                    0 // Milliseconds
-                );
+                return parseTime(inputValue);
+            }
+            when ID {
+                return parseId(inputValue);
+            }
+            when BASE64 {
+                return EncodingUtil.base64Decode(inputValue);
+            }
+            when REFERENCE {
+                return inputValue;
             }
             when else {
-                // Default to String (TEXTAREA, PICKLIST, EMAIL, PHONE, URL, etc.)
                 return inputValue;
             }
         }
+    }
+
+    private static Time parseTime(String input) {
+        if (String.isBlank(input)) {
+            return null;
+        }
+        List<String> parts = input.split(':');
+        if (parts.size() < 3) {
+            throw new AuraHandledException('Time value must be provided in HH:mm:ss format.');
+        }
+        try {
+            Integer hours = Integer.valueOf(parts[0]);
+            Integer minutes = Integer.valueOf(parts[1]);
+            Integer seconds = Integer.valueOf(parts[2]);
+            return Time.newInstance(hours, minutes, seconds, 0);
+        } catch (Exception ex) {
+            throw new AuraHandledException('Invalid time value provided.');
+        }
+    }
+
+    private static Id parseId(String input) {
+        if (String.isBlank(input)) {
+            return null;
+        }
+        try {
+            return Id.valueOf(input);
+        } catch (Exception ex) {
+            throw new AuraHandledException('Invalid Id value supplied.');
+        }
+    }
+
+    private static RecordData parseRecord(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        try {
+            if (raw instanceof String) {
+                String payload = ((String) raw).trim();
+                if (String.isBlank(payload) || 'null'.equalsIgnoreCase(payload)) {
+                    return null;
+                }
+                return (RecordData) JSON.deserialize(payload, RecordData.class);
+            }
+            return (RecordData) JSON.deserialize(JSON.serialize(raw), RecordData.class);
+        } catch (Exception e) {
+            throw new AuraHandledException('Unable to parse record payload.');
+        }
+    }
+
+    private static List<RecordData> parseRecordList(Object raw) {
+        List<RecordData> records = new List<RecordData>();
+        if (raw == null) {
+            return records;
+        }
+        try {
+            if (raw instanceof String) {
+                String payload = ((String) raw).trim();
+                if (String.isBlank(payload) || 'null'.equalsIgnoreCase(payload)) {
+                    return records;
+                }
+                records = (List<RecordData>) JSON.deserialize(payload, List<RecordData>.class);
+            } else if (raw instanceof List<Object>) {
+                records = (List<RecordData>) JSON.deserialize(JSON.serialize(raw), List<RecordData>.class);
+            }
+            return records;
+        } catch (Exception e) {
+            throw new AuraHandledException('Unable to parse record list payload.');
+        }
+    }
+
+    private static RequestPayload parsePayload(String params) {
+        try {
+            Map<String, Object> raw = (Map<String, Object>) JSON.deserializeUntyped(params);
+            RequestPayload payload = new RequestPayload();
+            payload.primary = parseRecord(raw.get('primaryObjectList'));
+            payload.parents = parseRecordList(raw.get('parentObjectList'));
+            payload.children = parseRecordList(raw.get('childObjectsList'));
+            payload.grandchildren = parseRecordList(raw.get('grandChildObjectList'));
+            return payload;
+        } catch (AuraHandledException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AuraHandledException('Invalid payload format.');
+        }
+    }
+
+    private static void validatePayload(RequestPayload payload) {
+        if (payload == null) {
+            throw new AuraHandledException('Request payload is required.');
+        }
+
+        if (
+            payload.primary == null &&
+            payload.parents.isEmpty() &&
+            payload.children.isEmpty() &&
+            payload.grandchildren.isEmpty()
+        ) {
+            throw new AuraHandledException('No records provided for save.');
+        }
+
+        validateRecord(payload.primary);
+        for (RecordData parent : payload.parents) {
+            validateRecord(parent);
+        }
+        for (RecordData child : payload.children) {
+            validateRecord(child);
+        }
+        for (RecordData grandchild : payload.grandchildren) {
+            validateRecord(grandchild);
+        }
+    }
+
+    private static void validateRecord(RecordData data) {
+        if (data == null) {
+            return;
+        }
+        if (String.isBlank(data.objectName)) {
+            throw new AuraHandledException('objectName is required for each record.');
+        }
+        if (data.fieldValue != null) {
+            for (FieldValue value : data.fieldValue) {
+                if (value == null || String.isBlank(value.fieldApi)) {
+                    throw new AuraHandledException('fieldApi is required for every field value.');
+                }
+            }
+        }
+    }
+
+    private static String sanitizeException(Exception e) {
+        if (e == null) {
+            return 'An unexpected error occurred.';
+        }
+        if (e instanceof AuraHandledException) {
+            return e.getMessage();
+        }
+        if (e.getMessage() != null) {
+            return e.getMessage();
+        }
+        return 'An unexpected error occurred.';
+    }
+
+    private static String extractFailedObjectName(Exception e) {
+        if (e instanceof RecordSaveException) {
+            return ((RecordSaveException) e).objectName;
+        }
+        return null;
+    }
+
+    private static Integer resolveIdentifier(Integer fieldIdentifier, Integer recordIdentifier) {
+        if (fieldIdentifier != null) {
+            return fieldIdentifier;
+        }
+        if (recordIdentifier != null) {
+            return recordIdentifier;
+        }
+        return 0;
+    }
+
+    private static String extractFieldApi(String descriptor) {
+        if (String.isBlank(descriptor)) {
+            return null;
+        }
+        List<String> parts = descriptor.split('\\|');
+        return parts.isEmpty() ? descriptor : parts[parts.size() - 1];
+    }
+
+    private static String normalizeObjectName(String objectName) {
+        if (String.isBlank(objectName)) {
+            return null;
+        }
+        if (objectName.contains('|')) {
+            return objectName.split('\\|')[0];
+        }
+        return objectName;
+    }
+
+    private class PreparedRecord {
+        public RecordData source;
+        public Integer identifier;
+        public SObject record;
+        public Schema.SObjectType type;
+
+        public String getObjectName() {
+            return type != null ? type.getDescribe().getName() : null;
+        }
+
+        public Boolean isUpdateOperation() {
+            return record != null && record.get('Id') != null;
+        }
+    }
+
+    private class SchemaCache {
+        private final Map<String, Schema.SObjectType> typeCache = new Map<String, Schema.SObjectType>();
+        private final Map<String, Map<String, Schema.SObjectField>> fieldCache = new Map<String, Map<String, Schema.SObjectField>>();
+
+        public void prime(RequestPayload payload) {
+            if (payload == null) {
+                return;
+            }
+            List<RecordData> all = new List<RecordData>();
+            if (payload.primary != null) {
+                all.add(payload.primary);
+            }
+            all.addAll(payload.parents);
+            all.addAll(payload.children);
+            all.addAll(payload.grandchildren);
+            for (RecordData data : all) {
+                if (data == null) {
+                    continue;
+                }
+                getType(data.objectName);
+            }
+        }
+
+        public Schema.SObjectType getType(String objectName) {
+            String normalized = normalizeObjectName(objectName);
+            if (String.isBlank(normalized)) {
+                throw new AuraHandledException('Object name is required.');
+            }
+            if (!typeCache.containsKey(normalized)) {
+                Map<String, Schema.SObjectType> globalDescribe = Schema.getGlobalDescribe();
+                if (!globalDescribe.containsKey(normalized)) {
+                    throw new AuraHandledException('Unknown sObject ' + normalized + '.');
+                }
+                typeCache.put(normalized, globalDescribe.get(normalized));
+            }
+            return typeCache.get(normalized);
+        }
+
+        public Schema.DescribeSObjectResult getDescribe(String objectName) {
+            return getType(objectName).getDescribe();
+        }
+
+        public Map<String, Schema.SObjectField> getFieldMap(String objectName) {
+            String normalized = normalizeObjectName(objectName);
+            if (!fieldCache.containsKey(normalized)) {
+                fieldCache.put(normalized, getDescribe(normalized).fields.getMap());
+            }
+            return fieldCache.get(normalized);
+        }
+    }
+
+    private class InsertRegistry {
+        private final Map<String, Map<Integer, Id>> idsByObjectAndKey = new Map<String, Map<Integer, Id>>();
+        private final Map<String, Id> lastInsertedByObject = new Map<String, Id>();
+
+        public void register(String objectName, Integer identifier, Id recordId) {
+            if (String.isBlank(objectName) || recordId == null) {
+                return;
+            }
+            if (!idsByObjectAndKey.containsKey(objectName)) {
+                idsByObjectAndKey.put(objectName, new Map<Integer, Id>());
+            }
+            Integer key = identifier == null ? 0 : identifier;
+            idsByObjectAndKey.get(objectName).put(key, recordId);
+            lastInsertedByObject.put(objectName, recordId);
+        }
+
+        public Id lookup(String objectName, Integer identifier) {
+            if (String.isBlank(objectName)) {
+                return null;
+            }
+            Map<Integer, Id> keyed = idsByObjectAndKey.get(objectName);
+            if (keyed != null) {
+                if (identifier != null && keyed.containsKey(identifier)) {
+                    return keyed.get(identifier);
+                }
+                if (keyed.containsKey(0)) {
+                    return keyed.get(0);
+                }
+            }
+            return lastInsertedByObject.get(objectName);
+        }
+
+        public Map<String, Id> snapshot() {
+            return new Map<String, Id>(lastInsertedByObject);
+        }
+    }
+
+    private class RecordSaveException extends Exception {
+        public String objectName;
+
+        public RecordSaveException(String objectName, String message) {
+            this.objectName = objectName;
+            this.setMessage(message);
+        }
+    }
+
+    private class RequestPayload {
+        public RecordData primary;
+        public List<RecordData> parents = new List<RecordData>();
+        public List<RecordData> children = new List<RecordData>();
+        public List<RecordData> grandchildren = new List<RecordData>();
     }
     
 
@@ -389,67 +776,6 @@ public static void attachPDF(String jsonString, String parentId) {
         system.debug(LoggingLevel.Error, 'Failed to insert fileToUpload, error is: ' + dmle.getMessage());
     }
 }
-
-
-    /* @AuraEnabled
-    public static void updateStagingApplicationStatus(String recordId, String applicationId){
-        update (new Application_Staging__c(Id = recordId, Conversion_Status__c='Converted', Application__c = applicationId));
-
-        //Update Application Date on Referral(Application) record
-
-        Date pendingApplicationDate = [select Id, Application_Date__c from Application_Staging__c where id =: recordId limit 1].Application_Date__c;
-
-        if(pendingApplicationDate != null){
-            update (new Referral__c(Id = applicationId, Application_Date__c = pendingApplicationDate, Intake_Date__c = pendingApplicationDate));
-        }
-    } */
-
-    /* @AuraEnabled
-    public static Application_Staging__c getStagingApplicationConversionStatus(String recordId){
-        return [select Id, Conversion_Status__c, Form_Id__c, isExternalReferral__c, primaryReason_ServId__c from Application_Staging__c where Id =: recordId limit 1];
-    } */
-
-    /* @AuraEnabled
-    public static String getReferralName(String recordId){
-        return [select Id, Name from Referral__c where Id =: recordId limit 1].Name;
-    } */
-
-    /* @AuraEnabled
-    public static Id getServiceId (Id recId)
-    {
-        Id serviceId;
-        Application_Staging__c astage = [select Id, primaryReason_ServId__c, Primary_Reason1__c from Application_Staging__c where Id = :recId];
-        if (astage.primaryReason_ServId__c != null)
-        {
-            serviceId = astage.primaryReason_ServId__c;
-        }
-        else if (astage.Primary_Reason1__c != null)
-        {
-            SP_Service__c serv = [select Id, Name from SP_Service__c where Name = :astage.Primary_Reason1__c LIMIT 1];
-            serviceId = serv.Id;
-        }
-
-        return serviceId;
-    } */
-
-    /* @AuraEnabled
-    public static Boolean isUserWithService (Id servId)
-    {
-        Boolean returnValue = false;
-        Id pId = UserInfo.getProfileId();
-        Profile p = [SELECT Id, Name from Profile where Id = :pId WITH USER_MODE];
-        if (p.Name.contains('Admin'))
-        {
-            returnValue = true;
-        }
-        else
-        {
-            returnValue = CheckAccessUtil.isUserWithService(UserInfo.getUserId(), servId);
-        }
-
-        return returnValue;
-    } */
-
     
 // Copies document links from a staging record to the specified application record
 @AuraEnabled
@@ -479,78 +805,6 @@ public static void attachDocsToApplication(String applicationId, String stagingI
         }
     }
 }
-
-     /*
-        * @date        : 01/06/2023
-        * @description : isEligibleServiceContact() for given service whether current logged in user is eligible for provdied service or not 
-        * @param2      : spServId - Id of SP Service
-        * @return      : Boolean
-        * Change Log   : UST-00240/IS-00476
-    */
-    /* @AuraEnabled
-    public static Boolean isEligibleServiceContact(String spServId){
-      
-        userDetails.userWrapper userData  = userDetails.getUserInfo ((String)UserInfo.getUserId());
-        String userRole = userData.userRole;
-        if(userRole == 'Superuser' || userRole == 'Admin'){
-            return true;
-        }
-        if(userRole == 'Read Only')
-            return false;
-
-        List<Service_Contact__c> serContactList = [select Id, Name, SP_Service__c, Staff_ID__c from Service_Contact__c where Staff_ID__c = :userData.staffId and SP_Service__c =:spServId];
-        system.debug('serContactList>>' + serContactList);
-        if(serContactList !=null & serContactList.size() > 0 )
-            return true;
-        else
-            return false;
-
-    } */
-
-
-    /*
-        * @date        : 01/05/2023
-        * @description : Get List of Primary Reasons
-        * @param1      : providerId - Id of Provider/Facility Account
-        * @param2      : spServId - Id of SP Service
-        * @return      : List of PrimReasonWrapper class
-        * Change Log   : UST-00240
-    */
-    /* @AuraEnabled
-    public static String getPrimaryReason (Id spServId)
-    {
-        String queryFields = 'SELECT Id, Name,  Confidential__c, Service_Provider__c, Service_Provider__r.Name FROM SP_Service__c';
-        
-        //String whereClause = ' WHERE Modules_Used__c Includes (\'Referral\') and InActive__c = False WITH_USER_MODE' ;
-        String finalCondition = '';
-        String fullQuery = '';
-        String serviceDetail = '';
-
-        if (spServId != null)
-        {
-            finalCondition = ' WHERE Id = :spServId LIMIT 1';
-        }
-        else
-        {
-            return null;
-        }
-
-        fullQuery = queryFields +   finalCondition;
-        system.debug('#### query: ' + fullQuery);
-
-        List<SP_Service__c> listSPServ = Database.query(fullQuery);
-        system.debug('#### listSPServ: ' + listSPServ);
-        
-        if (listSPServ != null && listSPServ.size() > 0)
-        {   
-            serviceDetail = listSPServ[0].Name + ' - ' + listSPServ[0].Service_Provider__r.Name ;
-            if(listSPServ[0].Confidential__c)
-                serviceDetail = serviceDetail + ' : Confidential';
-        }
-        
-        system.debug('serviceDetail>>' + serviceDetail);
-        return serviceDetail;
-    } */
 
 // Attaches a JSON file for print purposes to the specified record and returns a unique identifier
 //UST-00422
@@ -697,237 +951,6 @@ public static String moveJsonsAndDeleteTrackerRecords(String primaryRecordId, Li
     return 'Done';
 }
 
- 
-    /* @AuraEnabled
-    public static List<ClientEmailWrapper> getClientAndEmails(String recordId, String objectApi){
-        List<ClientEmailWrapper> resp = new List<ClientEmailWrapper>();
-
-        if(objectApi == 'Referral__c'){
-            List<Client_Referral__c> clientReferralList = [Select Id, Client_Name_Referral__c, Client__r.Email__c from Client_Referral__c where Referral__c =: recordId];
-
-            if(clientReferralList!=null && clientReferralList.size() > 0){
-                for(Client_Referral__c cr: clientReferralList){
-                    ClientEmailWrapper tempWrap = new ClientEmailWrapper();
-                    tempWrap.label = cr.Client_Name_Referral__c;
-                    tempWrap.value = cr.Client_Name_Referral__c+'#'+cr.Client__r.Email__c;
-                    resp.add(tempWrap);
-                }
-            }
-        }else if(objectApi == 'Client_Service__c'){
-            String referralId = [select Id, Referral__c from Client_Service__c where Id =: recordId].Referral__c;
-
-            List<Client_Referral__c> clientReferralList = [Select Id, Client_Name_Referral__c, Client__r.Email__c from Client_Referral__c where Referral__c =: referralId];
-
-            if(clientReferralList!=null && clientReferralList.size() > 0){
-                for(Client_Referral__c cr: clientReferralList){
-                    ClientEmailWrapper tempWrap = new ClientEmailWrapper();
-                    tempWrap.label = cr.Client_Name_Referral__c;
-                    tempWrap.value = cr.Client_Name_Referral__c+'#'+cr.Client__r.Email__c;
-                    resp.add(tempWrap);
-                }
-            }
-        }else if(objectApi == 'Client__c'){
-            
-            List<Client__c> clientList = [Select Id, Full_Name__c, Email__c from Client__c where Id =: recordId];
-
-            if(clientList!=null && clientList.size() > 0){
-                for(Client__c cr: clientList){
-                    ClientEmailWrapper tempWrap = new ClientEmailWrapper();
-                    tempWrap.label = cr.Full_Name__c;
-                    tempWrap.value = cr.Full_Name__c+'#'+cr.Email__c;
-                    resp.add(tempWrap);
-                }
-            }
-        }
-
-
-        return resp;
-        
-    } */
-
-    /* @AuraEnabled
-    public static LwcResponse sendFormToClient(String emailId, String formId, String recordId, String objectApi){
-        LwcResponse resp = new LwcResponse();
-        Boolean isSuccess = false;
-        String requestInfoSiteUrl = Label.Request_Info_Site_URL;
-        String serviceName;
-        String emailBody;
-        String encodedFormId = processEncryption(formId);
-        String encodedRecordId = processEncryption(recordId);
-        System.debug('encodedFormId >> '+encodedFormId);
-        System.debug('encodedRecordId >> '+encodedRecordId);
-        String formLink;
-
-        OrgWideEmailAddress owa = [select id, Address, DisplayName from OrgWideEmailAddress limit 1];
-
-        String emailSubject = 'Travis County Health and Human Service Form sent for completion';
-
-        List<Form__c> formList = [Select Id, Form_Name__c, Prefill_Fields__c from form__c where id =: formId];
-
-        if(objectApi == 'Referral__c'){
-            serviceName = [Select Id, Primary_Reason_F__c from Referral__c where id =: recordId].Primary_Reason_F__c;
-        }else if(objectApi == 'Client_Service__c'){
-            serviceName = [Select Id, Service_Name_F__c from Client_Service__c where id =: recordId].Service_Name_F__c;
-        }
-
-        formLink = '<a href='+requestInfoSiteUrl+'/clientform?formId='+encodedFormId+'&recordId='+encodedRecordId+'&objectApiName='+objectApi+'&isPrefillFieldsForm='+formList[0].Prefill_Fields__c+'&clientEmail='+emailId+'>'+formList[0].Form_Name__c+'</a>';
-
-        if(objectApi == 'Client__c'){
-            emailBody = 'We have sent <b>'+formList[0].Form_Name__c+'</b> to complete electronically. Click the link below to open the Form in another browser tab. Upon completion of all mandatory fields, click the Submit button and your Assigned Worker will be notified that you have completed the Form.<br /> <br /> '+formLink;
-        }else{
-            emailBody = 'We have sent <b>'+formList[0].Form_Name__c+'</b> for <b>'+serviceName+'</b> to complete electronically. Click the link below to open the Form in another browser tab. Upon completion of all mandatory fields, click the Submit button and your Assigned Worker will be notified that you have completed the Form..<br /> <br /> '+formLink;
-        }
-
-        List<Messaging.SingleEmailMessage> prepMailList = new List<Messaging.SingleEmailMessage>();
-
-        Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
-
-        System.debug('emailBody >> '+emailBody);
-        email.setOrgWideEmailAddressId(owa.id); 
-        email.setSubject(emailSubject);
-        email.setHtmlBody(emailBody);
-        if(String.isNotBlank(emailId)){
-            email.setToAddresses(new List<String>{emailId});
-        }else{
-            resp.isSuccess = false;
-            resp.error = 'No email id available for the selected Client.';
-            return resp;
-        }
-
-        prepMailList.add(email);
-
-        Messaging.SendEmailResult[] results = Messaging.sendEmail(prepMailList);
-
-        for (Messaging.SendEmailResult mr : results) 
-        {
-            if (mr.isSuccess()) {
-                resp.isSuccess = true;
-                resp.url = '';
-            }  else {
-                resp.isSuccess = false;
-                // Operation failed, so get all errors                
-                for(Messaging.SendEmailError err : mr.getErrors()) {
-                    System.debug('The following error has occurred.');                    
-                    System.debug(err.getStatusCode() + ': ' + err.getMessage());
-                    System.debug('fields that affected this error: ' + err.getFields());
-                    resp.error = err.getMessage();
-                }
-            }
-        }
-
-        System.debug('resp >> '+resp);
-        return resp;
-    }
-
-    @AuraEnabled
-    public static string getDecryptedFormAndRecordId(String encryptedFormId, String encryptedRecordId){
-        System.debug('>> '+encryptedFormId);
-        System.debug('>> '+encryptedRecordId);
-        return processDecryption(encryptedFormId)+'#'+processDecryption(encryptedRecordId);
-    }
-
-    public static string processEncryption(String fields){ 
-
-        Blob cryptoKey = getEncryptionDecryptionKey(); 
-        Blob data = Blob.valueOf(fields); 
-        Blob encryptedData = Crypto.encryptWithManagedIV('AES128', cryptoKey, data ); 
-        string b64Data = EncodingUtil.base64Encode (encryptedData);  
-        return b64Data; 
-
-    } 
-
-    public static String processDecryption(string encryptedData){ 
-
-        String decryptedData; 
-        Blob data = EncodingUtil.base64Decode (encryptedData); 
-        Blob privateKey = getEncryptionDecryptionKey();
-        String expMsg; 
-        try{ 
-            Blob dataToDecrypt = Crypto.decryptWithManagedIV ('AES128', privateKey, data); 
-            decryptedData = dataToDecrypt.toString(); 
-        } 
-
-        catch(Exception e){ 
-           expMsg = e.getMessage();
-        } 
-        return (string.isEmpty(expMsg) ?  decryptedData :  null);  
-
-    }
-
-    public static Blob getEncryptionDecryptionKey(){
-        StaticResource static_resource = [SELECT Id, SystemModStamp, Name, Body
-                                  FROM StaticResource 
-                                  WHERE Name = 'Crypto_Key' 
-
-                                  LIMIT 1];
-
-        return static_resource.Body;
-    }
-
-    @AuraEnabled
-    public static string sendConfirmationToAssignedWorker(String formId, String recordId, String objectApi, String clientEmail){
-        
-        List<Form__c> formList = [select Id, Form_Name__c from Form__c where Id =: formId];
-        String recordName;
-        String awEmail;
-        String recordLink;
-        String org_Url = Label.Org_URL;
-        String hhsAdminEmail = Label.HHS_Admin_Email;
-
-        if(objectApi == 'Referral__c'){
-            List<Referral__c> referralList = [select Id, Name, Assigned_Worker__r.Email__c from Referral__c where id =: recordId];
-            recordName = referralList[0].Name;
-            awEmail = referralList[0].Assigned_Worker__r.Email__c;
-            System.debug(' >> '+recordName);
-            System.debug(' >> '+awEmail);
-        }else if(objectApi == 'Client_Service__c'){
-            List<Client_Service__c> asList = [select Id, Name, AssignWorker_Email__c from Client_Service__c where id =:  recordId];
-            recordName = asList[0].Name;
-            awEmail = asList[0].AssignWorker_Email__c;
-            System.debug(' >> '+recordName);
-            System.debug(' >> '+awEmail);
-        }
-
-        List<Messaging.SingleEmailMessage> prepMailList = new List<Messaging.SingleEmailMessage>();
-
-        Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
-
-        OrgWideEmailAddress owa = [select id, Address, DisplayName from OrgWideEmailAddress where DisplayName = :hhsAdminEmail limit 1];
-
-        System.debug('>> '+owa);
-
-        String emailSubject = 'Form sent electronically has been completed';
-
-        recordLink = '<a href='+org_Url+recordId+'>'+recordName+'</a>';
-
-        String emailBody = 'The '+formList[0].Form_Name__c+' you sent electronically to '+clientEmail+' has been completed on '+System.now()+'. Review the completed Form by clicking the "Print Form" button of the '+recordLink;
-
-        email.setOrgWideEmailAddressId(owa.id); 
-        email.setSubject(emailSubject);
-        email.setHtmlBody(emailBody);
-        email.setToAddresses(new String[] {awEmail});
-
-        prepMailList.add(email);
-
-        Messaging.SendEmailResult[] results = Messaging.sendEmail(prepMailList);
-
-        for (Messaging.SendEmailResult mr : results) 
-        {
-            if (mr.isSuccess()) {
-                System.debug('Sent Successfully');
-            }  else {
-                // Operation failed, so get all errors                
-                for(Messaging.SendEmailError err : mr.getErrors()) {
-                    System.debug('The following error has occurred.');                    
-                    System.debug(err.getStatusCode() + ': ' + err.getMessage());
-                    System.debug('fields that affected this error: ' + err.getFields());
-                }
-            }
-        }
-        
-        return 'Sent';
-    } */
-
    // Marks a dependent forms tracker record as completed
 @AuraEnabled
 public static void markAdditionalFormComplete(String trackerRecordId) {
@@ -988,21 +1011,7 @@ public class Parents {
     public String parentId {get;set;}
 }
 
-    /* public class FieldValue {
-        @AuraEnabled
-        public String fieldApi {get;set;}
-        @AuraEnabled
-        public String inputValue {get;set;}
-        @AuraEnabled
-        public Integer recordIdentifier {get;set;}
-    } */
-
-    // public class ResponseParser {
-    //     @AuraEnabled
-    //     public String fieldApi {get;set;}
-    //     @AuraEnabled
-    //     public List<String> inputValue {get;set;}
-    // }
+   
 // Data parser for forms with multiple child records
 public class FormsMultiChildParser {
     @AuraEnabled
@@ -1035,54 +1044,40 @@ public class PicklistWrapper {
 
 // Container for record data, including parents and field values
 public class RecordData {
-    public String objectName;
-    public String recordType;
-    public List<ParentData> parents;
-    public List<FieldValue> fieldValue;
-    public Integer recordIdentifier;
-
-    // Empty constructor
-    public RecordData() {}
-
-    // Constructor for setting all core properties
-    public RecordData(String objectName, String recordType, List<ParentData> parents, List<FieldValue> fieldValue) {
-        this.objectName = objectName;
-        this.recordType = recordType;
-        this.parents = parents;
-        this.fieldValue = fieldValue;
+        @AuraEnabled
+        public String objectName;
+        @AuraEnabled
+        public String recordType;
+        @AuraEnabled
+        public List<ParentData> parents;
+        @AuraEnabled
+        public List<FieldValue> fieldValue;
+        @AuraEnabled
+        public Integer recordIdentifier;
     }
-}
 
 // Represents parent record reference data
 public class ParentData {
-    public String parentApi;
-    public String parentFieldApi;
-    public String parentId;
-
-    // Constructor for required parent fields
-    public ParentData(String parentApi, String parentFieldApi) {
-        this.parentApi = parentApi;
-        this.parentFieldApi = parentFieldApi;
-    }
+        @AuraEnabled
+        public String parentApi;
+        @AuraEnabled
+        public String parentFieldApi;
+        @AuraEnabled
+        public String parentId;
+        @AuraEnabled
+        public Integer parentRecordIdentifier;
 }
 
 // Represents a single field value with its API name and optional record identifier
 public class FieldValue {
-    @AuraEnabled
-    public String fieldApi;
-    @AuraEnabled
-    public String inputValue;
-    @AuraEnabled
-    public Integer recordIdentifier;
-
-    // Constructor for quick initialization
-    public FieldValue(String fieldApi, String inputValue) {
-        this.fieldApi = fieldApi;
-        this.inputValue = inputValue;
+        @AuraEnabled
+        public String fieldApi;
+        @AuraEnabled
+        public String inputValue;
+        @AuraEnabled
+        public Integer recordIdentifier;
     }
-}
 
-// Wrapper for returning the results of an insert operation
 public class InsertResult {
     @AuraEnabled
     public Boolean isSuccess;
@@ -1092,5 +1087,7 @@ public class InsertResult {
     public String failedObjectName;
     @AuraEnabled
     public Id primaryRecordId;
+    @AuraEnabled
+    public Map<String, Id> recordIdsByObject;
 }
 }

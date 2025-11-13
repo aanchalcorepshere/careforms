@@ -42,19 +42,47 @@ export default class AssessmentWizardModuleHandler extends LightningElement {
 
     set editAssessmentData(value) {
         this.localEditData = value;
-        //console.log("this.localEditData >> ",this.localEditData);
-        if(this.localEditData){
-            this.assessmentDetails = JSON.parse(this.localEditData.caresp__Assessment_Detail_JSON__c);
-            if(this.localEditData.caresp__Section_JSON__c){
-                this.sections = JSON.parse(this.localEditData.caresp__Section_JSON__c);
-            }
-            this.sectionData = JSON.parse(this.localEditData.caresp__Questions_JSON__c);
-            if(this.localEditData.caresp__Scoring_JSON__c){
-                this.scoringData = JSON.parse(this.localEditData.caresp__Scoring_JSON__c);
-            }
-            if(this.localEditData.caresp__Field_Update_JSON__c){
-                this.fieldUpdate = JSON.parse(this.localEditData.caresp__Field_Update_JSON__c);
-            }
+        if (!this.localEditData) {
+            return;
+        }
+        // Support namespaced and non-namespaced API names and guard JSON.parse calls
+        const detail    = this.localEditData.caresp__Assessment_Detail_JSON__c ?? this.localEditData.Assessment_Detail_JSON__c;
+        const sections  = this.localEditData.caresp__Section_JSON__c ?? this.localEditData.Section_JSON__c;
+        const questions = this.localEditData.caresp__Questions_JSON__c ?? this.localEditData.Questions_JSON__c;
+        const scoring   = this.localEditData.caresp__Scoring_JSON__c ?? this.localEditData.Scoring_JSON__c;
+        const fieldUpd  = this.localEditData.caresp__Field_Update_JSON__c ?? this.localEditData.Field_Update_JSON__c;
+
+        if (detail)    { this.assessmentDetails = JSON.parse(detail); }
+        if (sections)  { this.sections = JSON.parse(sections); }
+        if (questions) { this.sectionData = JSON.parse(questions); }
+        if (scoring)   { this.scoringData = JSON.parse(scoring); }
+        if (fieldUpd)  { this.fieldUpdate = JSON.parse(fieldUpd); }
+
+        // Proactively sync parsed data back to container so validations see it
+        if (this.assessmentDetails) {
+            this.dispatchEvent(new CustomEvent('stepdata', {
+                detail: { eventName: 'assessmentdetails', data: this.assessmentDetails }
+            }));
+        }
+        if (this.sections) {
+            this.dispatchEvent(new CustomEvent('stepdata', {
+                detail: { eventName: 'sectiondetails', data: this.sections }
+            }));
+        }
+        if (this.sectionData) {
+            this.dispatchEvent(new CustomEvent('stepdata', {
+                detail: { eventName: 'sectiondata', data: this.sectionData }
+            }));
+        }
+        if (this.scoringData) {
+            this.dispatchEvent(new CustomEvent('stepdata', {
+                detail: { eventName: 'scoringdata', data: this.scoringData }
+            }));
+        }
+        if (this.fieldUpdate) {
+            this.dispatchEvent(new CustomEvent('stepdata', {
+                detail: { eventName: 'completionfieldupdate', data: this.fieldUpdate }
+            }));
         }
     }
 

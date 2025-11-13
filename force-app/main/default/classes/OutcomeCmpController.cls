@@ -221,6 +221,7 @@ public with sharing class OutcomeCmpController {
                         questionDataType == 'Currency',
                         questionDataType == 'Date',
                         questionDataType == 'Telephone',
+                        questionDataType == 'Signature',
                         resp.caresp__Response__c, 
                         quesAnsWrpList
                     ));
@@ -253,13 +254,14 @@ public with sharing class OutcomeCmpController {
         @AuraEnabled public Boolean isCurrency;
         @AuraEnabled public Boolean isDate;
         @AuraEnabled public Boolean isPhone;
+        @AuraEnabled public Boolean isSignature;
         @AuraEnabled public String response;
         @AuraEnabled public List<QuesAnswerWrapper> quesAnsList;
         
         public QuestionsWrapper(String level, String responseId, String quesText, String dataType, Decimal sequence, 
                                String sfSeq, String section, Decimal sectionSequence, Boolean isText, Boolean isNumber, 
                                Boolean isCheckbox, Boolean isRadio, Boolean isCombobox, Boolean isLongText, 
-                               Boolean isCurrency, Boolean isDate, Boolean isPhone, String response, 
+                               Boolean isCurrency, Boolean isDate, Boolean isPhone, Boolean isSignature, String response, 
                                List<QuesAnswerWrapper> quesAnsList) {
             this.level = level;
             this.responseId = responseId;
@@ -278,6 +280,7 @@ public with sharing class OutcomeCmpController {
             this.isCurrency = isCurrency;
             this.isDate = isDate;
             this.isPhone = isPhone;
+            this.isSignature = isSignature;
             this.response = response;
             this.quesAnsList = quesAnsList;
         }

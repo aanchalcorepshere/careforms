@@ -7,6 +7,7 @@ export default class QuestionCard extends LightningElement {
     @api ansOps;
     @api level;
     @api isText;
+    @api isSignature;
     @api isNumber;
     @api isCheckbox;
     @api isRadio;
@@ -35,6 +36,7 @@ export default class QuestionCard extends LightningElement {
         this.localAnsOps = JSON.parse(JSON.stringify(this.ansOps));
         if(this.response){
             if(this.isText) this.textValue = this.response;
+            if(this.isSignature) this.textValue = this.response;
             if(this.isLongText) this.longTextValue = this.response;
            
             if (this.isDate) {
@@ -77,7 +79,7 @@ export default class QuestionCard extends LightningElement {
 
     handleResponse(event){
         let response = '';
-        if(this.isText || this.isNumber){
+        if(this.isText || this.isNumber || this.isSignature){
             response = event.target.value;
         }else{
             console.log("event.target >>>> ",JSON.stringify(event.target.label));
@@ -106,6 +108,7 @@ export default class QuestionCard extends LightningElement {
                 'isCheckbox' : this.isCheckbox,
                 'isCombobox' : this.isCombobox,
                 'isLongText' : this.isLongText,
+                'isSignature' : this.isSignature,
                 'isDate' : this.isDate,
                 'isCurrency' : this.isCurrency,
                 'isPhone' : this.isPhone,

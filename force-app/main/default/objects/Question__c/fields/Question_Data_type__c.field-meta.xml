@@ -56,6 +56,11 @@
                 <default>false</default>
                 <label>Telephone</label>
             </value>
+            <value>
+                <fullName>Signature</fullName>
+                <default>false</default>
+                <label>Signature</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

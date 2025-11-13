@@ -292,6 +292,7 @@ public with sharing class AssessmentQuestionnaireController {
                             dataType == 'Text', dataType == 'Number', dataType == 'Checkbox', 
                             dataType == 'Radio Box', dataType == 'Picklist', dataType == 'Long Text Area', 
                             dataType == 'Date', dataType == 'Currency', dataType == 'Telephone', 
+                            dataType == 'Signature',
                             '', quesIdQuesAnsMap.get(aq.caresp__Question__c)
                         ));
                     }
@@ -415,6 +416,7 @@ public with sharing class AssessmentQuestionnaireController {
                                 dataType == 'Text', dataType == 'Number', dataType == 'Checkbox', 
                                 dataType == 'Radio Box', dataType == 'Picklist', dataType == 'Long Text Area', 
                                 dataType == 'Date', dataType == 'Currency', dataType == 'Telephone', 
+                                dataType == 'Signature',
                                 '', quesIdQuesAnsMap.get(aq.caresp__Question__c)
                             ));
                         }
@@ -882,6 +884,7 @@ public with sharing class AssessmentQuestionnaireController {
         @AuraEnabled public Boolean isDate;
         @AuraEnabled public Boolean isCurrency;
         @AuraEnabled public Boolean isPhone;
+        @AuraEnabled public Boolean isSignature;
         @AuraEnabled public String response;
         @AuraEnabled public List<PicklistWrapper> quesAnsList;
         
@@ -911,6 +914,38 @@ public with sharing class AssessmentQuestionnaireController {
             this.isDate = isDate;
             this.isCurrency = isCurrency;
             this.isPhone = isPhone;
+            this.isSignature = false;
+            this.response = response;
+            this.quesAnsList = quesAnsList;
+        }
+        
+        public QuestionsWrapper(String level, String assessmentQuesId, String quesId, String quesText, String dataType, 
+                               String sequence, String grandParent, String parent, String fieldUpdate, String section, 
+                               Decimal sectionSequence, Boolean required, Boolean isText, Boolean isNumber, Boolean isCheckbox, 
+                               Boolean isRadio, Boolean isCombobox, Boolean isLongText, Boolean isDate, Boolean isCurrency, 
+                               Boolean isPhone, Boolean isSignature, String response, List<PicklistWrapper> quesAnsList) {
+            this.level = level;
+            this.assessmentQuesId = assessmentQuesId;
+            this.quesId = quesId;
+            this.quesText = quesText;
+            this.dataType = dataType;
+            this.sequence = sequence;
+            this.grandParent = grandParent;
+            this.parent = parent;
+            this.fieldUpdate = fieldUpdate;
+            this.section = section;
+            this.sectionSequence = sectionSequence;
+            this.required = required;
+            this.isText = isText;
+            this.isNumber = isNumber;
+            this.isCheckbox = isCheckbox;
+            this.isRadio = isRadio;
+            this.isCombobox = isCombobox;
+            this.isLongText = isLongText;
+            this.isDate = isDate;
+            this.isCurrency = isCurrency;
+            this.isPhone = isPhone;
+            this.isSignature = isSignature;
             this.response = response;
             this.quesAnsList = quesAnsList;
         }

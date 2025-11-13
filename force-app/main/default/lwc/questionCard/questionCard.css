@@ -18,3 +18,9 @@ p{
 textarea {
     --sds-c-textarea-sizing-min-height: 200px;
 }
+
+.signature-output{
+    font-family: "Brush Script MT", "Lucida Handwriting", cursive;
+    color: #2E86C1;
+    font-size: 1.8rem;
+}

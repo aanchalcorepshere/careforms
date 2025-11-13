@@ -193,6 +193,10 @@
     
             if (objWrapParentRec != null)
               respList.add(objWrapParentRec);
+
+              for(ObjectWrapperCategory resp:respList){
+                System.debug('Object >>> '+resp);
+              }
           }
         }
         system.debug(LoggingLevel.Error ,'respList ' + respList);

@@ -6,6 +6,15 @@
             <lightning-input disabled={isSubmit} value={textValue} type="text" variant="label-hidden" name={assQuesId}
                 onblur={handleResponse}></lightning-input>
         </template>
+        <template if:true={isSignature}>
+            <template if:false={isOutcomeView}>
+                <lightning-input disabled={isSubmit} value={textValue} type="text" maxlength="255" variant="label-hidden" name={assQuesId}
+                    onblur={handleResponse}></lightning-input>
+            </template>
+            <template if:true={isOutcomeView}>
+                <div class="signature-output">{response}</div>
+            </template>
+        </template>
         <template if:true={isLongText}>
             <lightning-textarea disabled={isSubmit} value={longTextValue} type="text" variant="label-hidden" name={assQuesId} onblur={handleResponse} style="height:auto"></lightning-textarea>
         </template>

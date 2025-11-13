@@ -80,7 +80,7 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
         }
     }
 
-    /* @wire(CurrentPageReference)
+    @wire(CurrentPageReference)
     getStateParameters(currentPageReference) {
         if (currentPageReference) {
             const editVal = currentPageReference.state.c__isEdit;
@@ -112,7 +112,7 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
                 })
             }
         }   
-    } */
+    }
 
     connectedCallback() {
         if(this.isEdit){
@@ -233,6 +233,13 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
     async handleValidations(activeModule){
         switch(activeModule.name){
             case 'Assessment Details':
+                // Fallback: if not yet set (e.g., blur not fired or edit data async), pull from child
+                if(!this.assessmentDetails){
+                    const nameScreen = this.template.querySelector("c-assessment-wizard-name-screen");
+                    if(nameScreen && nameScreen.previousData){
+                        this.assessmentDetails = JSON.parse(JSON.stringify(nameScreen.previousData));
+                    }
+                }
                 if(this.assessmentDetails){
                     if(this.assessmentDetails.assessmentName == ''){
                         activeModule.valid = false;
@@ -523,62 +530,62 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
                     
                     let assessmentList = [];
                     if(this.questionsList){
-                        let assessRec = { 'sobjectType': 'Assessment__c' };
+                        // Use namespaced sObject and field API names to avoid mapping issues
+                        let assessRec = { 'sobjectType': 'caresp__Assessment__c' };
                         assessRec.Id = assessmentId;
-                        assessRec.Assessment_Detail_JSON__c = JSON.stringify(this.assessmentDetails);
-                        assessRec.Questions_JSON__c = JSON.stringify(tempQuesList);
+                        assessRec.caresp__Assessment_Detail_JSON__c = JSON.stringify(this.assessmentDetails);
+                        assessRec.caresp__Questions_JSON__c = JSON.stringify(tempQuesList);
                         if(this.completionFieldData){
-                            assessRec.Field_Update_JSON__c = JSON.stringify(this.completionFieldData);
+                            assessRec.caresp__Field_Update_JSON__c = JSON.stringify(this.completionFieldData);
                         }
                         if(this.scoringData){
-                            assessRec.Scoring_JSON__c = JSON.stringify(this.scoringData);
+                            assessRec.caresp__Scoring_JSON__c = JSON.stringify(this.scoringData);
                         }
                         if(this.sections){
-                            assessRec.Section_JSON__c = JSON.stringify(this.sections);
+                            assessRec.caresp__Section_JSON__c = JSON.stringify(this.sections);
                         }
                         console.log("assessRec >> ",JSON.stringify(assessRec));
                         assessmentList.push(assessRec);
                     }
 
                     if(assessmentList && assessmentList.length > 0){
+                        // Ensure JSON fields are saved before navigating away
                         updateJsonData({assessmentList : assessmentList})
-                        .then(result => {
-                            console.log("Saved");
+                        .then(() => {
+                            const postUpdatePromises = [];
+                            if(this.assessmentDetails.fieldUpdate){
+                                postUpdatePromises.push(
+                                    updateCompletionFieldData({
+                                        assessmentId:assessmentId,
+                                        field:this.completionFieldData.selectedField,
+                                        fieldValue:this.completionFieldData.selectedValue
+                                    })
+                                );
+                            }
+                            // Chain scoring creation after any field update
+                            return Promise.all(postUpdatePromises).then(() => {
+                                if(this.scoringData && this.scoringData.length && this.assessmentDetails.needScoring){
+                                    let scoringList = [];
+                                    this.scoringData.forEach(score => {
+                                        let scoreRec = { 'sobjectType': 'Scoring__c' };
+                                        scoreRec.Assessment__c = assessmentId;
+                                        scoreRec.Min_Score__c = score.minScore;
+                                        scoreRec.Max_Score__c = score.maxScore;
+                                        scoreRec.Color__c = score.color;
+                                        scoreRec.Status__c = score.status;
+                                        scoringList.push(scoreRec)
+                                    })
+                                    return createScoringRecords({scoringList : scoringList, editAssessmentId : this.editAssessmentId});
+                                }
+                            });
                         })
-                        .catch(error=>{
-                            this.error = JSON.stringify(error);
-                        })
-                    }
-                    if(this.assessmentDetails.fieldUpdate){
-                        updateCompletionFieldData({assessmentId:assessmentId,field:this.completionFieldData.selectedField, fieldValue:this.completionFieldData.selectedValue})
-                        .then(result=>{
-                        })
-                        .catch(error=>{
-                            this.error = JSON.stringify(error);
-                        })
-                    }
-                    if(this.scoringData && this.scoringData.length && this.assessmentDetails.needScoring){
-                        let scoringList = [];
-                        this.scoringData.forEach(score => {
-                            let scoreRec = { 'sobjectType': 'Scoring__c' };
-                            scoreRec.Assessment__c = assessmentId;
-                            scoreRec.Min_Score__c = score.minScore;
-                            scoreRec.Max_Score__c = score.maxScore;
-                            scoreRec.Color__c = score.color;
-                            scoreRec.Status__c = score.status;
-                            scoringList.push(scoreRec)
-                        })
-                        createScoringRecords({scoringList : scoringList, editAssessmentId : this.editAssessmentId})
-                        .then(result => {
-                            var wizurl = '/'+assessmentId;
-                            //window.open(wizurl,'_parent')
+                        .then(() => {
                             window.open('/lightning/r/caresp__Assessment__c/'+assessmentId+'/view', '_self');
                         })
-                        .catch(error =>{
+                        .catch(error=>{
                             this.error = JSON.stringify(error);
                         })
-                    }else{
-                        var wizurl = '/'+assessmentId;
+                    } else {
                         window.open('/lightning/r/caresp__Assessment__c/'+assessmentId+'/view', '_self');
                     }
                     

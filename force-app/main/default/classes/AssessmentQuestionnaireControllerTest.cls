@@ -598,7 +598,7 @@ public with sharing class AssessmentQuestionnaireControllerTest {
                 '1', 'gp', 'p', 'fieldUpdate', 'section', 
                 1.0, true, true, false, false, 
                 false, false, false, false, false, 
-                false, 'response', testList
+                false, false, 'response', testList
             );
         
         System.assertEquals('level1', qw.level, 'Level should be set correctly');
@@ -622,6 +622,7 @@ public with sharing class AssessmentQuestionnaireControllerTest {
         System.assertEquals(false, qw.isDate, 'IsDate should be set');
         System.assertEquals(false, qw.isCurrency, 'IsCurrency should be set');
         System.assertEquals(false, qw.isPhone, 'IsPhone should be set');
+        System.assertEquals(false, qw.isSignature, 'IsSignature should be set');
         System.assertEquals('response', qw.response, 'Response should be set');
         System.assertEquals(1, qw.quesAnsList.size(), 'Question answers list should have one item');
     }

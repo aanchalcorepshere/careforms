@@ -5,6 +5,7 @@ import getAssessments from '@salesforce/apex/AssessmentQuestionnaireController.g
 import getDraftAssessments from '@salesforce/apex/AssessmentQuestionnaireController.getDraftAssessments';
 import getAssessmentDetails from '@salesforce/apex/AssessmentQuestionnaireController.getAssessmentDetails';
 import getDraftAssessmentDetails from '@salesforce/apex/AssessmentQuestionnaireController.getDraftAssessmentDetails';
+import getAdditionalLookupOptionsForAssessment from '@salesforce/apex/AssessmentQuestionnaireController.getAdditionalLookupOptionsForAssessment';
 import stepProgressCss from '@salesforce/resourceUrl/stepProgressCss';
 import saveResponses from '@salesforce/apex/AssessmentQuestionnaireController.saveResponses';
 import saveDraftResponses from '@salesforce/apex/AssessmentQuestionnaireController.saveDraftResponses';
@@ -59,7 +60,7 @@ export default class AssessmentSectionHandler extends LightningElement {
                 if(result.startsWith("No such column")){
                     this.error = 'Outcome object doesn\'t have lookup for '+this.objectName+'. Please create lookup field for '+this.objectName+' on Outcome (Outcome__c) object as '+this.objectName+'__c';
                 }else{
-                    getAssessments({ objectName: '$objectName' })
+                    getAssessments({ objectName: this.objectName, recordId: this.recordId })
                     .then(assessmentResult => {
                         if(assessmentResult){
                             console.log('assessmentResult >> ', assessmentResult);
@@ -149,6 +150,28 @@ export default class AssessmentSectionHandler extends LightningElement {
                 .catch(error => {
                     this.error = JSON.stringify(error);
                 })
+                
+                // Get additional lookup options for assessment
+                getAdditionalLookupOptionsForAssessment({ recordId: this.recordId, objectName: this.objectName })
+                .then(result => {
+                    if (result) {
+                        let tempData = JSON.parse(result);
+                        // Only set clients if we have actual client data
+                        if (tempData && Array.isArray(tempData) && tempData.length > 0) {
+                            this.clients = tempData;
+                        } else {
+                            this.clients = undefined;
+                        }
+                    } else {
+                        this.clients = undefined;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error retrieving clients: ' + JSON.stringify(error));
+                    // Don't block assessment launch if client retrieval fails
+                    this.clients = undefined;
+                })
+                
                 this.isSelectAssessment = false;
                 this.isLaunchAssessment = false;
                 this.isAssessmentDetails = true;
@@ -212,8 +235,13 @@ export default class AssessmentSectionHandler extends LightningElement {
 
     handleStart(event) {
         this.selectedDate = event.detail.selectedDate;
-        //this.selectedClient = event.detail.selectedClient;
-        if (this.selectedDate) {
+        this.selectedClient = event.detail.selectedClient;
+        
+        // Validate: Date is required, Client is only required if clients are available
+        const hasClients = this.clients && Array.isArray(this.clients) && this.clients.length > 0;
+        const clientRequired = hasClients && !this.selectedClient;
+        
+        if (this.selectedDate && !clientRequired) {
             this.error = undefined;
             getQuestions({ assessmentId: this.selectedAssessmentId })
                 .then(result => {
@@ -274,8 +302,12 @@ export default class AssessmentSectionHandler extends LightningElement {
                     this.error = JSON.stringify(error);
                     console.log("Error ## ", JSON.stringify(error));
                 })
-        }else{
-            this.error = "Assessment Date and Client must be selected."
+        } else {
+            if (!this.selectedDate) {
+                this.error = "Assessment Date must be selected.";
+            } else if (clientRequired) {
+                this.error = "Client must be selected.";
+            }
         }
     }
 
@@ -307,7 +339,7 @@ export default class AssessmentSectionHandler extends LightningElement {
         if (confirmation == true) {
             console.log('objName >>>>' +this.objectName);
             console.log('objName >>>>' +this.recordId);
-            saveDraftResponses({ recordId: this.recordId, assessmentId: this.selectedAssessmentId, assessmentName: this.selectedAssessmentName, assessmentDate: this.selectedDate, objName: this.objectName, draftResponses: JSON.stringify(this.sections), draftOutcomeId: this.selectedDraftOutcomeId })
+            saveDraftResponses({ recordId: this.recordId, assessmentId: this.selectedAssessmentId, assessmentName: this.selectedAssessmentName, assessmentDate: this.selectedDate, objName: this.objectName, draftResponses: JSON.stringify(this.sections), draftOutcomeId: this.selectedDraftOutcomeId, clientId: this.selectedClient })
                 .then(result => {
                      console.log('objName >>>>' +this.objectName);
                     alert("Draft Saved.");
@@ -343,7 +375,7 @@ export default class AssessmentSectionHandler extends LightningElement {
                         })
                     })
                     console.log('responses >> ',JSON.stringify(finalQuesList));
-                    saveResponses({ recordId: this.recordId, objName: this.objectName, assessmentId: this.selectedAssessmentId, assessmentName: this.selectedAssessmentName, responses: JSON.stringify(finalQuesList), assessmentDate: this.selectedDate, draftOutcomeId: this.selectedDraftOutcomeId })
+                    saveResponses({ recordId: this.recordId, objName: this.objectName, assessmentId: this.selectedAssessmentId, assessmentName: this.selectedAssessmentName, responses: JSON.stringify(finalQuesList), assessmentDate: this.selectedDate, draftOutcomeId: this.selectedDraftOutcomeId, clientId: this.selectedClient })
                         .then(result => {
                             let outcomeId = result;
                             window.location.replace("/"+outcomeId);

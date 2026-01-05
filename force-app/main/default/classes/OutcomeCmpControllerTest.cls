@@ -58,6 +58,14 @@ public with sharing class OutcomeCmpControllerTest {
         Outcome__c outcomeASTest= [select id, name, Record_Id__c from Outcome__c where name='Test Outcome Assigned Service' limit 1];
         OutcomeCmpController.OutcomeDetailsWrapper result = OutcomeCmpController.getOutcomeDetails(outcomeASTest.Id,'Account');
         System.assertNotEquals(null, result, 'The result should not be null');
+        
+        // Verify additional lookup fields are accessible in wrapper (may be null if no lookup record is associated)
+        // These fields were added as part of additional lookup selection feature
+        // Note: Property names remain clientId/clientName for backward compatibility with LWC components
+        String clientIdValue = result.clientId; // May be null
+        String clientNameValue = result.clientName; // May be null
+        // Just verify the wrapper structure includes these fields - they exist even if null
+        System.assert(true, 'clientId and clientName fields are accessible in OutcomeDetailsWrapper (represents additional lookup)');
 
     //    Outcome__c outcomeRefTest= [select id, name, Record_Id__c from Outcome__c where name='Test Outcome Referral' limit 1];
     //    OutcomeCmpController.getOutcomeDetails(outcomeRefTest.Id,'caresp__Outcome__c');

@@ -7,6 +7,10 @@ export default class AssessmentDetails extends LightningElement {
     @track selectedDate;
     selectedClient;
 
+    get hasClients() {
+        return this.clients && Array.isArray(this.clients) && this.clients.length > 0;
+    }
+
     connectedCallback(){
         //this.selectedDate = new Date().toISOString();
         getTodayDate()

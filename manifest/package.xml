@@ -55,6 +55,7 @@
     <members>SignatureControllerTest</members>
     <members>testFactory</members>
     <members>TriggerDispatcher</members>
+    <members>IAssessmentAdditionalLookupProvider</members>
     <name>ApexClass</name>
   </types>
   <types>
@@ -102,6 +103,11 @@
     <members>Trigger_Setting.Question_Trigger</members>
     <members>Trigger_Setting.Response_Trigger</members>
     <members>Dynamic_Plans_Restriction_Setttings.Setting_1</members>
+    <members>Assessment_Additional_Lookup_Config.Test_Config</members>
+    <members>Assessment_Filter_Config.Default_Filter_Config</members>
+    <members>Assessment_Object_Mapping.Account_Mapping</members>
+    <members>Assessment_Object_Mapping.Assigned_Service_Mapping</members>
+    <members>Assessment_Object_Mapping.Referral_Mapping</members>
     <name>CustomMetadata</name>
   </types>
   <types>
@@ -324,6 +330,18 @@
     <members>Trigger_Setting__mdt.Helper_Class__c</members>
     <members>Trigger_Setting__mdt.isActive__c</members>
     <members>Trigger_Setting__mdt.Object_Name__c</members>
+    <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Additional_Lookup_Display_Field_API__c</members>
+    <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Additional_Lookup_Field_API__c</members>
+    <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Custom_Class_Name__c</members>
+    <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Is_Active__c</members>
+    <members>caresp__Assessment_Filter_Config__mdt.caresp__Assessment_Filter_Field_API__c</members>
+    <members>caresp__Assessment_Filter_Config__mdt.caresp__Assessment_Objects_Field_API__c</members>
+    <members>caresp__Assessment_Filter_Config__mdt.caresp__Is_Active__c</members>
+    <members>caresp__Assessment_Object_Mapping__mdt.caresp__Child_Object_API__c</members>
+    <members>caresp__Assessment_Object_Mapping__mdt.caresp__Is_Active__c</members>
+    <members>caresp__Assessment_Object_Mapping__mdt.caresp__Parent_Lookup_Field_API__c</members>
+    <members>caresp__Assessment_Object_Mapping__mdt.caresp__Parent_Object_API__c </members>
+    <members>caresp__Assessment_Object_Mapping__mdt.caresp__Source_Filter_Field_API__c</members>
     <name>CustomField</name>
   </types>
   <types>
@@ -383,6 +401,9 @@
     <members>Doc_Category_Help_Text__mdt</members>
     <members>Dynamic_Plan_Parent_Obj_Configuration__mdt</members>
     <members>Dynamic_Plans_Restriction_Setttings__mdt</members>
+    <members>Assessment_Object_Mapping__mdt</members>
+    <members>Assessment_Filter_Config__mdt</members>
+    <members>Assessment_Additional_Lookup_Config__mdt</members>
     <members>Form__c</members>
     <members>Forms_Setting__mdt</members>
     <members>Goal__c</members>
@@ -535,6 +556,9 @@
     <members>caresp__Step__c-Step Layout</members>
     <members>caresp__Step_Template__c-Step Template Layout</members>
     <members>caresp__Trigger_Setting__mdt-Trigger Setting Layout</members>
+    <members>caresp__Assessment_Object_Mapping__mdt-Assessment Object Mapping Layout</members>
+    <members>caresp__Assessment_Filter_Config__mdt-Assessment Filter Config Layout</members>
+    <members>caresp__Assessment_Additional_Lookup_Config__mdt-Assessment Additional Lookup Config Layout</members>
     <name>Layout</name>
   </types>
   <version>61.0</version>

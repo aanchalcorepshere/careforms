@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Maps parent objects to their child objects for lookup relationships in Assessment module</description>
+    <label>Assessment Object Mapping</label>
+    <pluralLabel>Assessment Object Mappings</pluralLabel>
+    <visibility>Public</visibility>
+</CustomObject>

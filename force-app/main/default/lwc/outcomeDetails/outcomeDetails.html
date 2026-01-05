@@ -67,6 +67,18 @@
                                 </div>
                             </div>
                         </div>
+                        <template if:true={hasClient}>
+                            <div class="slds-col slds-size_1-of-1 slds-m-vertical_x-small">
+                                <div class="slds-grid slds-gutters">
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <b>Client :</b>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <a href={clientLink} target="_blank">{outcome.clientName}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
                 <div class="slds-col slds-size_1-of-2 slds-align_absolute-center">

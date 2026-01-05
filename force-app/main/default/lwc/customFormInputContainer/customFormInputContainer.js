@@ -62,7 +62,7 @@ export default class CustomFormInputContainer extends LightningElement {
     parentFormJSId;
     orgUrl = ORG_URL;
 
-    //change these to @api
+    // Public API surface for subscriber LWCs embedding this component
     @api isApplicationForm = false;
     @api isCreateApplication = false;
     @api isPrefillFieldsForm = false;

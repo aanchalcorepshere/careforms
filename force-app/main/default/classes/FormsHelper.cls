@@ -316,7 +316,7 @@ public with sharing class FormsHelper {
         }
 
         Schema.DescribeFieldResult describeField = fieldToken.getDescribe();
-        Object typedValue = convertValue(fieldValue.inputValue, describeField.getType());
+        Object typedValue = convertValue(fieldValue.inputValue, describeField);
         prepared.record.put(fieldValue.fieldApi, typedValue);
     }
 
@@ -336,14 +336,25 @@ public with sharing class FormsHelper {
         }
     }
 
-    private static Object convertValue(String inputValue, Schema.DisplayType fieldType) {
-        if (fieldType == null || String.isBlank(inputValue)) {
+    private static Object convertValue(String inputValue, Schema.DescribeFieldResult describeField) {
+        Schema.DisplayType fieldType = describeField != null ? describeField.getType() : null;
+        if (fieldType == null) {
             return String.isBlank(inputValue) ? null : inputValue;
+        }
+
+        if (String.isBlank(inputValue)) {
+            return fieldType == Schema.DisplayType.BOOLEAN
+                ? resolveBooleanDefault(describeField)
+                : null;
         }
 
         switch on fieldType {
             when BOOLEAN {
-                return Boolean.valueOf(inputValue);
+                String normalized = inputValue.trim();
+                if ('true'.equalsIgnoreCase(normalized) || 'false'.equalsIgnoreCase(normalized)) {
+                    return Boolean.valueOf(normalized);
+                }
+                return resolveBooleanDefault(describeField);
             }
             when CURRENCY, DOUBLE, PERCENT {
                 return Decimal.valueOf(inputValue);
@@ -358,7 +369,7 @@ public with sharing class FormsHelper {
                 return Date.valueOf(inputValue);
             }
             when DATETIME {
-                return DateTime.valueOfGmt(inputValue);
+                return parseDateTimeValue(inputValue);
             }
             when TIME {
                 return parseTime(inputValue);
@@ -378,22 +389,168 @@ public with sharing class FormsHelper {
         }
     }
 
+    private static Boolean resolveBooleanDefault(Schema.DescribeFieldResult describeField) {
+        if (describeField != null) {
+            Object defaultValue = describeField.getDefaultValue();
+            if (defaultValue instanceof Boolean) {
+                return (Boolean) defaultValue;
+            }
+            if (defaultValue != null) {
+                return Boolean.valueOf(String.valueOf(defaultValue));
+            }
+            if (describeField.isDefaultedOnCreate()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static DateTime parseDateTimeValue(String inputValue) {
+        if (String.isBlank(inputValue)) {
+            return null;
+        }
+
+        String normalized = inputValue.trim();
+        Integer offsetMinutes = 0;
+
+        Integer tzStartIndex = Math.max(normalized.lastIndexOf('+'), normalized.lastIndexOf('-'));
+        if (tzStartIndex > 10) {
+            String offsetToken = normalized.substring(tzStartIndex);
+            normalized = normalized.substring(0, tzStartIndex);
+            offsetMinutes = parseTimezoneOffset(offsetToken);
+        } else if (normalized.endsWith('Z') || normalized.endsWith('z')) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+
+        normalized = normalized.replace('T', ' ').trim();
+        normalized = stripMilliseconds(normalized);
+        normalized = ensureSecondsComponent(normalized);
+
+        try {
+            DateTime gmtValue = DateTime.valueOfGmt(normalized);
+            if (offsetMinutes != 0) {
+                return gmtValue.addMinutes(-offsetMinutes);
+            }
+            return gmtValue;
+        } catch (Exception ex) {
+            throw new AuraHandledException('Invalid date/time value provided.');
+        }
+    }
+
+    private static String stripMilliseconds(String dateTimeString) {
+        if (String.isBlank(dateTimeString)) {
+            return dateTimeString;
+        }
+        Integer dotIndex = dateTimeString.indexOf('.');
+        if (dotIndex > -1) {
+            return dateTimeString.substring(0, dotIndex);
+        }
+        return dateTimeString;
+    }
+
+    private static String ensureSecondsComponent(String dateTimeString) {
+        if (String.isBlank(dateTimeString)) {
+            return dateTimeString;
+        }
+        Integer spaceIndex = dateTimeString.indexOf(' ');
+        if (spaceIndex == -1) {
+            return dateTimeString;
+        }
+        String timePortion = dateTimeString.substring(spaceIndex + 1);
+        List<String> timeSegments = timePortion.split(':');
+        if (timeSegments.size() == 1) {
+            return dateTimeString + ':00:00';
+        }
+        if (timeSegments.size() == 2) {
+            return dateTimeString + ':00';
+        }
+        return dateTimeString;
+    }
+
+    private static Integer parseTimezoneOffset(String token) {
+        if (String.isBlank(token)) {
+            return 0;
+        }
+
+        String working = token.trim();
+        Integer sign = working.startsWith('-') ? -1 : 1;
+        if (working.startsWith('+') || working.startsWith('-')) {
+            working = working.substring(1);
+        }
+        working = working.replace(':', '');
+
+        if (String.isBlank(working)) {
+            return 0;
+        }
+
+        if (working.length() != 2 && working.length() != 4) {
+            throw new AuraHandledException('Invalid date/time value provided.');
+        }
+
+        try {
+            Integer hours = Integer.valueOf(working.substring(0, 2));
+            Integer minutes = working.length() == 4 ? Integer.valueOf(working.substring(2)) : 0;
+            return sign * ((hours * 60) + minutes);
+        } catch (Exception ex) {
+            throw new AuraHandledException('Invalid date/time value provided.');
+        }
+    }
+
+    @TestVisible
     private static Time parseTime(String input) {
         if (String.isBlank(input)) {
             return null;
         }
-        List<String> parts = input.split(':');
-        if (parts.size() < 3) {
+
+        String normalized = sanitizeTime(input.trim());
+        List<String> parts = normalized.split(':');
+
+        if (parts.isEmpty() || parts.size() < 2 || parts.size() > 3) {
             throw new AuraHandledException('Time value must be provided in HH:mm:ss format.');
         }
+
         try {
-            Integer hours = Integer.valueOf(parts[0]);
-            Integer minutes = Integer.valueOf(parts[1]);
-            Integer seconds = Integer.valueOf(parts[2]);
+            String hoursToken = parts[0];
+            String minutesToken = parts[1];
+            String secondsToken = parts.size() == 3 ? parts[2] : '00';
+
+            Integer hours = Integer.valueOf(hoursToken);
+            Integer minutes = Integer.valueOf(minutesToken);
+            Integer seconds = Integer.valueOf(secondsToken);
             return Time.newInstance(hours, minutes, seconds, 0);
         } catch (Exception ex) {
             throw new AuraHandledException('Invalid time value provided.');
         }
+    }
+
+    private static String sanitizeTime(String value) {
+        if (String.isBlank(value)) {
+            return value;
+        }
+
+        String working = value;
+        Integer timezoneIdx = Math.max(working.indexOf('+'), working.indexOf('-', 1));
+        if (timezoneIdx > 0) {
+            working = working.substring(0, timezoneIdx);
+        }
+
+        if (working.endsWith('Z') || working.endsWith('z')) {
+            working = working.substring(0, working.length() - 1);
+        }
+
+        Integer dotIndex = working.indexOf('.');
+        if (dotIndex > -1) {
+            working = working.substring(0, dotIndex);
+        }
+
+        List<String> segments = working.split(':');
+        if (segments.size() == 1) {
+            working = working + ':00:00';
+        } else if (segments.size() == 2) {
+            working = working + ':00';
+        }
+
+        return working;
     }
 
     private static Id parseId(String input) {

@@ -172,6 +172,94 @@ private class FormsHelperTest {
     }
 
     @IsTest
+    static void testSaveObjectStructure_acceptsIsoDateTime() {
+        FormsHelper.RecordData eventRecord = recordData(
+            'Event',
+            null,
+            new List<FormsHelper.FieldValue>{
+                fieldValue('Subject', 'ISO DateTime'),
+                fieldValue('StartDateTime', '2025-11-06T08:30:00.000Z'),
+                fieldValue('EndDateTime', '2025-11-06T09:30:00.000Z')
+            },
+            null
+        );
+
+        Test.startTest();
+        FormsHelper.InsertResult result = FormsHelper.saveObjectStructure(
+            buildPayload(
+                eventRecord,
+                new List<FormsHelper.RecordData>(),
+                new List<FormsHelper.RecordData>(),
+                new List<FormsHelper.RecordData>()
+            )
+        );
+        Test.stopTest();
+
+        System.assertEquals(true, result.isSuccess, 'Event save should succeed.');
+        System.assertNotEquals(null, result.primaryRecordId, 'Primary event Id expected.');
+
+        Event insertedEvent = [
+            SELECT Id, StartDateTime, EndDateTime
+            FROM Event
+            WHERE Id = :result.primaryRecordId
+        ];
+        DateTime expectedStart = DateTime.valueOfGmt('2025-11-06 08:30:00');
+        DateTime expectedEnd = DateTime.valueOfGmt('2025-11-06 09:30:00');
+        System.assertEquals(expectedStart, insertedEvent.StartDateTime);
+        System.assertEquals(expectedEnd, insertedEvent.EndDateTime);
+    }
+
+    @IsTest
+    static void testParseTime_handlesLightningIsoFormat() {
+        Time expected = Time.newInstance(8, 30, 0, 0);
+
+        Time parsedWithZ = FormsHelper.parseTime('08:30:00.000Z');
+        System.assertEquals(expected, parsedWithZ, 'Parser should handle trailing Z.');
+
+        Time parsedWithOffset = FormsHelper.parseTime('08:30:00.000+05:30');
+        System.assertEquals(expected, parsedWithOffset, 'Parser should ignore timezone offset for time values.');
+
+        Time parsedWithoutSeconds = FormsHelper.parseTime('08:30');
+        System.assertEquals(expected, parsedWithoutSeconds, 'Parser should pad missing seconds.');
+    }
+
+    @IsTest
+    static void testSaveObjectStructure_defaultsBooleanFields() {
+        FormsHelper.RecordData contactRecord = recordData(
+            'Contact',
+            null,
+            new List<FormsHelper.FieldValue>{
+                fieldValue('LastName', 'Boolean Default'),
+                fieldValue('HasOptedOutOfEmail', ''),
+                fieldValue('DoNotCall', 'invalid')
+            },
+            null
+        );
+
+        Test.startTest();
+        FormsHelper.InsertResult result = FormsHelper.saveObjectStructure(
+            buildPayload(
+                contactRecord,
+                new List<FormsHelper.RecordData>(),
+                new List<FormsHelper.RecordData>(),
+                new List<FormsHelper.RecordData>()
+            )
+        );
+        Test.stopTest();
+
+        System.assertEquals(true, result.isSuccess, 'Contact save should succeed.');
+        System.assertNotEquals(null, result.primaryRecordId, 'Primary contact Id expected.');
+
+        Contact insertedContact = [
+            SELECT Id, HasOptedOutOfEmail, DoNotCall
+            FROM Contact
+            WHERE Id = :result.primaryRecordId
+        ];
+        System.assertEquals(false, insertedContact.HasOptedOutOfEmail, 'Blank checkbox should use default value.');
+        System.assertEquals(false, insertedContact.DoNotCall, 'Invalid checkbox input should use default value.');
+    }
+
+    @IsTest
     static void testSaveObjectStructure_updatesExisting() {
         Account existingAccount = [SELECT Id, Name FROM Account WHERE Name = 'Setup Account' LIMIT 1];
         Contact existingContact = [

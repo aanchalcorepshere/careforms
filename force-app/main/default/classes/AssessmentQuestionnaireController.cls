@@ -50,10 +50,35 @@ public with sharing class AssessmentQuestionnaireController {
     }
     
     // Retrieves all active assessments and returns them as JSON serialized picklist wrappers
+    // Optionally filters assessments based on configurable Objects and Filter fields when launched from objects with Object Mapping metadata
     @AuraEnabled(cacheable = true)
-    public static String getAssessments(String objectName) {
+    public static String getAssessments(String objectName, String recordId) {
         try {
-            List<PicklistWrapper> resp = new List<PicklistWrapper>();
+            // Check if filtering should be applied - check Object Mapping metadata
+            Boolean shouldFilter = false;
+            String sanitizedObjName = null;
+            if (String.isNotBlank(objectName) && String.isNotBlank(recordId)) {
+                sanitizedObjName = objectName.contains('__c') ? objectName : objectName + '__c';
+                
+                // Check if Object Mapping exists for this parent object (indicates filtering should be applied)
+                try {
+                    String mappingSoql = 'SELECT Id ' +
+                                       'FROM caresp__Assessment_Object_Mapping__mdt ' +
+                                       'WHERE caresp__Parent_Object_API__c = :sanitizedObjName ' +
+                                       'AND caresp__Is_Active__c = true ' +
+                                       'WITH USER_MODE ' +
+                                       'LIMIT 1';
+                    List<SObject> mappings = Database.query(mappingSoql);
+                    if (!mappings.isEmpty()) {
+                        shouldFilter = true;
+                    }
+                } catch (Exception e) {
+                    // Object Mapping metadata may not exist, no filtering
+                    System.debug(LoggingLevel.INFO, 'No Object Mapping found for ' + sanitizedObjName + ', skipping filtering');
+                }
+            }
+            
+            // Query all active assessments
             List<caresp__Assessment__c> assessmentList = [
                 SELECT Id, Name 
                 FROM caresp__Assessment__c 
@@ -61,7 +86,77 @@ public with sharing class AssessmentQuestionnaireController {
                 WITH USER_MODE
                 LIMIT 1000
             ];
-
+            
+            // If no Object Mapping found or no recordId, return all active assessments
+            if (!shouldFilter) {
+                List<PicklistWrapper> resp = new List<PicklistWrapper>();
+                if (assessmentList != null && assessmentList.size() > 0) {
+                    for (caresp__Assessment__c assess : assessmentList) {
+                        if (assess != null && String.isNotBlank(assess.Name)) {
+                            resp.add(new PicklistWrapper(assess.Name, assess.Name + '|' + assess.Id));
+                        }
+                    }
+                }
+                System.debug(LoggingLevel.INFO, 'Found ' + resp.size() + ' active assessments (no filtering)');
+                return JSON.serialize(resp);
+            }
+            
+            // Apply filtering logic - check Custom Metadata for custom implementation
+            List<SObject> lookupConfigs = new List<SObject>();
+            try {
+                String lookupSoql = 'SELECT caresp__Custom_Class_Name__c, caresp__Is_Active__c ' +
+                                   'FROM caresp__Assessment_Additional_Lookup_Config__mdt ' +
+                                   'WHERE caresp__Is_Active__c = true ' +
+                                   'WITH USER_MODE ' +
+                                   'LIMIT 1';
+                lookupConfigs = Database.query(lookupSoql);
+            } catch (Exception e) {
+                // Custom Metadata Type may not exist yet
+                System.debug(LoggingLevel.INFO, 'Additional Lookup Config not found: ' + e.getMessage());
+            }
+            
+            // If custom class is configured, delegate to it
+            if (!lookupConfigs.isEmpty() && lookupConfigs[0].get('caresp__Custom_Class_Name__c') != null && 
+                String.isNotBlank(String.valueOf(lookupConfigs[0].get('caresp__Custom_Class_Name__c')))) {
+                try {
+                    String customClassName = String.valueOf(lookupConfigs[0].get('caresp__Custom_Class_Name__c'));
+                    Type customType = Type.forName(customClassName);
+                    IAssessmentAdditionalLookupProvider provider = (IAssessmentAdditionalLookupProvider)customType.newInstance();
+                    
+                    // Convert assessment list to JSON array of IDs
+                    List<String> assessmentIds = new List<String>();
+                    for (caresp__Assessment__c assess : assessmentList) {
+                        assessmentIds.add(assess.Id);
+                    }
+                    String assessmentIdsJson = JSON.serialize(assessmentIds);
+                    
+                    // Call custom filtering method
+                    String filteredIdsJson = provider.filterAssessments(recordId, objectName, assessmentIdsJson);
+                    List<String> filteredIds = (List<String>)JSON.deserializeUntyped(filteredIdsJson);
+                    
+                    // Filter assessment list based on returned IDs
+                    Map<Id, caresp__Assessment__c> assessmentMap = new Map<Id, caresp__Assessment__c>(assessmentList);
+                    List<caresp__Assessment__c> filteredList = new List<caresp__Assessment__c>();
+                    for (String idStr : filteredIds) {
+                        Id assessId = Id.valueOf(idStr);
+                        if (assessmentMap.containsKey(assessId)) {
+                            filteredList.add(assessmentMap.get(assessId));
+                        }
+                    }
+                    assessmentList = filteredList;
+                } catch (Exception ex) {
+                    System.debug(LoggingLevel.ERROR, 'Error calling custom assessment filter provider: ' + ex.getMessage());
+                    // Fall through to default implementation
+                }
+            }
+            
+            // Default filtering implementation
+            if (shouldFilter && assessmentList != null && assessmentList.size() > 0) {
+                assessmentList = filterAssessmentsDefault(assessmentList, recordId, sanitizedObjName);
+            }
+            
+            // Convert to PicklistWrapper
+            List<PicklistWrapper> resp = new List<PicklistWrapper>();
             if (assessmentList != null && assessmentList.size() > 0) {
                 for (caresp__Assessment__c assess : assessmentList) {
                     if (assess != null && String.isNotBlank(assess.Name)) {
@@ -70,12 +165,156 @@ public with sharing class AssessmentQuestionnaireController {
                 }
             }
             
-            System.debug(LoggingLevel.INFO, 'Found ' + resp.size() + ' active assessments');
+            System.debug(LoggingLevel.INFO, 'Found ' + resp.size() + ' filtered assessments');
             return JSON.serialize(resp);
             
         } catch (Exception ex) {
             System.debug(LoggingLevel.ERROR, 'Error in getAssessments: ' + ex.getMessage());
             throw new AuraHandledException('Failed to retrieve assessments: ' + ex.getMessage());
+        }
+    }
+    
+    // Default implementation for assessment filtering using Filter Config and Object Mapping metadata
+    private static List<caresp__Assessment__c> filterAssessmentsDefault(List<caresp__Assessment__c> assessmentList, String recordId, String objectName) {
+        try {
+            // Get field API names from Filter Config metadata or use defaults
+            String objectsFieldApi = 'caresp__Objects__c';
+            String filterFieldApi = 'caresp__SP_Service__c';
+            
+            try {
+                String filterConfigSoql = 'SELECT caresp__Assessment_Objects_Field_API__c, ' +
+                                         'caresp__Assessment_Filter_Field_API__c ' +
+                                         'FROM caresp__Assessment_Filter_Config__mdt ' +
+                                         'WHERE caresp__Is_Active__c = true ' +
+                                         'WITH USER_MODE ' +
+                                         'LIMIT 1';
+                List<SObject> filterConfigs = Database.query(filterConfigSoql);
+                if (!filterConfigs.isEmpty()) {
+                    if (filterConfigs[0].get('caresp__Assessment_Objects_Field_API__c') != null) {
+                        String customField = String.valueOf(filterConfigs[0].get('caresp__Assessment_Objects_Field_API__c'));
+                        if (String.isNotBlank(customField)) {
+                            objectsFieldApi = customField;
+                        }
+                    }
+                    if (filterConfigs[0].get('caresp__Assessment_Filter_Field_API__c') != null) {
+                        String customField = String.valueOf(filterConfigs[0].get('caresp__Assessment_Filter_Field_API__c'));
+                        if (String.isNotBlank(customField)) {
+                            filterFieldApi = customField;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.INFO, 'Filter Config metadata not found, using defaults: ' + e.getMessage());
+            }
+            
+            // Get source filter field from Object Mapping metadata
+            String sourceFilterFieldApi = null;
+            try {
+                String mappingSoql = 'SELECT caresp__Source_Filter_Field_API__c ' +
+                                   'FROM caresp__Assessment_Object_Mapping__mdt ' +
+                                   'WHERE caresp__Parent_Object_API__c = :objectName ' +
+                                   'AND caresp__Is_Active__c = true ' +
+                                   'WITH USER_MODE ' +
+                                   'LIMIT 1';
+                List<SObject> mappings = Database.query(mappingSoql);
+                if (!mappings.isEmpty() && mappings[0].get('caresp__Source_Filter_Field_API__c') != null) {
+                    String customField = String.valueOf(mappings[0].get('caresp__Source_Filter_Field_API__c'));
+                    if (String.isNotBlank(customField)) {
+                        sourceFilterFieldApi = customField;
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.INFO, 'Object Mapping metadata not found: ' + e.getMessage());
+            }
+            
+            // If no source filter field configured, use default
+            if (String.isBlank(sourceFilterFieldApi)) {
+                sourceFilterFieldApi = 'caresp__SP_Service__c'; // Default
+            }
+            
+            // Query source record for filter value
+            String sourceFilterValue = null;
+            if (String.isNotBlank(recordId) && String.isNotBlank(objectName) && String.isNotBlank(sourceFilterFieldApi)) {
+                try {
+                    // Validate recordId format
+                    Id validatedRecordId = Id.valueOf(recordId);
+                    String soql = 'SELECT ' + String.escapeSingleQuotes(sourceFilterFieldApi) +
+                                  ' FROM ' + String.escapeSingleQuotes(objectName) +
+                                  ' WHERE Id = :validatedRecordId WITH USER_MODE LIMIT 1';
+                    List<SObject> records = Database.query(soql);
+                    if (!records.isEmpty() && records[0].get(sourceFilterFieldApi) != null) {
+                        sourceFilterValue = String.valueOf(records[0].get(sourceFilterFieldApi));
+                    }
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.WARN, 'Error querying source record for filter field: ' + e.getMessage());
+                }
+            }
+            
+            // Query assessments with filtering fields
+            Set<Id> assessmentIds = new Set<Id>();
+            for (caresp__Assessment__c assess : assessmentList) {
+                assessmentIds.add(assess.Id);
+            }
+            
+            String assessmentQuery = 'SELECT Id, Name, ' +
+                                    String.escapeSingleQuotes(objectsFieldApi) + ', ' +
+                                    String.escapeSingleQuotes(filterFieldApi) +
+                                    ' FROM caresp__Assessment__c ' +
+                                    'WHERE Id IN :assessmentIds AND caresp__Active__c = true WITH USER_MODE';
+            
+            List<caresp__Assessment__c> assessmentsWithFields = Database.query(assessmentQuery);
+            
+            // Filter assessments
+            List<caresp__Assessment__c> filteredList = new List<caresp__Assessment__c>();
+            for (caresp__Assessment__c assess : assessmentsWithFields) {
+                Boolean objectMatches = false;
+                Boolean filterMatches = false;
+                
+                // Check Objects field
+                Object objectsFieldValue = assess.get(objectsFieldApi);
+                if (objectsFieldValue == null || String.isBlank(String.valueOf(objectsFieldValue))) {
+                    objectMatches = true; // Empty means all objects
+                } else {
+                    String objectsValue = String.valueOf(objectsFieldValue);
+                    List<String> objects = objectsValue.split(';');
+                    for (String obj : objects) {
+                        if (obj.trim().equalsIgnoreCase(objectName)) {
+                            objectMatches = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Check filter field (SP_Service or custom filter field)
+                Object filterFieldValue = assess.get(filterFieldApi);
+                if (filterFieldValue == null || String.isBlank(String.valueOf(filterFieldValue))) {
+                    filterMatches = true; // Empty means all services
+                } else if (String.isBlank(sourceFilterValue)) {
+                    filterMatches = true; // If source has no filter value, show all
+                } else {
+                    String filterValue = String.valueOf(filterFieldValue);
+                    // Handle multi-select picklist (semicolon-separated)
+                    List<String> filterValues = filterValue.split(';');
+                    for (String fv : filterValues) {
+                        if (fv.trim().equalsIgnoreCase(sourceFilterValue.trim())) {
+                            filterMatches = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Include if both match (AND logic)
+                if (objectMatches && filterMatches) {
+                    filteredList.add(assess);
+                }
+            }
+            
+            return filteredList;
+            
+        } catch (Exception ex) {
+            System.debug(LoggingLevel.ERROR, 'Error in filterAssessmentsDefault: ' + ex.getMessage());
+            // Return original list on error
+            return assessmentList;
         }
     }
 
@@ -182,13 +421,52 @@ public with sharing class AssessmentQuestionnaireController {
         }
         
         try {
-            List<caresp__Outcome__c> outcomeList = [
-                SELECT Id, caresp__Assessment_Date__c, caresp__Init_Object__c, caresp__Assessment__c, caresp__Draft_Responses__c 
-                FROM caresp__Outcome__c 
-                WHERE Id = :validatedOutcomeId 
-                WITH USER_MODE
-                LIMIT 1
-            ];
+            // Get Additional Lookup field name from Custom Metadata (safely handle if not deployed yet)
+            String clientFieldApi = 'caresp__Client__c';
+            try {
+                String soql = 'SELECT caresp__Additional_Lookup_Field_API__c ' +
+                             'FROM caresp__Assessment_Additional_Lookup_Config__mdt ' +
+                             'WHERE caresp__Is_Active__c = true ' +
+                             'WITH USER_MODE ' +
+                             'LIMIT 1';
+                List<SObject> configs = Database.query(soql);
+                if (!configs.isEmpty() && configs[0].get('caresp__Additional_Lookup_Field_API__c') != null) {
+                    String customFieldName = String.valueOf(configs[0].get('caresp__Additional_Lookup_Field_API__c'));
+                    if (String.isNotBlank(customFieldName)) {
+                        clientFieldApi = customFieldName;
+                    }
+                }
+            } catch (Exception e) {
+                // Custom Metadata Type may not exist yet, use default
+                System.debug(LoggingLevel.INFO, 'Custom Metadata Type not found, using default field: ' + e.getMessage());
+            }
+            
+            // Check if the client field exists on Outcome object before querying
+            Boolean includeClientField = false;
+            try {
+                Schema.SObjectType outcomeType = Schema.getGlobalDescribe().get('caresp__Outcome__c');
+                if (outcomeType != null) {
+                    Map<String, Schema.SObjectField> fieldMap = outcomeType.getDescribe().fields.getMap();
+                    if (fieldMap.containsKey(clientFieldApi) && fieldMap.get(clientFieldApi).getDescribe().isAccessible()) {
+                        includeClientField = true;
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.INFO, 'Error checking field existence, excluding client field from query: ' + e.getMessage());
+            }
+            
+            // Build dynamic SOQL query
+            String soql = 'SELECT Id, caresp__Assessment_Date__c, caresp__Init_Object__c, caresp__Assessment__c, ' +
+                         'caresp__Draft_Responses__c, caresp__Referral__c';
+            if (includeClientField) {
+                soql += ', ' + String.escapeSingleQuotes(clientFieldApi);
+            }
+            soql += ' FROM caresp__Outcome__c ' +
+                    'WHERE Id = :validatedOutcomeId ' +
+                    'WITH USER_MODE ' +
+                    'LIMIT 1';
+            
+            List<caresp__Outcome__c> outcomeList = Database.query(soql);
 
             DraftWrapper draftResp = new DraftWrapper();
 
@@ -436,7 +714,7 @@ public with sharing class AssessmentQuestionnaireController {
     // Saves draft assessment responses to an Outcome record for later completion
     @AuraEnabled
     public static String saveDraftResponses(String recordId, String assessmentId, String assessmentName, 
-                                          Date assessmentDate, String objName, String draftResponses, String draftOutcomeId) {
+                                          Date assessmentDate, String objName, String draftResponses, String draftOutcomeId, String clientId) {
         // Input validation (Critical fix)
         if (String.isBlank(recordId) || String.isBlank(assessmentId) || String.isBlank(assessmentName) || 
             assessmentDate == null || String.isBlank(objName)) {
@@ -485,7 +763,14 @@ public with sharing class AssessmentQuestionnaireController {
             
             if (!insertableRecords.isEmpty()) {
                 Database.insert(insertableRecords, AccessLevel.USER_MODE);
-                return insertableRecords[0].Id;
+                String outcomeId = insertableRecords[0].Id;
+                
+                // Save client association if provided
+                if (String.isNotBlank(clientId)) {
+                    saveClientAssociationGeneric(Id.valueOf(outcomeId), clientId, objName);
+                }
+                
+                return outcomeId;
             } else {
                 throw new AuraHandledException('Insufficient permissions to create outcome record');
             }
@@ -511,10 +796,263 @@ public with sharing class AssessmentQuestionnaireController {
         }
     } 
 
+    // Retrieves additional lookup options for assessment launch with extensibility support
+    @AuraEnabled(cacheable=true)
+    public static String getAdditionalLookupOptions(String recordId, String objectName) {
+        try {
+            // Input validation
+            if (String.isBlank(recordId) || String.isBlank(objectName)) {
+                return JSON.serialize(new List<PicklistWrapper>());
+            }
+            
+            // Validate ID format
+            Id validatedRecordId;
+            try {
+                validatedRecordId = Id.valueOf(recordId);
+            } catch (Exception e) {
+                throw new AuraHandledException('Invalid record ID format');
+            }
+            
+            // Check Custom Metadata for custom implementation (safely handle if not deployed yet)
+            List<SObject> configs = new List<SObject>();
+            try {
+                String soql = 'SELECT caresp__Custom_Class_Name__c, caresp__Is_Active__c ' +
+                             'FROM caresp__Assessment_Additional_Lookup_Config__mdt ' +
+                             'WHERE caresp__Is_Active__c = true ' +
+                             'WITH USER_MODE ' +
+                             'LIMIT 1';
+                configs = Database.query(soql);
+            } catch (Exception e) {
+                // Custom Metadata Type may not exist yet, use defaults
+                System.debug(LoggingLevel.INFO, 'Custom Metadata Type not found, using defaults: ' + e.getMessage());
+            }
+            
+            // If custom class is configured, delegate to it
+            if (!configs.isEmpty() && configs[0].get('caresp__Custom_Class_Name__c') != null && 
+                String.isNotBlank(String.valueOf(configs[0].get('caresp__Custom_Class_Name__c')))) {
+                try {
+                    String customClassName = String.valueOf(configs[0].get('caresp__Custom_Class_Name__c'));
+                    Type customType = Type.forName(customClassName);
+                    IAssessmentAdditionalLookupProvider provider = (IAssessmentAdditionalLookupProvider)customType.newInstance();
+                    return provider.getAdditionalLookupOptions(recordId, objectName);
+                } catch (Exception ex) {
+                    System.debug(LoggingLevel.ERROR, 'Error calling custom additional lookup provider: ' + ex.getMessage());
+                    // Fall through to default implementation
+                }
+            }
+            
+            // Default implementation - query Object Mapping metadata
+            return getAdditionalLookupOptionsDefault(validatedRecordId, objectName);
+            
+        } catch (Exception ex) {
+            System.debug(LoggingLevel.ERROR, 'Error in getAdditionalLookupOptions: ' + ex.getMessage());
+            // Return empty list on error
+            return JSON.serialize(new List<PicklistWrapper>());
+        }
+    }
+    
+    // Public method for LWC components - delegates to internal method
+    @AuraEnabled(cacheable=true)
+    public static String getAdditionalLookupOptionsForAssessment(String recordId, String objectName) {
+        return getAdditionalLookupOptions(recordId, objectName);
+    }
+    
+    // Default implementation for additional lookup retrieval using Object Mapping metadata
+    private static String getAdditionalLookupOptionsDefault(Id recordId, String objectName) {
+        try {
+            List<PicklistWrapper> lookupList = new List<PicklistWrapper>();
+            String sanitizedObjName = objectName.contains('__c') ? objectName : objectName + '__c';
+            
+            // Query Object Mapping metadata for this parent object
+            String childObjectApiName;
+            String lookupFieldName;
+            String lookupTargetFieldApi = 'caresp__Client__c'; // Default lookup target field
+            
+            List<SObject> objectMappings = new List<SObject>();
+            try {
+                String soql = 'SELECT caresp__Child_Object_API__c, caresp__Parent_Lookup_Field_API__c ' +
+                             'FROM caresp__Assessment_Object_Mapping__mdt ' +
+                             'WHERE caresp__Parent_Object_API__c = :sanitizedObjName ' +
+                             'AND caresp__Is_Active__c = true ' +
+                             'WITH USER_MODE ' +
+                             'LIMIT 1';
+                objectMappings = Database.query(soql);
+            } catch (Exception e) {
+                // Object Mapping metadata may not exist yet, use defaults
+                System.debug(LoggingLevel.INFO, 'Object Mapping metadata not found, using defaults: ' + e.getMessage());
+            }
+            
+            // If metadata found, use it; otherwise fall back to hardcoded defaults for backward compatibility
+            if (!objectMappings.isEmpty()) {
+                childObjectApiName = String.valueOf(objectMappings[0].get('caresp__Child_Object_API__c'));
+                lookupFieldName = String.valueOf(objectMappings[0].get('caresp__Parent_Lookup_Field_API__c'));
+            } else {
+                // Backward compatibility: Use hardcoded defaults for known objects
+                if (sanitizedObjName == 'caresp__Referral__c') {
+                    childObjectApiName = 'caresp__Client_Referral__c';
+                    lookupFieldName = 'caresp__Referral__c';
+                } else if (sanitizedObjName == 'caresp__Assigned_Service__c') {
+                    childObjectApiName = 'caresp__Client_Service__c';
+                    lookupFieldName = 'caresp__Assigned_Service__c';
+                } else {
+                    // Unknown object type, return empty list
+                    return JSON.serialize(lookupList);
+                }
+            }
+            
+            // Validate field names to prevent SOQL injection
+            if (String.isBlank(childObjectApiName) || String.isBlank(lookupFieldName)) {
+                System.debug(LoggingLevel.WARN, 'Invalid object mapping configuration');
+                return JSON.serialize(lookupList);
+            }
+            
+            // Query child records to get related lookup records
+            // Using dynamic field name for lookup target (defaults to caresp__Client__c for backward compatibility)
+            String soql = 'SELECT Id, ' + String.escapeSingleQuotes(lookupTargetFieldApi) + ', ' +
+                         String.escapeSingleQuotes(lookupTargetFieldApi.replace('__c', '__r.Name')) + ', ' +
+                         String.escapeSingleQuotes(lookupTargetFieldApi.replace('__c', '__r.caresp__Full_Name__c')) + ' ' +
+                         'FROM ' + String.escapeSingleQuotes(childObjectApiName) + ' ' +
+                         'WHERE ' + String.escapeSingleQuotes(lookupFieldName) + ' = :recordId ' +
+                         'AND ' + String.escapeSingleQuotes(lookupTargetFieldApi) + ' != null ' +
+                         'WITH USER_MODE ' +
+                         'LIMIT 1000';
+            
+            List<sObject> childRecords = Database.query(soql);
+            
+            // Build lookup list with deduplication
+            Set<Id> lookupIds = new Set<Id>();
+            Map<Id, String> lookupNameMap = new Map<Id, String>();
+            String relationshipName = lookupTargetFieldApi.replace('__c', '__r');
+            
+            for (sObject childRec : childRecords) {
+                Id lookupId = (Id)childRec.get(lookupTargetFieldApi);
+                if (lookupId != null && !lookupIds.contains(lookupId)) {
+                    lookupIds.add(lookupId);
+                    // Use Full Name if available, otherwise Name
+                    sObject lookupRec = childRec.getSObject(relationshipName);
+                    String lookupName = lookupRec != null ? (String)lookupRec.get('caresp__Full_Name__c') : null;
+                    if (String.isBlank(lookupName) && lookupRec != null) {
+                        lookupName = (String)lookupRec.get('Name');
+                    }
+                    if (String.isNotBlank(lookupName)) {
+                        lookupNameMap.put(lookupId, lookupName);
+                    }
+                }
+            }
+            
+            // Create picklist wrappers
+            for (Id lookupId : lookupIds) {
+                String lookupName = lookupNameMap.get(lookupId);
+                if (String.isNotBlank(lookupName)) {
+                    lookupList.add(new PicklistWrapper(lookupName, lookupId));
+                }
+            }
+            
+            return JSON.serialize(lookupList);
+            
+        } catch (Exception ex) {
+            System.debug(LoggingLevel.ERROR, 'Error in getAdditionalLookupOptionsDefault: ' + ex.getMessage());
+            return JSON.serialize(new List<PicklistWrapper>());
+        }
+    }
+    
+    // Generic helper method for saving additional lookup association with extensibility support
+    private static void saveAdditionalLookupAssociation(Id outcomeId, String lookupRecordId, String objectName) {
+        try {
+            // Skip if no lookupRecordId provided
+            if (String.isBlank(lookupRecordId)) {
+                return;
+            }
+            
+            // Validate lookupRecordId format
+            Id validatedLookupRecordId;
+            try {
+                validatedLookupRecordId = Id.valueOf(lookupRecordId);
+            } catch (Exception e) {
+                System.debug(LoggingLevel.WARN, 'Invalid lookup record ID format: ' + lookupRecordId);
+                return;
+            }
+            
+            // Check Custom Metadata for custom implementation (safely handle if not deployed yet)
+            List<SObject> configs = new List<SObject>();
+            try {
+                String soql = 'SELECT caresp__Custom_Class_Name__c, caresp__Is_Active__c, caresp__Additional_Lookup_Field_API__c ' +
+                             'FROM caresp__Assessment_Additional_Lookup_Config__mdt ' +
+                             'WHERE caresp__Is_Active__c = true ' +
+                             'WITH USER_MODE ' +
+                             'LIMIT 1';
+                configs = Database.query(soql);
+            } catch (Exception e) {
+                // Custom Metadata Type may not exist yet, use defaults
+                System.debug(LoggingLevel.INFO, 'Custom Metadata Type not found, using defaults: ' + e.getMessage());
+            }
+            
+            // If custom class is configured, delegate to it
+            if (!configs.isEmpty() && configs[0].get('caresp__Custom_Class_Name__c') != null && 
+                String.isNotBlank(String.valueOf(configs[0].get('caresp__Custom_Class_Name__c')))) {
+                try {
+                    String customClassName = String.valueOf(configs[0].get('caresp__Custom_Class_Name__c'));
+                    Type customType = Type.forName(customClassName);
+                    IAssessmentAdditionalLookupProvider provider = (IAssessmentAdditionalLookupProvider)customType.newInstance();
+                    provider.saveAdditionalLookupAssociation(outcomeId, lookupRecordId, objectName);
+                    return;
+                } catch (Exception ex) {
+                    System.debug(LoggingLevel.ERROR, 'Error calling custom additional lookup save provider: ' + ex.getMessage());
+                    // Fall through to default implementation
+                }
+            }
+            
+            // Default implementation: Set additional lookup field on Outcome
+            String additionalLookupFieldApi = 'caresp__Client__c';
+            if (!configs.isEmpty() && configs[0].get('caresp__Additional_Lookup_Field_API__c') != null) {
+                String customFieldName = String.valueOf(configs[0].get('caresp__Additional_Lookup_Field_API__c'));
+                if (String.isNotBlank(customFieldName)) {
+                    additionalLookupFieldApi = customFieldName;
+                }
+            }
+            
+            // Validate field exists and is accessible
+            Map<String, Schema.SObjectField> outcomeFields = Schema.sObjectType.caresp__Outcome__c.fields.getMap();
+            if (!outcomeFields.containsKey(additionalLookupFieldApi)) {
+                System.debug(LoggingLevel.WARN, 'Additional lookup field does not exist on Outcome: ' + additionalLookupFieldApi);
+                return;
+            }
+            
+            Schema.SObjectField fieldToken = outcomeFields.get(additionalLookupFieldApi);
+            if (!fieldToken.getDescribe().isUpdateable()) {
+                System.debug(LoggingLevel.WARN, 'Additional lookup field is not updateable: ' + additionalLookupFieldApi);
+                return;
+            }
+            
+            // Update Outcome with additional lookup record
+            caresp__Outcome__c outcome = new caresp__Outcome__c(Id = outcomeId);
+            outcome.put(additionalLookupFieldApi, validatedLookupRecordId);
+            
+            List<caresp__Outcome__c> outcomesToUpdate = new List<caresp__Outcome__c>{ outcome };
+            List<caresp__Outcome__c> updatableRecords = Security.stripInaccessible(
+                AccessType.UPDATABLE, 
+                outcomesToUpdate
+            ).getRecords();
+            
+            if (!updatableRecords.isEmpty()) {
+                Database.update(updatableRecords, AccessLevel.USER_MODE);
+            }
+            
+        } catch (Exception ex) {
+            System.debug(LoggingLevel.ERROR, 'Error in saveAdditionalLookupAssociation: ' + ex.getMessage());
+            // Don't throw - fail silently to not block assessment completion
+        }
+    }
+    
+    // Backward compatibility method - delegates to new method name
+    private static void saveClientAssociationGeneric(Id outcomeId, String clientId, String objectName) {
+        saveAdditionalLookupAssociation(outcomeId, clientId, objectName);
+    }
+
     // Saves complete assessment responses, creates outcome and response records, calculates scores
     @AuraEnabled
     public static String saveResponses(String recordId, String objName, String assessmentId, String assessmentName, 
-                                     String responses, Date assessmentDate, String draftOutcomeId) {
+                                     String responses, Date assessmentDate, String draftOutcomeId, String clientId) {
         // Input validation (Critical fix)
         if (String.isBlank(recordId) || String.isBlank(objName) || String.isBlank(assessmentId) || 
             String.isBlank(responses) || assessmentDate == null) {
@@ -544,7 +1082,7 @@ public with sharing class AssessmentQuestionnaireController {
             }
 
             // Create or update the Outcome record
-            String outcomeId = handleOutcome(validatedRecordId, objName, validatedAssessmentId, assessmentName, assessmentDate, draftOutcomeId);
+            String outcomeId = handleOutcome(validatedRecordId, objName, validatedAssessmentId, assessmentName, assessmentDate, draftOutcomeId, clientId);
 
             // Prepare Assessment Question Score Map
             Map<String, Integer> qaoScoreMap = getAssessmentQuestionScores(validatedAssessmentId);
@@ -584,7 +1122,7 @@ public with sharing class AssessmentQuestionnaireController {
     
     // Helper Method: Handle Outcome Record Creation or Update
     private static String handleOutcome(Id recordId, String objName, Id assessmentId, String assessmentName, 
-                                       Date assessmentDate, String draftOutcomeId) {
+                                       Date assessmentDate, String draftOutcomeId, String clientId) {
         // Input validation
         if (String.isNotBlank(draftOutcomeId)) {
             try {
@@ -622,7 +1160,14 @@ public with sharing class AssessmentQuestionnaireController {
         
         if (!insertableRecords.isEmpty()) {
             Database.insert(insertableRecords, AccessLevel.USER_MODE);
-            return insertableRecords[0].Id;
+            String outcomeId = insertableRecords[0].Id;
+            
+            // Save client association if provided
+            if (String.isNotBlank(clientId)) {
+                saveClientAssociationGeneric(Id.valueOf(outcomeId), clientId, objName);
+            }
+            
+            return outcomeId;
         } else {
             throw new AuraHandledException('Insufficient permissions to create outcome record');
         }

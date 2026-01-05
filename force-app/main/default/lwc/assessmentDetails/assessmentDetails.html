@@ -38,6 +38,26 @@
                             </div>
                         </div>
                     </div>
+                    <template if:true={hasClients}>
+                        <div class="slds-col slds-size_1-of-1 slds-m-vertical_medium">
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <b>Client</b>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-combobox
+                                        name="client"
+                                        label=""
+                                        value={selectedClient}
+                                        placeholder="Select Client"
+                                        options={clients}
+                                        onchange={handleChange}
+                                        variant="label-hidden">
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>    
             </div>
         </template>

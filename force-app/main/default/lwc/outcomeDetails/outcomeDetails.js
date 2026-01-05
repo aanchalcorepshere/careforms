@@ -9,6 +9,7 @@ export default class OutcomeDetails extends LightningElement {
     percentScore;
     assessmentDate;
     recordLink;
+    clientLink;
     sfObjectName;
     recordName;
 
@@ -26,6 +27,9 @@ export default class OutcomeDetails extends LightningElement {
             this.percentScore = this.percentage(this.outcome.totalScore, this.outcome.totalMaxScore);
             this.assessmentDate =  this.format(this.outcome.assessmentDate) ;
             this.recordLink = '/'+this.outcome.recordId;
+            if(this.outcome.clientId){
+                this.clientLink = '/'+this.outcome.clientId;
+            }
             console.log('this.outcome > ',JSON.stringify(this.outcome));
         }else if(result.error){
             console.error('ERROR : ',JSON.stringify(result.error));
@@ -48,6 +52,10 @@ export default class OutcomeDetails extends LightningElement {
 
     get objName(){
         return this.outcome.caresp__Object__c=='caresp__Referral__c'?'Referral':'Assigned Service';
+    }
+
+    get hasClient(){
+        return this.outcome && this.outcome.clientId && this.outcome.clientName;
     }
 
     percentage(partialValue, totalValue) {

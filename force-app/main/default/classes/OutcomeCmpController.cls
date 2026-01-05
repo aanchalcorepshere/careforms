@@ -71,13 +71,64 @@ public with sharing class OutcomeCmpController {
             // Validate object name to prevent injection
             String sanitizedObjName = String.escapeSingleQuotes(objName);
             
+            // Get Client field name and display field from Custom Metadata (safely handle if not deployed yet)
+            String clientFieldApi = 'caresp__Client__c';
+            String clientDisplayField = 'Name';
+            try {
+                String soql = 'SELECT caresp__Additional_Lookup_Field_API__c, caresp__Additional_Lookup_Display_Field_API__c ' +
+                             'FROM caresp__Assessment_Additional_Lookup_Config__mdt ' +
+                             'WHERE caresp__Is_Active__c = true ' +
+                             'WITH USER_MODE ' +
+                             'LIMIT 1';
+                List<SObject> configs = Database.query(soql);
+                if (!configs.isEmpty()) {
+                    // Get Additional Lookup field API
+                    if (configs[0].get('caresp__Additional_Lookup_Field_API__c') != null) {
+                        String customFieldName = String.valueOf(configs[0].get('caresp__Additional_Lookup_Field_API__c'));
+                        if (String.isNotBlank(customFieldName)) {
+                            clientFieldApi = customFieldName;
+                        }
+                    }
+                    // Get Additional Lookup display field API
+                    if (configs[0].get('caresp__Additional_Lookup_Display_Field_API__c') != null) {
+                        String customDisplayField = String.valueOf(configs[0].get('caresp__Additional_Lookup_Display_Field_API__c'));
+                        if (String.isNotBlank(customDisplayField)) {
+                            clientDisplayField = customDisplayField;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // Custom Metadata Type may not exist yet, use defaults
+                System.debug(LoggingLevel.INFO, 'Custom Metadata Type not found, using default fields: ' + e.getMessage());
+            }
+            
+            // Check if the client field exists on Outcome object before querying
+            Boolean includeClientField = false;
+            String clientRelationshipField = '';
+            try {
+                Schema.SObjectType outcomeType = Schema.getGlobalDescribe().get('caresp__Outcome__c');
+                if (outcomeType != null) {
+                    Map<String, Schema.SObjectField> fieldMap = outcomeType.getDescribe().fields.getMap();
+                    if (fieldMap.containsKey(clientFieldApi) && fieldMap.get(clientFieldApi).getDescribe().isAccessible()) {
+                        includeClientField = true;
+                        // Build Client relationship field name (e.g., caresp__Client__r.Name or caresp__Client__r.CustomField__c)
+                        clientRelationshipField = clientFieldApi.replace('__c', '__r.' + String.escapeSingleQuotes(clientDisplayField));
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.INFO, 'Error checking client field existence, excluding client fields from query: ' + e.getMessage());
+            }
+            
             // Build query with proper field names and security
             String query = 'select Id, Name, caresp__Outcome__c, caresp__Assessment__r.Name, caresp__Color__c, ' +
                           'caresp__Status__c, caresp__Assessment_Date__c, caresp__Object__c, caresp__Total_Score__c, ' +
                           'caresp__Total_Max_Score__c, createdby.name, CreatedDate, lastmodifiedby.Id, ' +
-                          'lastmodifiedby.name, lastmodifieddate, ' + sanitizedObjName + 
-                          ' from caresp__Outcome__c where Id = :validatedOutcomeId ' +
-                          'AND caresp__inActive__c = false WITH USER_MODE LIMIT 1';
+                          'lastmodifiedby.name, lastmodifieddate, ' + sanitizedObjName;
+            if (includeClientField) {
+                query += ', ' + String.escapeSingleQuotes(clientFieldApi) + ', ' + String.escapeSingleQuotes(clientRelationshipField);
+            }
+            query += ' from caresp__Outcome__c where Id = :validatedOutcomeId ' +
+                    'AND caresp__inActive__c = false WITH USER_MODE LIMIT 1';
 
             List<caresp__Outcome__c> outcomeList = Database.query(query);
             
@@ -102,6 +153,30 @@ public with sharing class OutcomeCmpController {
                 respWrp.lastModifiedDate = outcome.lastmodifieddate != null ? String.valueOf(outcome.lastmodifieddate) : null;
                 respWrp.totalScore = outcome.caresp__Total_Score__c != null ? Integer.valueOf(outcome.caresp__Total_Score__c) : 0;
                 respWrp.totalMaxScore = outcome.caresp__Total_Max_Score__c != null ? Integer.valueOf(outcome.caresp__Total_Max_Score__c) : 0;
+                
+                // Populate Client data if available (only if field was included in query)
+                if (includeClientField) {
+                    try {
+                        Object clientIdObj = outcome.get(clientFieldApi);
+                        if (clientIdObj != null) {
+                            respWrp.clientId = String.valueOf(clientIdObj);
+                            
+                            // Get Client display value from relationship field using custom field from metadata
+                            // Extract relationship name (e.g., "caresp__Client__r" from "caresp__Client__c")
+                            String relationshipName = clientFieldApi.replace('__c', '__r');
+                            SObject clientRecord = outcome.getSObject(relationshipName);
+                            if (clientRecord != null) {
+                                Object clientDisplayValue = clientRecord.get(clientDisplayField);
+                                if (clientDisplayValue != null) {
+                                    respWrp.clientName = String.valueOf(clientDisplayValue);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.debug(LoggingLevel.INFO, 'Error accessing client fields: ' + e.getMessage());
+                        // Continue without client data
+                    }
+                }
             }
             return respWrp;
             
@@ -300,6 +375,8 @@ public with sharing class OutcomeCmpController {
         @AuraEnabled public String lastModifiedDate {get;set;}
         @AuraEnabled public Integer totalScore {get;set;}
         @AuraEnabled public Integer totalMaxScore {get;set;}
+        @AuraEnabled public String clientId {get;set;}
+        @AuraEnabled public String clientName {get;set;}
     }
 
     public class QuesAnswerWrapper {

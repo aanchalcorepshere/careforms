@@ -334,6 +334,7 @@
     <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Additional_Lookup_Field_API__c</members>
     <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Custom_Class_Name__c</members>
     <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Is_Active__c</members>
+    <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Additional_Lookup_Label__c</members>
     <members>caresp__Assessment_Filter_Config__mdt.caresp__Assessment_Filter_Field_API__c</members>
     <members>caresp__Assessment_Filter_Config__mdt.caresp__Assessment_Objects_Field_API__c</members>
     <members>caresp__Assessment_Filter_Config__mdt.caresp__Is_Active__c</members>
@@ -342,6 +343,25 @@
     <members>caresp__Assessment_Object_Mapping__mdt.caresp__Parent_Lookup_Field_API__c</members>
     <members>caresp__Assessment_Object_Mapping__mdt.caresp__Parent_Object_API__c </members>
     <members>caresp__Assessment_Object_Mapping__mdt.caresp__Source_Filter_Field_API__c</members>
+    
+    <!-- New fields which are subscriber editable START-->
+    <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Custom_Class_Name_Subscriber__c</members>
+    <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Lookup_Display_Field_API_Subscriber__c</members>
+    <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Is_Active_Subscriber__c</members>
+    <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Additional_Lookup_Field_API_Subscriber__c</members>
+    <members>caresp__Assessment_Additional_Lookup_Config__mdt.caresp__Additional_Lookup_Label_Subscriber__c</members>
+
+    <members>caresp__Assessment_Filter_Config__mdt.caresp__Assessment_Filter_Field_API_Subscriber__c</members>
+    <members>caresp__Assessment_Filter_Config__mdt.caresp__Is_Active_Subscriber__c</members>
+    <members>caresp__Assessment_Filter_Config__mdt.caresp__Assessment_Objects_Field_API_Subscriber__c</members>
+
+    <members>caresp__Assessment_Object_Mapping__mdt.caresp__Child_Object_API_Subscriber__c</members>
+    <members>caresp__Assessment_Object_Mapping__mdt.caresp__Is_Active_Subscriber__c</members>
+    <members>caresp__Assessment_Object_Mapping__mdt.caresp__Parent_Lookup_Field_API_Subscriber__c</members>
+    <members>caresp__Assessment_Object_Mapping__mdt.caresp__Parent_Object_API_Subscriber__c</members>
+    <members>caresp__Assessment_Object_Mapping__mdt.caresp__Related_Field_API_Subscriber__c</members>
+
+    <!-- New fields which are subscriber editable END-->
     <name>CustomField</name>
   </types>
   <types>

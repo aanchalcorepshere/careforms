@@ -3,20 +3,44 @@
     <label>Account Mapping</label>
     <protected>false</protected>
     <values>
+        <field>Child_Object_API_Subscriber__c</field>
+        <value xsi:type="xsd:string">Contact</value>
+    </values>
+    <values>
         <field>Child_Object_API__c</field>
-        <value xsi:type="xsd:string">Account</value>
+        <value xsi:type="xsd:string">Contact</value>
+    </values>
+    <values>
+        <field>Is_Active_Subscriber__c</field>
+        <value xsi:type="xsd:boolean">true</value>
     </values>
     <values>
         <field>Is_Active__c</field>
         <value xsi:type="xsd:boolean">true</value>
     </values>
     <values>
+        <field>Parent_Lookup_Field_API_Subscriber__c</field>
+        <value xsi:type="xsd:string">AccountId</value>
+    </values>
+    <values>
         <field>Parent_Lookup_Field_API__c</field>
-        <value xsi:type="xsd:string">Id</value>
+        <value xsi:type="xsd:string">AccountId</value>
+    </values>
+    <values>
+        <field>Parent_Object_API_Subscriber__c</field>
+        <value xsi:type="xsd:string">Account</value>
     </values>
     <values>
         <field>Parent_Object_API__c</field>
         <value xsi:type="xsd:string">Account</value>
+    </values>
+    <values>
+        <field>Related_Field_API_Subscriber__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Source_Filter_Field_API_Subscriber__c</field>
+        <value xsi:type="xsd:string">Type</value>
     </values>
     <values>
         <field>Source_Filter_Field_API__c</field>

@@ -12,11 +12,7 @@ export default class OutcomeDetails extends LightningElement {
     clientLink;
     sfObjectName;
     recordName;
-
-    handleOnLoad() {
-        this.recordName = this.template.querySelector('.thefield').value;
-        console.log('this.recordName >> '+this.recordName);
-     }
+    additionalLookupLabel = 'Client'; // Default label
 
     @wire(getOutcomeDetails,{outcomeId : '$outcomeId', objName:'$objectName'})
     wiredOutcomes(result){
@@ -26,11 +22,31 @@ export default class OutcomeDetails extends LightningElement {
             this.outcome = JSON.parse(JSON.stringify(result.data));
             this.percentScore = this.percentage(this.outcome.totalScore, this.outcome.totalMaxScore);
             this.assessmentDate =  this.format(this.outcome.assessmentDate) ;
-            this.recordLink = '/'+this.outcome.recordId;
+            
+            // Set record link and name - prioritize associatedRecordName
+            if(this.outcome.associatedRecordName && this.outcome.associatedRecordId) {
+                // Use Associated Record if available
+                this.recordLink = '/' + this.outcome.associatedRecordId;
+                this.recordName = this.outcome.associatedRecordName;
+            } else if(this.outcome.recordId) {
+                // Fallback to the related record from the dynamic field
+                this.recordLink = '/' + this.outcome.recordId;
+                // recordName will be set by lightning-input-field onchange handler
+            }
+            
             if(this.outcome.clientId){
                 this.clientLink = '/'+this.outcome.clientId;
             }
+            
+            // Set additional lookup label from metadata (defaults to 'Client' if not provided)
+            if(this.outcome.additionalLookupLabel){
+                this.additionalLookupLabel = this.outcome.additionalLookupLabel;
+            }
+            
             console.log('this.outcome > ',JSON.stringify(this.outcome));
+            console.log('recordName: ', this.recordName);
+            console.log('recordLink: ', this.recordLink);
+            console.log('additionalLookupLabel: ', this.additionalLookupLabel);
         }else if(result.error){
             console.error('ERROR : ',JSON.stringify(result.error));
         }
@@ -56,6 +72,13 @@ export default class OutcomeDetails extends LightningElement {
 
     get hasClient(){
         return this.outcome && this.outcome.clientId && this.outcome.clientName;
+    }
+
+    handleOnLoad(event) {
+        if(event && event.detail && event.detail.value) {
+            this.recordName = event.detail.value;
+            console.log('this.recordName >> '+this.recordName);
+        }
     }
 
     percentage(partialValue, totalValue) {

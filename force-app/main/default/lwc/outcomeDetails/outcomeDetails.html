@@ -1,9 +1,11 @@
 <template>
     <div class="slds-box slds-m-around_medium">
         <template if:true={outcome}>
-            <lightning-record-edit-form record-id={outcome.recordId} object-api-name={outcome.objectName} onload={handleOnLoad}>
-                <lightning-input-field style="display: none;" class="thefield" field-name="Name"></lightning-input-field>
-            </lightning-record-edit-form>
+            <template if:false={outcome.associatedRecordName}>
+                <lightning-record-edit-form record-id={outcome.recordId} object-api-name={outcome.objectName}>
+                    <lightning-input-field style="display: none;" class="thefield" field-name="Name" onchange={handleOnLoad}></lightning-input-field>
+                </lightning-record-edit-form>
+            </template>
             <div class="slds-grid slds-gutters">
                 <div class="slds-col slds-size_1-of-2">
                     <div class="slds-grid slds-wrap">
@@ -63,7 +65,19 @@
                                     <b>Related Record :</b>
                                 </div>
                                 <div class="slds-col slds-size_1-of-2">
-                                    <a href={recordLink} target="_blank">{recordName}</a>
+                                    <template if:true={outcome.associatedRecordName}>
+                                        <a href={recordLink} target="_blank">{outcome.associatedRecordName}</a>
+                                    </template>
+                                    <template if:false={outcome.associatedRecordName}>
+                                        <template if:true={recordName}>
+                                            <a href={recordLink} target="_blank">{recordName}</a>
+                                        </template>
+                                        <template if:false={recordName}>
+                                            <template if:true={outcome.recordId}>
+                                                <a href={recordLink} target="_blank">View Record</a>
+                                            </template>
+                                        </template>
+                                    </template>
                                 </div>
                             </div>
                         </div>
@@ -71,7 +85,7 @@
                             <div class="slds-col slds-size_1-of-1 slds-m-vertical_x-small">
                                 <div class="slds-grid slds-gutters">
                                     <div class="slds-col slds-size_1-of-2">
-                                        <b>Client :</b>
+                                        <b>{additionalLookupLabel} :</b>
                                     </div>
                                     <div class="slds-col slds-size_1-of-2">
                                         <a href={clientLink} target="_blank">{outcome.clientName}</a>

@@ -71,29 +71,39 @@ public with sharing class OutcomeCmpController {
             // Validate object name to prevent injection
             String sanitizedObjName = String.escapeSingleQuotes(objName);
             
-            // Get Client field name and display field from Custom Metadata (safely handle if not deployed yet)
+            // Get Client field name, display field, and label from Custom Metadata (safely handle if not deployed yet)
             String clientFieldApi = 'caresp__Client__c';
             String clientDisplayField = 'Name';
+            String clientLabel = 'Client';
             try {
-                String soql = 'SELECT caresp__Additional_Lookup_Field_API__c, caresp__Additional_Lookup_Display_Field_API__c ' +
+                String soql = 'SELECT caresp__Additional_Lookup_Field_API_Subscriber__c, ' +
+                             'caresp__Lookup_Display_Field_API_Subscriber__c, ' +
+                             'caresp__Additional_Lookup_Label_Subscriber__c ' +
                              'FROM caresp__Assessment_Additional_Lookup_Config__mdt ' +
-                             'WHERE caresp__Is_Active__c = true ' +
+                             'WHERE caresp__Is_Active_Subscriber__c = true ' +
                              'WITH USER_MODE ' +
                              'LIMIT 1';
                 List<SObject> configs = Database.query(soql);
                 if (!configs.isEmpty()) {
                     // Get Additional Lookup field API
-                    if (configs[0].get('caresp__Additional_Lookup_Field_API__c') != null) {
-                        String customFieldName = String.valueOf(configs[0].get('caresp__Additional_Lookup_Field_API__c'));
+                    if (configs[0].get('caresp__Additional_Lookup_Field_API_Subscriber__c') != null) {
+                        String customFieldName = String.valueOf(configs[0].get('caresp__Additional_Lookup_Field_API_Subscriber__c'));
                         if (String.isNotBlank(customFieldName)) {
                             clientFieldApi = customFieldName;
                         }
                     }
                     // Get Additional Lookup display field API
-                    if (configs[0].get('caresp__Additional_Lookup_Display_Field_API__c') != null) {
-                        String customDisplayField = String.valueOf(configs[0].get('caresp__Additional_Lookup_Display_Field_API__c'));
+                    if (configs[0].get('caresp__Lookup_Display_Field_API_Subscriber__c') != null) {
+                        String customDisplayField = String.valueOf(configs[0].get('caresp__Lookup_Display_Field_API_Subscriber__c'));
                         if (String.isNotBlank(customDisplayField)) {
                             clientDisplayField = customDisplayField;
+                        }
+                    }
+                    // Get Additional Lookup label
+                    if (configs[0].get('caresp__Additional_Lookup_Label_Subscriber__c') != null) {
+                        String customLabel = String.valueOf(configs[0].get('caresp__Additional_Lookup_Label_Subscriber__c'));
+                        if (String.isNotBlank(customLabel)) {
+                            clientLabel = customLabel;
                         }
                     }
                 }
@@ -105,27 +115,70 @@ public with sharing class OutcomeCmpController {
             // Check if the client field exists on Outcome object before querying
             Boolean includeClientField = false;
             String clientRelationshipField = '';
+            Boolean isClientFieldLookup = false;
             try {
                 Schema.SObjectType outcomeType = Schema.getGlobalDescribe().get('caresp__Outcome__c');
                 if (outcomeType != null) {
                     Map<String, Schema.SObjectField> fieldMap = outcomeType.getDescribe().fields.getMap();
                     if (fieldMap.containsKey(clientFieldApi) && fieldMap.get(clientFieldApi).getDescribe().isAccessible()) {
                         includeClientField = true;
-                        // Build Client relationship field name (e.g., caresp__Client__r.Name or caresp__Client__r.CustomField__c)
-                        clientRelationshipField = clientFieldApi.replace('__c', '__r.' + String.escapeSingleQuotes(clientDisplayField));
+                        Schema.DescribeFieldResult fieldDescribe = fieldMap.get(clientFieldApi).getDescribe();
+                        isClientFieldLookup = (fieldDescribe.getType() == Schema.DisplayType.REFERENCE);
+                        // Only build relationship field if it's a lookup field
+                        if (isClientFieldLookup) {
+                            // Build Client relationship field name (e.g., caresp__Client__r.Name or caresp__Client__r.CustomField__c)
+                            clientRelationshipField = clientFieldApi.replace('__c', '__r.' + String.escapeSingleQuotes(clientDisplayField));
+                        }
                     }
                 }
             } catch (Exception e) {
                 System.debug(LoggingLevel.INFO, 'Error checking client field existence, excluding client fields from query: ' + e.getMessage());
             }
             
+            // Check if caresp__Associated_Record__c field exists and is accessible
+            Boolean includeAssociatedRecord = false;
+            String associatedRecordRelationshipName = null;
+            String associatedRecordTargetObject = null;
+            try {
+                Schema.SObjectType outcomeType = Schema.getGlobalDescribe().get('caresp__Outcome__c');
+                if (outcomeType != null) {
+                    Map<String, Schema.SObjectField> fieldMap = outcomeType.getDescribe().fields.getMap();
+                    if (fieldMap.containsKey('caresp__Associated_Record__c')) {
+                        Schema.DescribeFieldResult fieldDescribe = fieldMap.get('caresp__Associated_Record__c').getDescribe();
+                        if (fieldDescribe.isAccessible()) {
+                            includeAssociatedRecord = true;
+                            // Get the relationship name and target object
+                            List<Schema.SObjectType> referenceTo = fieldDescribe.getReferenceTo();
+                            if (!referenceTo.isEmpty()) {
+                                associatedRecordTargetObject = referenceTo[0].getDescribe().getName();
+                                // Get relationship name - use getRelationshipName() which returns null if no relationship
+                                associatedRecordRelationshipName = fieldDescribe.getRelationshipName();
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.INFO, 'Error checking Associated_Record field existence: ' + e.getMessage());
+            }
+            
             // Build query with proper field names and security
             String query = 'select Id, Name, caresp__Outcome__c, caresp__Assessment__r.Name, caresp__Color__c, ' +
                           'caresp__Status__c, caresp__Assessment_Date__c, caresp__Object__c, caresp__Total_Score__c, ' +
-                          'caresp__Total_Max_Score__c, createdby.name, CreatedDate, lastmodifiedby.Id, ' +
+                          'caresp__Total_Max_Score__c, caresp__Record_Id__c, createdby.name, CreatedDate, lastmodifiedby.Id, ' +
                           'lastmodifiedby.name, lastmodifieddate, ' + sanitizedObjName;
             if (includeClientField) {
-                query += ', ' + String.escapeSingleQuotes(clientFieldApi) + ', ' + String.escapeSingleQuotes(clientRelationshipField);
+                query += ', ' + String.escapeSingleQuotes(clientFieldApi);
+                // Only include relationship field if it's a lookup field
+                if (isClientFieldLookup && String.isNotBlank(clientRelationshipField)) {
+                    query += ', ' + String.escapeSingleQuotes(clientRelationshipField);
+                }
+            }
+            // Only include relationship query if relationship name exists
+            if (includeAssociatedRecord) {
+                query += ', caresp__Associated_Record__c';
+                if (String.isNotBlank(associatedRecordRelationshipName)) {
+                    query += ', ' + String.escapeSingleQuotes(associatedRecordRelationshipName) + '.Name';
+                }
             }
             query += ' from caresp__Outcome__c where Id = :validatedOutcomeId ' +
                     'AND caresp__inActive__c = false WITH USER_MODE LIMIT 1';
@@ -154,21 +207,140 @@ public with sharing class OutcomeCmpController {
                 respWrp.totalScore = outcome.caresp__Total_Score__c != null ? Integer.valueOf(outcome.caresp__Total_Score__c) : 0;
                 respWrp.totalMaxScore = outcome.caresp__Total_Max_Score__c != null ? Integer.valueOf(outcome.caresp__Total_Max_Score__c) : 0;
                 
+                // Set the additional lookup label from metadata
+                respWrp.additionalLookupLabel = clientLabel;
+                
+                // Get record ID from caresp__Record_Id__c field and query the related record name
+                String recordIdFromField = outcome.caresp__Record_Id__c;
+                if (String.isNotBlank(recordIdFromField)) {
+                    try {
+                        Id validatedRecordId = Id.valueOf(recordIdFromField);
+                        // Determine the object type from the ID prefix
+                        String sObjectType = validatedRecordId.getSObjectType().getDescribe().getName();
+                        System.debug(LoggingLevel.INFO, 'Record ID from caresp__Record_Id__c: ' + recordIdFromField);
+                        System.debug(LoggingLevel.INFO, 'Object Type: ' + sObjectType);
+                        
+                        // Query the related record to get its Name
+                        String soql = 'SELECT Name FROM ' + String.escapeSingleQuotes(sObjectType) + 
+                                     ' WHERE Id = :validatedRecordId WITH USER_MODE LIMIT 1';
+                        List<SObject> relatedRecords = Database.query(soql);
+                        if (!relatedRecords.isEmpty()) {
+                            Object nameValue = relatedRecords[0].get('Name');
+                            if (nameValue != null) {
+                                respWrp.associatedRecordName = String.valueOf(nameValue);
+                                respWrp.associatedRecordId = recordIdFromField;
+                                System.debug(LoggingLevel.INFO, 'Related Record Name from caresp__Record_Id__c: ' + respWrp.associatedRecordName);
+                            }
+                        }
+                    } catch (Exception recordEx) {
+                        System.debug(LoggingLevel.WARN, 'Error querying record from caresp__Record_Id__c: ' + recordEx.getMessage());
+                        System.debug(LoggingLevel.WARN, 'Stack trace: ' + recordEx.getStackTraceString());
+                    }
+                }
+                
+                // Populate Associated Record name if available (from caresp__Associated_Record__c field)
+                if (includeAssociatedRecord) {
+                    try {
+                        Object associatedRecordId = outcome.get('caresp__Associated_Record__c');
+                        System.debug(LoggingLevel.INFO, 'Associated Record ID from field: ' + associatedRecordId);
+                        if (associatedRecordId != null) {
+                            String associatedRecordIdStr = String.valueOf(associatedRecordId);
+                            respWrp.associatedRecordId = associatedRecordIdStr; // Store the ID for the link
+                            System.debug(LoggingLevel.INFO, 'Associated Record ID String: ' + associatedRecordIdStr);
+                            System.debug(LoggingLevel.INFO, 'Relationship Name: ' + associatedRecordRelationshipName);
+                            System.debug(LoggingLevel.INFO, 'Target Object: ' + associatedRecordTargetObject);
+                            
+                            // Try to get name from relationship if relationship exists
+                            if (String.isNotBlank(associatedRecordRelationshipName)) {
+                                try {
+                                    SObject associatedRecord = outcome.getSObject(associatedRecordRelationshipName);
+                                    System.debug(LoggingLevel.INFO, 'Associated Record from relationship: ' + associatedRecord);
+                                    if (associatedRecord != null) {
+                                        Object associatedRecordName = associatedRecord.get('Name');
+                                        if (associatedRecordName != null) {
+                                            respWrp.associatedRecordName = String.valueOf(associatedRecordName);
+                                            System.debug(LoggingLevel.INFO, 'Associated Record Name from relationship: ' + respWrp.associatedRecordName);
+                                        }
+                                    }
+                                } catch (Exception relEx) {
+                                    System.debug(LoggingLevel.WARN, 'Error accessing Associated_Record relationship: ' + relEx.getMessage());
+                                    System.debug(LoggingLevel.WARN, 'Stack trace: ' + relEx.getStackTraceString());
+                                    // Fall through to query the record directly
+                                }
+                            }
+                            
+                            // If relationship name not available or relationship query failed, query the record directly
+                            if (String.isBlank(respWrp.associatedRecordName) && String.isNotBlank(associatedRecordTargetObject)) {
+                                try {
+                                    Id validatedAssociatedRecordId = Id.valueOf(associatedRecordIdStr);
+                                    String soql = 'SELECT Name FROM ' + String.escapeSingleQuotes(associatedRecordTargetObject) + 
+                                                 ' WHERE Id = :validatedAssociatedRecordId WITH USER_MODE LIMIT 1';
+                                    System.debug(LoggingLevel.INFO, 'Querying Associated Record: ' + soql);
+                                    List<SObject> relatedRecords = Database.query(soql);
+                                    System.debug(LoggingLevel.INFO, 'Query returned ' + relatedRecords.size() + ' records');
+                                    if (!relatedRecords.isEmpty()) {
+                                        Object nameValue = relatedRecords[0].get('Name');
+                                        if (nameValue != null) {
+                                            respWrp.associatedRecordName = String.valueOf(nameValue);
+                                            System.debug(LoggingLevel.INFO, 'Associated Record Name from query: ' + respWrp.associatedRecordName);
+                                        }
+                                    }
+                                } catch (Exception queryEx) {
+                                    System.debug(LoggingLevel.ERROR, 'Error querying Associated_Record name: ' + queryEx.getMessage());
+                                    System.debug(LoggingLevel.ERROR, 'Stack trace: ' + queryEx.getStackTraceString());
+                                }
+                            }
+                        } else {
+                            System.debug(LoggingLevel.INFO, 'Associated_Record__c field is null or empty');
+                        }
+                    } catch (Exception e) {
+                        System.debug(LoggingLevel.ERROR, 'Error accessing Associated_Record field: ' + e.getMessage());
+                        System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+                    }
+                } else {
+                    System.debug(LoggingLevel.INFO, 'Associated_Record field not included in query (field may not exist or not accessible)');
+                }
+                
                 // Populate Client data if available (only if field was included in query)
                 if (includeClientField) {
                     try {
                         Object clientIdObj = outcome.get(clientFieldApi);
                         if (clientIdObj != null) {
-                            respWrp.clientId = String.valueOf(clientIdObj);
+                            String clientIdStr = String.valueOf(clientIdObj);
+                            respWrp.clientId = clientIdStr;
                             
-                            // Get Client display value from relationship field using custom field from metadata
-                            // Extract relationship name (e.g., "caresp__Client__r" from "caresp__Client__c")
-                            String relationshipName = clientFieldApi.replace('__c', '__r');
-                            SObject clientRecord = outcome.getSObject(relationshipName);
-                            if (clientRecord != null) {
-                                Object clientDisplayValue = clientRecord.get(clientDisplayField);
-                                if (clientDisplayValue != null) {
-                                    respWrp.clientName = String.valueOf(clientDisplayValue);
+                            // Check if the field is a lookup field (has relationship) or a text field (contains ID)
+                            Schema.DescribeFieldResult fieldDescribe = Schema.sObjectType.caresp__Outcome__c.fields.getMap().get(clientFieldApi).getDescribe();
+                            Boolean isLookupField = (fieldDescribe.getType() == Schema.DisplayType.REFERENCE);
+                            
+                            if (isLookupField) {
+                                // Field is a lookup - use relationship query
+                                String relationshipName = clientFieldApi.replace('__c', '__r');
+                                SObject clientRecord = outcome.getSObject(relationshipName);
+                                if (clientRecord != null) {
+                                    Object clientDisplayValue = clientRecord.get(clientDisplayField);
+                                    if (clientDisplayValue != null) {
+                                        respWrp.clientName = String.valueOf(clientDisplayValue);
+                                    }
+                                }
+                            } else {
+                                // Field is a text field containing an ID - query the record directly
+                                try {
+                                    Id validatedClientId = Id.valueOf(clientIdStr);
+                                    String sObjectType = validatedClientId.getSObjectType().getDescribe().getName();
+                                    String soql = 'SELECT ' + String.escapeSingleQuotes(clientDisplayField) + 
+                                                 ' FROM ' + String.escapeSingleQuotes(sObjectType) + 
+                                                 ' WHERE Id = :validatedClientId WITH USER_MODE LIMIT 1';
+                                    List<SObject> clientRecords = Database.query(soql);
+                                    if (!clientRecords.isEmpty()) {
+                                        Object clientDisplayValue = clientRecords[0].get(clientDisplayField);
+                                        if (clientDisplayValue != null) {
+                                            respWrp.clientName = String.valueOf(clientDisplayValue);
+                                        }
+                                    }
+                                } catch (Exception idEx) {
+                                    System.debug(LoggingLevel.WARN, 'Error querying client record from text field: ' + idEx.getMessage());
+                                    // Continue without client name
                                 }
                             }
                         }
@@ -377,6 +549,9 @@ public with sharing class OutcomeCmpController {
         @AuraEnabled public Integer totalMaxScore {get;set;}
         @AuraEnabled public String clientId {get;set;}
         @AuraEnabled public String clientName {get;set;}
+        @AuraEnabled public String associatedRecordName {get;set;}
+        @AuraEnabled public String associatedRecordId {get;set;}
+        @AuraEnabled public String additionalLookupLabel {get;set;}
     }
 
     public class QuesAnswerWrapper {

@@ -15,16 +15,16 @@
                 <field>DeveloperName</field>
             </layoutItems>
             <layoutItems>
-                <behavior>Required</behavior>
-                <field>Child_Object_API__c</field>
+                <behavior>Edit</behavior>
+                <field>Child_Object_API_Subscriber__c</field>
             </layoutItems>
             <layoutItems>
-                <behavior>Required</behavior>
-                <field>Parent_Lookup_Field_API__c</field>
+                <behavior>Edit</behavior>
+                <field>Source_Filter_Field_API_Subscriber__c</field>
             </layoutItems>
             <layoutItems>
-                <behavior>Required</behavior>
-                <field>Parent_Object_API__c</field>
+                <behavior>Edit</behavior>
+                <field>Related_Field_API_Subscriber__c</field>
             </layoutItems>
         </layoutColumns>
         <layoutColumns>
@@ -33,12 +33,20 @@
                 <field>IsProtected</field>
             </layoutItems>
             <layoutItems>
-                <behavior>Required</behavior>
+                <behavior>Edit</behavior>
+                <field>Is_Active_Subscriber__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
                 <field>NamespacePrefix</field>
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
-                <field>Source_Filter_Field_API__c</field>
+                <field>Parent_Lookup_Field_API_Subscriber__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Parent_Object_API_Subscriber__c</field>
             </layoutItems>
         </layoutColumns>
         <style>TwoColumnsTopToBottom</style>

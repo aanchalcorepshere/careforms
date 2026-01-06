@@ -11,16 +11,20 @@
                 <field>MasterLabel</field>
             </layoutItems>
             <layoutItems>
-                <behavior>Edit</behavior>
-                <field>Additional_Lookup_Display_Field_API__c</field>
-            </layoutItems>
-            <layoutItems>
                 <behavior>Required</behavior>
                 <field>DeveloperName</field>
             </layoutItems>
             <layoutItems>
+                <behavior>Required</behavior>
+                <field>NamespacePrefix</field>
+            </layoutItems>
+            <layoutItems>
                 <behavior>Edit</behavior>
-                <field>Additional_Lookup_Field_API__c</field>
+                <field>Custom_Class_Name_Subscriber__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Additional_Lookup_Label_Subscriber__c</field>
             </layoutItems>
         </layoutColumns>
         <layoutColumns>
@@ -29,16 +33,16 @@
                 <field>IsProtected</field>
             </layoutItems>
             <layoutItems>
-                <behavior>Required</behavior>
-                <field>NamespacePrefix</field>
+                <behavior>Edit</behavior>
+                <field>Is_Active_Subscriber__c</field>
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
-                <field>Custom_Class_Name__c</field>
+                <field>Lookup_Display_Field_API_Subscriber__c</field>
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
-                <field>Is_Active__c</field>
+                <field>Additional_Lookup_Field_API_Subscriber__c</field>
             </layoutItems>
         </layoutColumns>
         <style>TwoColumnsTopToBottom</style>

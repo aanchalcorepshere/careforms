@@ -3,12 +3,24 @@
     <label>Default Filter Config</label>
     <protected>false</protected>
     <values>
+        <field>Assessment_Filter_Field_API_Subscriber__c</field>
+        <value xsi:type="xsd:string">caresp__SP_Service__c</value>
+    </values>
+    <values>
         <field>Assessment_Filter_Field_API__c</field>
         <value xsi:type="xsd:string">caresp__SP_Service__c</value>
     </values>
     <values>
+        <field>Assessment_Objects_Field_API_Subscriber__c</field>
+        <value xsi:type="xsd:string">caresp__Objects__c</value>
+    </values>
+    <values>
         <field>Assessment_Objects_Field_API__c</field>
         <value xsi:type="xsd:string">caresp__Objects__c</value>
+    </values>
+    <values>
+        <field>Is_Active_Subscriber__c</field>
+        <value xsi:type="xsd:boolean">true</value>
     </values>
     <values>
         <field>Is_Active__c</field>

@@ -58,23 +58,36 @@ public with sharing class AssessmentQuestionnaireController {
             Boolean shouldFilter = false;
             String sanitizedObjName = null;
             if (String.isNotBlank(objectName) && String.isNotBlank(recordId)) {
-                sanitizedObjName = objectName.contains('__c') ? objectName : objectName + '__c';
-                
-                // Check if Object Mapping exists for this parent object (indicates filtering should be applied)
+                // Try with original objectName first (for standard objects like Account, Contact)
                 try {
                     String mappingSoql = 'SELECT Id ' +
                                        'FROM caresp__Assessment_Object_Mapping__mdt ' +
-                                       'WHERE caresp__Parent_Object_API__c = :sanitizedObjName ' +
-                                       'AND caresp__Is_Active__c = true ' +
+                                       'WHERE caresp__Parent_Object_API_Subscriber__c = :objectName ' +
+                                       'AND caresp__Is_Active_Subscriber__c = true ' +
                                        'WITH USER_MODE ' +
                                        'LIMIT 1';
                     List<SObject> mappings = Database.query(mappingSoql);
                     if (!mappings.isEmpty()) {
                         shouldFilter = true;
+                        sanitizedObjName = objectName; // Use original for filtering
+                    } else if (!objectName.contains('__c')) {
+                        // If not found and objectName doesn't have __c, try with __c (for custom objects)
+                        String objNameWithSuffix = objectName + '__c';
+                        mappingSoql = 'SELECT Id ' +
+                                     'FROM caresp__Assessment_Object_Mapping__mdt ' +
+                                     'WHERE caresp__Parent_Object_API_Subscriber__c = :objNameWithSuffix ' +
+                                     'AND caresp__Is_Active_Subscriber__c = true ' +
+                                     'WITH USER_MODE ' +
+                                     'LIMIT 1';
+                        mappings = Database.query(mappingSoql);
+                        if (!mappings.isEmpty()) {
+                            shouldFilter = true;
+                            sanitizedObjName = objNameWithSuffix; // Use with __c for filtering
+                        }
                     }
                 } catch (Exception e) {
                     // Object Mapping metadata may not exist, no filtering
-                    System.debug(LoggingLevel.INFO, 'No Object Mapping found for ' + sanitizedObjName + ', skipping filtering');
+                    System.debug(LoggingLevel.INFO, 'No Object Mapping found for ' + objectName + ', skipping filtering');
                 }
             }
             
@@ -104,9 +117,9 @@ public with sharing class AssessmentQuestionnaireController {
             // Apply filtering logic - check Custom Metadata for custom implementation
             List<SObject> lookupConfigs = new List<SObject>();
             try {
-                String lookupSoql = 'SELECT caresp__Custom_Class_Name__c, caresp__Is_Active__c ' +
+                String lookupSoql = 'SELECT caresp__Custom_Class_Name_Subscriber__c ' +
                                    'FROM caresp__Assessment_Additional_Lookup_Config__mdt ' +
-                                   'WHERE caresp__Is_Active__c = true ' +
+                                   'WHERE caresp__Is_Active_Subscriber__c = true ' +
                                    'WITH USER_MODE ' +
                                    'LIMIT 1';
                 lookupConfigs = Database.query(lookupSoql);
@@ -116,10 +129,10 @@ public with sharing class AssessmentQuestionnaireController {
             }
             
             // If custom class is configured, delegate to it
-            if (!lookupConfigs.isEmpty() && lookupConfigs[0].get('caresp__Custom_Class_Name__c') != null && 
-                String.isNotBlank(String.valueOf(lookupConfigs[0].get('caresp__Custom_Class_Name__c')))) {
+            if (!lookupConfigs.isEmpty() && lookupConfigs[0].get('caresp__Custom_Class_Name_Subscriber__c') != null && 
+                String.isNotBlank(String.valueOf(lookupConfigs[0].get('caresp__Custom_Class_Name_Subscriber__c')))) {
                 try {
-                    String customClassName = String.valueOf(lookupConfigs[0].get('caresp__Custom_Class_Name__c'));
+                    String customClassName = String.valueOf(lookupConfigs[0].get('caresp__Custom_Class_Name_Subscriber__c'));
                     Type customType = Type.forName(customClassName);
                     IAssessmentAdditionalLookupProvider provider = (IAssessmentAdditionalLookupProvider)customType.newInstance();
                     
@@ -151,7 +164,7 @@ public with sharing class AssessmentQuestionnaireController {
             }
             
             // Default filtering implementation
-            if (shouldFilter && assessmentList != null && assessmentList.size() > 0) {
+            if (shouldFilter && assessmentList != null && assessmentList.size() > 0 && String.isNotBlank(sanitizedObjName)) {
                 assessmentList = filterAssessmentsDefault(assessmentList, recordId, sanitizedObjName);
             }
             
@@ -182,22 +195,22 @@ public with sharing class AssessmentQuestionnaireController {
             String filterFieldApi = 'caresp__SP_Service__c';
             
             try {
-                String filterConfigSoql = 'SELECT caresp__Assessment_Objects_Field_API__c, ' +
-                                         'caresp__Assessment_Filter_Field_API__c ' +
+                String filterConfigSoql = 'SELECT caresp__Assessment_Objects_Field_API_Subscriber__c, ' +
+                                         'caresp__Assessment_Filter_Field_API_Subscriber__c ' +
                                          'FROM caresp__Assessment_Filter_Config__mdt ' +
-                                         'WHERE caresp__Is_Active__c = true ' +
+                                         'WHERE caresp__Is_Active_Subscriber__c = true ' +
                                          'WITH USER_MODE ' +
                                          'LIMIT 1';
                 List<SObject> filterConfigs = Database.query(filterConfigSoql);
                 if (!filterConfigs.isEmpty()) {
-                    if (filterConfigs[0].get('caresp__Assessment_Objects_Field_API__c') != null) {
-                        String customField = String.valueOf(filterConfigs[0].get('caresp__Assessment_Objects_Field_API__c'));
+                    if (filterConfigs[0].get('caresp__Assessment_Objects_Field_API_Subscriber__c') != null) {
+                        String customField = String.valueOf(filterConfigs[0].get('caresp__Assessment_Objects_Field_API_Subscriber__c'));
                         if (String.isNotBlank(customField)) {
                             objectsFieldApi = customField;
                         }
                     }
-                    if (filterConfigs[0].get('caresp__Assessment_Filter_Field_API__c') != null) {
-                        String customField = String.valueOf(filterConfigs[0].get('caresp__Assessment_Filter_Field_API__c'));
+                    if (filterConfigs[0].get('caresp__Assessment_Filter_Field_API_Subscriber__c') != null) {
+                        String customField = String.valueOf(filterConfigs[0].get('caresp__Assessment_Filter_Field_API_Subscriber__c'));
                         if (String.isNotBlank(customField)) {
                             filterFieldApi = customField;
                         }
@@ -209,18 +222,43 @@ public with sharing class AssessmentQuestionnaireController {
             
             // Get source filter field from Object Mapping metadata
             String sourceFilterFieldApi = null;
+            String sourceFilterRelatedFieldApi = null;
             try {
-                String mappingSoql = 'SELECT caresp__Source_Filter_Field_API__c ' +
+                // Try with original objectName first (for standard objects like Account, Contact)
+                String mappingSoql = 'SELECT caresp__Source_Filter_Field_API_Subscriber__c, ' +
+                                   'caresp__Related_Field_API_Subscriber__c ' +
                                    'FROM caresp__Assessment_Object_Mapping__mdt ' +
-                                   'WHERE caresp__Parent_Object_API__c = :objectName ' +
-                                   'AND caresp__Is_Active__c = true ' +
+                                   'WHERE caresp__Parent_Object_API_Subscriber__c = :objectName ' +
+                                   'AND caresp__Is_Active_Subscriber__c = true ' +
                                    'WITH USER_MODE ' +
                                    'LIMIT 1';
                 List<SObject> mappings = Database.query(mappingSoql);
-                if (!mappings.isEmpty() && mappings[0].get('caresp__Source_Filter_Field_API__c') != null) {
-                    String customField = String.valueOf(mappings[0].get('caresp__Source_Filter_Field_API__c'));
-                    if (String.isNotBlank(customField)) {
-                        sourceFilterFieldApi = customField;
+                
+                // If not found and objectName doesn't have __c, try with __c (for custom objects)
+                if (mappings.isEmpty() && !objectName.contains('__c')) {
+                    String objNameWithSuffix = objectName + '__c';
+                    mappingSoql = 'SELECT caresp__Source_Filter_Field_API_Subscriber__c, ' +
+                                 'caresp__Related_Field_API_Subscriber__c ' +
+                                 'FROM caresp__Assessment_Object_Mapping__mdt ' +
+                                 'WHERE caresp__Parent_Object_API_Subscriber__c = :objNameWithSuffix ' +
+                                 'AND caresp__Is_Active_Subscriber__c = true ' +
+                                 'WITH USER_MODE ' +
+                                 'LIMIT 1';
+                    mappings = Database.query(mappingSoql);
+                }
+                
+                if (!mappings.isEmpty()) {
+                    if (mappings[0].get('caresp__Source_Filter_Field_API_Subscriber__c') != null) {
+                        String customField = String.valueOf(mappings[0].get('caresp__Source_Filter_Field_API_Subscriber__c'));
+                        if (String.isNotBlank(customField)) {
+                            sourceFilterFieldApi = customField;
+                        }
+                    }
+                    if (mappings[0].get('caresp__Related_Field_API_Subscriber__c') != null) {
+                        String relatedField = String.valueOf(mappings[0].get('caresp__Related_Field_API_Subscriber__c'));
+                        if (String.isNotBlank(relatedField)) {
+                            sourceFilterRelatedFieldApi = relatedField;
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -238,12 +276,62 @@ public with sharing class AssessmentQuestionnaireController {
                 try {
                     // Validate recordId format
                     Id validatedRecordId = Id.valueOf(recordId);
-                    String soql = 'SELECT ' + String.escapeSingleQuotes(sourceFilterFieldApi) +
-                                  ' FROM ' + String.escapeSingleQuotes(objectName) +
-                                  ' WHERE Id = :validatedRecordId WITH USER_MODE LIMIT 1';
-                    List<SObject> records = Database.query(soql);
-                    if (!records.isEmpty() && records[0].get(sourceFilterFieldApi) != null) {
-                        sourceFilterValue = String.valueOf(records[0].get(sourceFilterFieldApi));
+                    
+                    // Check if source filter field is a lookup field
+                    Schema.SObjectType sourceObjectType = Schema.getGlobalDescribe().get(objectName);
+                    Boolean isLookupField = false;
+                    String relationshipName = null;
+                    String relatedObjectType = null;
+                    
+                    if (sourceObjectType != null) {
+                        Map<String, Schema.SObjectField> fieldMap = sourceObjectType.getDescribe().fields.getMap();
+                        if (fieldMap.containsKey(sourceFilterFieldApi)) {
+                            Schema.DescribeFieldResult fieldDescribe = fieldMap.get(sourceFilterFieldApi).getDescribe();
+                            if (fieldDescribe.getType() == Schema.DisplayType.REFERENCE) {
+                                isLookupField = true;
+                                relationshipName = fieldDescribe.getRelationshipName();
+                                List<Schema.SObjectType> referenceTo = fieldDescribe.getReferenceTo();
+                                if (!referenceTo.isEmpty()) {
+                                    relatedObjectType = referenceTo[0].getDescribe().getName();
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (isLookupField && String.isNotBlank(relationshipName) && String.isNotBlank(relatedObjectType)) {
+                        // Field is a lookup - query the related object's field
+                        String relatedFieldApi = String.isNotBlank(sourceFilterRelatedFieldApi) ? sourceFilterRelatedFieldApi : 'Name';
+                        String relationshipFieldPath = relationshipName + '.' + String.escapeSingleQuotes(relatedFieldApi);
+                        
+                        String soql = 'SELECT ' + String.escapeSingleQuotes(sourceFilterFieldApi) + ', ' +
+                                      String.escapeSingleQuotes(relationshipFieldPath) +
+                                      ' FROM ' + String.escapeSingleQuotes(objectName) +
+                                      ' WHERE Id = :validatedRecordId WITH USER_MODE LIMIT 1';
+                        List<SObject> records = Database.query(soql);
+                        
+                        if (!records.isEmpty()) {
+                            SObject sourceRecord = records[0];
+                            Object lookupIdObj = sourceRecord.get(sourceFilterFieldApi);
+                            if (lookupIdObj != null) {
+                                // Get the related record
+                                SObject relatedRecord = sourceRecord.getSObject(relationshipName);
+                                if (relatedRecord != null) {
+                                    Object relatedFieldValue = relatedRecord.get(relatedFieldApi);
+                                    if (relatedFieldValue != null) {
+                                        sourceFilterValue = String.valueOf(relatedFieldValue);
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Field is not a lookup - query directly
+                        String soql = 'SELECT ' + String.escapeSingleQuotes(sourceFilterFieldApi) +
+                                      ' FROM ' + String.escapeSingleQuotes(objectName) +
+                                      ' WHERE Id = :validatedRecordId WITH USER_MODE LIMIT 1';
+                        List<SObject> records = Database.query(soql);
+                        if (!records.isEmpty() && records[0].get(sourceFilterFieldApi) != null) {
+                            sourceFilterValue = String.valueOf(records[0].get(sourceFilterFieldApi));
+                        }
                     }
                 } catch (Exception e) {
                     System.debug(LoggingLevel.WARN, 'Error querying source record for filter field: ' + e.getMessage());
@@ -424,14 +512,14 @@ public with sharing class AssessmentQuestionnaireController {
             // Get Additional Lookup field name from Custom Metadata (safely handle if not deployed yet)
             String clientFieldApi = 'caresp__Client__c';
             try {
-                String soql = 'SELECT caresp__Additional_Lookup_Field_API__c ' +
+                String soql = 'SELECT caresp__Additional_Lookup_Field_API_Subscriber__c ' +
                              'FROM caresp__Assessment_Additional_Lookup_Config__mdt ' +
-                             'WHERE caresp__Is_Active__c = true ' +
+                             'WHERE caresp__Is_Active_Subscriber__c = true ' +
                              'WITH USER_MODE ' +
                              'LIMIT 1';
                 List<SObject> configs = Database.query(soql);
-                if (!configs.isEmpty() && configs[0].get('caresp__Additional_Lookup_Field_API__c') != null) {
-                    String customFieldName = String.valueOf(configs[0].get('caresp__Additional_Lookup_Field_API__c'));
+                if (!configs.isEmpty() && configs[0].get('caresp__Additional_Lookup_Field_API_Subscriber__c') != null) {
+                    String customFieldName = String.valueOf(configs[0].get('caresp__Additional_Lookup_Field_API_Subscriber__c'));
                     if (String.isNotBlank(customFieldName)) {
                         clientFieldApi = customFieldName;
                     }
@@ -797,7 +885,8 @@ public with sharing class AssessmentQuestionnaireController {
     } 
 
     // Retrieves additional lookup options for assessment launch with extensibility support
-    @AuraEnabled(cacheable=true)
+    // Note: cacheable=false to ensure custom metadata changes are picked up immediately
+    @AuraEnabled(cacheable=false)
     public static String getAdditionalLookupOptions(String recordId, String objectName) {
         try {
             // Input validation
@@ -816,29 +905,41 @@ public with sharing class AssessmentQuestionnaireController {
             // Check Custom Metadata for custom implementation (safely handle if not deployed yet)
             List<SObject> configs = new List<SObject>();
             try {
-                String soql = 'SELECT caresp__Custom_Class_Name__c, caresp__Is_Active__c ' +
+                String soql = 'SELECT caresp__Custom_Class_Name_Subscriber__c ' +
                              'FROM caresp__Assessment_Additional_Lookup_Config__mdt ' +
-                             'WHERE caresp__Is_Active__c = true ' +
+                             'WHERE caresp__Is_Active_Subscriber__c = true ' +
                              'WITH USER_MODE ' +
                              'LIMIT 1';
                 configs = Database.query(soql);
+                System.debug(LoggingLevel.INFO, 'Found ' + configs.size() + ' Additional Lookup Config records');
             } catch (Exception e) {
                 // Custom Metadata Type may not exist yet, use defaults
-                System.debug(LoggingLevel.INFO, 'Custom Metadata Type not found, using defaults: ' + e.getMessage());
+                System.debug(LoggingLevel.WARN, 'Custom Metadata Type not found, using defaults: ' + e.getMessage());
             }
             
             // If custom class is configured, delegate to it
-            if (!configs.isEmpty() && configs[0].get('caresp__Custom_Class_Name__c') != null && 
-                String.isNotBlank(String.valueOf(configs[0].get('caresp__Custom_Class_Name__c')))) {
+            if (!configs.isEmpty() && configs[0].get('caresp__Custom_Class_Name_Subscriber__c') != null && 
+                String.isNotBlank(String.valueOf(configs[0].get('caresp__Custom_Class_Name_Subscriber__c')))) {
                 try {
-                    String customClassName = String.valueOf(configs[0].get('caresp__Custom_Class_Name__c'));
+                    String customClassName = String.valueOf(configs[0].get('caresp__Custom_Class_Name_Subscriber__c'));
+                    System.debug(LoggingLevel.INFO, 'Attempting to instantiate custom class: ' + customClassName);
                     Type customType = Type.forName(customClassName);
+                    if (customType == null) {
+                        System.debug(LoggingLevel.ERROR, 'Type.forName returned null for: ' + customClassName);
+                        throw new TypeException('Class not found: ' + customClassName);
+                    }
                     IAssessmentAdditionalLookupProvider provider = (IAssessmentAdditionalLookupProvider)customType.newInstance();
-                    return provider.getAdditionalLookupOptions(recordId, objectName);
+                    System.debug(LoggingLevel.INFO, 'Successfully instantiated custom class, calling getAdditionalLookupOptions');
+                    String result = provider.getAdditionalLookupOptions(recordId, objectName);
+                    System.debug(LoggingLevel.INFO, 'Custom class returned result length: ' + (result != null ? result.length() : 0));
+                    return result;
                 } catch (Exception ex) {
                     System.debug(LoggingLevel.ERROR, 'Error calling custom additional lookup provider: ' + ex.getMessage());
+                    System.debug(LoggingLevel.ERROR, 'Stack trace: ' + ex.getStackTraceString());
                     // Fall through to default implementation
                 }
+            } else {
+                System.debug(LoggingLevel.INFO, 'No custom class configured or config is empty/inactive');
             }
             
             // Default implementation - query Object Mapping metadata
@@ -852,7 +953,8 @@ public with sharing class AssessmentQuestionnaireController {
     }
     
     // Public method for LWC components - delegates to internal method
-    @AuraEnabled(cacheable=true)
+    // Note: cacheable=false to ensure custom metadata changes are picked up immediately
+    @AuraEnabled(cacheable=false)
     public static String getAdditionalLookupOptionsForAssessment(String recordId, String objectName) {
         return getAdditionalLookupOptions(recordId, objectName);
     }
@@ -861,7 +963,8 @@ public with sharing class AssessmentQuestionnaireController {
     private static String getAdditionalLookupOptionsDefault(Id recordId, String objectName) {
         try {
             List<PicklistWrapper> lookupList = new List<PicklistWrapper>();
-            String sanitizedObjName = objectName.contains('__c') ? objectName : objectName + '__c';
+            // Don't sanitize objectName - use as-is for metadata query (standard objects don't have __c)
+            // Only add __c if it's a custom object (already has __c) or if we need it for field lookups
             
             // Query Object Mapping metadata for this parent object
             String childObjectApiName;
@@ -870,13 +973,26 @@ public with sharing class AssessmentQuestionnaireController {
             
             List<SObject> objectMappings = new List<SObject>();
             try {
-                String soql = 'SELECT caresp__Child_Object_API__c, caresp__Parent_Lookup_Field_API__c ' +
+                // Try with original objectName first (for standard objects like Account, Contact)
+                String soql = 'SELECT caresp__Child_Object_API_Subscriber__c, caresp__Parent_Lookup_Field_API_Subscriber__c ' +
                              'FROM caresp__Assessment_Object_Mapping__mdt ' +
-                             'WHERE caresp__Parent_Object_API__c = :sanitizedObjName ' +
-                             'AND caresp__Is_Active__c = true ' +
+                             'WHERE caresp__Parent_Object_API_Subscriber__c = :objectName ' +
+                             'AND caresp__Is_Active_Subscriber__c = true ' +
                              'WITH USER_MODE ' +
                              'LIMIT 1';
                 objectMappings = Database.query(soql);
+                
+                // If not found and objectName doesn't have __c, try with __c (for custom objects)
+                if (objectMappings.isEmpty() && !objectName.contains('__c')) {
+                    String sanitizedObjName = objectName + '__c';
+                    soql = 'SELECT caresp__Child_Object_API_Subscriber__c, caresp__Parent_Lookup_Field_API_Subscriber__c ' +
+                           'FROM caresp__Assessment_Object_Mapping__mdt ' +
+                           'WHERE caresp__Parent_Object_API_Subscriber__c = :sanitizedObjName ' +
+                           'AND caresp__Is_Active_Subscriber__c = true ' +
+                           'WITH USER_MODE ' +
+                           'LIMIT 1';
+                    objectMappings = Database.query(soql);
+                }
             } catch (Exception e) {
                 // Object Mapping metadata may not exist yet, use defaults
                 System.debug(LoggingLevel.INFO, 'Object Mapping metadata not found, using defaults: ' + e.getMessage());
@@ -884,14 +1000,16 @@ public with sharing class AssessmentQuestionnaireController {
             
             // If metadata found, use it; otherwise fall back to hardcoded defaults for backward compatibility
             if (!objectMappings.isEmpty()) {
-                childObjectApiName = String.valueOf(objectMappings[0].get('caresp__Child_Object_API__c'));
-                lookupFieldName = String.valueOf(objectMappings[0].get('caresp__Parent_Lookup_Field_API__c'));
+                childObjectApiName = String.valueOf(objectMappings[0].get('caresp__Child_Object_API_Subscriber__c'));
+                lookupFieldName = String.valueOf(objectMappings[0].get('caresp__Parent_Lookup_Field_API_Subscriber__c'));
             } else {
                 // Backward compatibility: Use hardcoded defaults for known objects
-                if (sanitizedObjName == 'caresp__Referral__c') {
+                // Check both with and without __c for custom objects
+                String objNameForCheck = objectName.contains('__c') ? objectName : objectName + '__c';
+                if (objNameForCheck == 'caresp__Referral__c') {
                     childObjectApiName = 'caresp__Client_Referral__c';
                     lookupFieldName = 'caresp__Referral__c';
-                } else if (sanitizedObjName == 'caresp__Assigned_Service__c') {
+                } else if (objNameForCheck == 'caresp__Assigned_Service__c') {
                     childObjectApiName = 'caresp__Client_Service__c';
                     lookupFieldName = 'caresp__Assigned_Service__c';
                 } else {
@@ -976,9 +1094,9 @@ public with sharing class AssessmentQuestionnaireController {
             // Check Custom Metadata for custom implementation (safely handle if not deployed yet)
             List<SObject> configs = new List<SObject>();
             try {
-                String soql = 'SELECT caresp__Custom_Class_Name__c, caresp__Is_Active__c, caresp__Additional_Lookup_Field_API__c ' +
+                String soql = 'SELECT caresp__Custom_Class_Name_Subscriber__c, caresp__Additional_Lookup_Field_API_Subscriber__c ' +
                              'FROM caresp__Assessment_Additional_Lookup_Config__mdt ' +
-                             'WHERE caresp__Is_Active__c = true ' +
+                             'WHERE caresp__Is_Active_Subscriber__c = true ' +
                              'WITH USER_MODE ' +
                              'LIMIT 1';
                 configs = Database.query(soql);
@@ -988,10 +1106,10 @@ public with sharing class AssessmentQuestionnaireController {
             }
             
             // If custom class is configured, delegate to it
-            if (!configs.isEmpty() && configs[0].get('caresp__Custom_Class_Name__c') != null && 
-                String.isNotBlank(String.valueOf(configs[0].get('caresp__Custom_Class_Name__c')))) {
+            if (!configs.isEmpty() && configs[0].get('caresp__Custom_Class_Name_Subscriber__c') != null && 
+                String.isNotBlank(String.valueOf(configs[0].get('caresp__Custom_Class_Name_Subscriber__c')))) {
                 try {
-                    String customClassName = String.valueOf(configs[0].get('caresp__Custom_Class_Name__c'));
+                    String customClassName = String.valueOf(configs[0].get('caresp__Custom_Class_Name_Subscriber__c'));
                     Type customType = Type.forName(customClassName);
                     IAssessmentAdditionalLookupProvider provider = (IAssessmentAdditionalLookupProvider)customType.newInstance();
                     provider.saveAdditionalLookupAssociation(outcomeId, lookupRecordId, objectName);
@@ -1004,8 +1122,8 @@ public with sharing class AssessmentQuestionnaireController {
             
             // Default implementation: Set additional lookup field on Outcome
             String additionalLookupFieldApi = 'caresp__Client__c';
-            if (!configs.isEmpty() && configs[0].get('caresp__Additional_Lookup_Field_API__c') != null) {
-                String customFieldName = String.valueOf(configs[0].get('caresp__Additional_Lookup_Field_API__c'));
+            if (!configs.isEmpty() && configs[0].get('caresp__Additional_Lookup_Field_API_Subscriber__c') != null) {
+                String customFieldName = String.valueOf(configs[0].get('caresp__Additional_Lookup_Field_API_Subscriber__c'));
                 if (String.isNotBlank(customFieldName)) {
                     additionalLookupFieldApi = customFieldName;
                 }

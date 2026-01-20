@@ -26,10 +26,17 @@
                                             </div>
                                             <div class="slds-col slds-size_1-of-2">
                                                 <template if:true={outcome.isAssessmentAccessible}>
-                                                    <a href={outcome.assessmentUrl}>{outcome.Assessment__r.Name}</a>
+                                                    <template if:true={outcome.caresp__Assessment__r}>
+                                                        <a href={outcome.assessmentUrl}>{outcome.caresp__Assessment__r.Name}</a>
+                                                    </template>
+                                                    <template if:false={outcome.caresp__Assessment__r}>
+                                                        <a href={outcome.assessmentUrl}></a>
+                                                    </template>
                                                 </template>
                                                 <template if:false={outcome.isAssessmentAccessible}>
-                                                    {outcome.Assessment__r.Name}
+                                                    <template if:true={outcome.caresp__Assessment__r}>
+                                                        {outcome.caresp__Assessment__r.Name}
+                                                    </template>
                                                 </template>
                                             </div>
                                         </div>
@@ -44,23 +51,35 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
-                                        <div class="slds-grid slds-gutters">
-                                            <div class="slds-col slds-size_1-of-2">
-                                                <b>Client Name :</b>
-                                            </div>
-                                            <div class="slds-col slds-size_1-of-2">
-                                                <a href={outcome.clientUrl}>{outcome.caresp__Client__r.caresp__Full_Name__c}</a>
+                                    <template if:true={outcome.caresp__Client__r}>
+                                        <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
+                                            <div class="slds-grid slds-gutters">
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <b>Client Name :</b>
+                                                </div>
+                                                <div class="slds-col slds-size_1-of-2">
+                                                    <template if:true={outcome.caresp__Client__r}>
+                                                        <a href={outcome.clientUrl}>{outcome.caresp__Client__r.caresp__Full_Name__c}</a>
+                                                    </template>
+                                                    <template if:false={outcome.caresp__Client__r}>
+                                                        <a href={outcome.clientUrl}></a>
+                                                    </template>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </template>
                                     <div class="slds-col slds-size_1-of-1 slds-m-bottom_xx-small">
                                         <div class="slds-grid slds-gutters">
                                             <div class="slds-col slds-size_1-of-2">
                                                 <b>Last Modified By :</b>
                                             </div>
                                             <div class="slds-col slds-size_1-of-2">
-                                                <a href={outcome.lastmodifiedbyUrl}>{outcome.LastModifiedBy.Name}</a>, {outcome.editDate}
+                                                <template if:true={outcome.LastModifiedBy}>
+                                                    <a href={outcome.lastmodifiedbyUrl}>{outcome.LastModifiedBy.Name}</a>, {outcome.editDate}
+                                                </template>
+                                                <template if:false={outcome.LastModifiedBy}>
+                                                    {outcome.editDate}
+                                                </template>
                                             </div>
                                         </div>
                                     </div>
@@ -116,7 +135,12 @@
                                                 <b>Created By :</b>
                                             </div>
                                             <div class="slds-col slds-size_1-of-2">
-                                                <a href={outcome.createdbyUrl}>{outcome.CreatedBy.Name}</a>, {outcome.createDate}
+                                                <template if:true={outcome.CreatedBy}>
+                                                    <a href={outcome.createdbyUrl}>{outcome.CreatedBy.Name}</a>, {outcome.createDate}
+                                                </template>
+                                                <template if:false={outcome.CreatedBy}>
+                                                    {outcome.createDate}
+                                                </template>
                                             </div>
                                         </div>
                                     </div>

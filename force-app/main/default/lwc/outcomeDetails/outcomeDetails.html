@@ -4,7 +4,7 @@
             <template if:false={outcome.associatedRecordName}>
                 <lightning-record-edit-form record-id={outcome.recordId} object-api-name={outcome.objectName}>
                     <lightning-input-field style="display: none;" class="thefield" field-name="Name" onchange={handleOnLoad}></lightning-input-field>
-                </lightning-record-edit-form>
+            </lightning-record-edit-form>
             </template>
             <div class="slds-grid slds-gutters">
                 <div class="slds-col slds-size_1-of-2">
@@ -70,7 +70,7 @@
                                     </template>
                                     <template if:false={outcome.associatedRecordName}>
                                         <template if:true={recordName}>
-                                            <a href={recordLink} target="_blank">{recordName}</a>
+                                    <a href={recordLink} target="_blank">{recordName}</a>
                                         </template>
                                         <template if:false={recordName}>
                                             <template if:true={outcome.recordId}>

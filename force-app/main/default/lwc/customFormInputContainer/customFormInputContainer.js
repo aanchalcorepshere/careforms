@@ -935,6 +935,33 @@ export default class CustomFormInputContainer extends LightningElement {
     handleSubmit() {
         this.isConfirmationBox = false;
         this.error = undefined;
+        
+        // Prepare form data structures
+        this.prepareFormData();
+        
+        // Log prepared data
+        console.log('primary final >> ', JSON.stringify(this.primaryObjectStructure));
+        console.log('children final >> ', JSON.stringify(this.childrenObjectStructure));
+        console.log('parents >> ', JSON.stringify(this.parentsObjectStructure));
+        console.log('grandchildren >> ', JSON.stringify(this.grandChildrenObjectStructure));
+        console.log('questionsResponses >> ', JSON.stringify(this.questionsResponses));
+
+        // If there's an error, dispatch event and return
+        if (this.error) {
+            this.dispatchFormSubmittedEvent(null, false);
+            return;
+        }
+
+        // Route to appropriate save method
+        if (!this.isPDFOnly) {
+            this.saveFormData();
+        } else {
+            this.savePDFOnlyForm();
+        }
+    }
+
+    prepareFormData() {
+        // Initialize data structures
         [
             this.primaryObjectStructure,
             this.parentsObjectStructure,
@@ -942,378 +969,427 @@ export default class CustomFormInputContainer extends LightningElement {
             this.grandChildrenObjectStructure
         ] = this.createData();
 
+        // Reset questions responses
+        this.questionsResponses = [];
+
+        // Process page data and populate structures
         this.pageData.forEach((page) => {
             if (page.sections && page.sections.length) {
                 page.sections.forEach((section) => {
                     if (!section.isSectionMulti) {
-                        if (section.fields && section.fields.length) {
-                            section.fields.forEach((field) => {
-                                if (
-                                    field.fieldData.objectName ==
-                                    this.primaryObjectStructure.objectName &&
-                                    !field.fieldData.hide && !field.fieldData.isFormulaField
-                                ) {
-                                    let fieldValue = {};
-                                    fieldValue.fieldApi = field.fieldData.fieldApi;
-                                    fieldValue.inputValue = field.fieldData.inputValue;
-                                    this.primaryObjectStructure.fieldValue.push(fieldValue);
-                                    if (
-                                        field.fieldData.recordId &&
-                                        field.fieldData.recordId.length
-                                    ) {
-                                        console.log(
-                                            " >> " + JSON.stringify(this.primaryObjectStructure)
-                                        );
-                                        if (
-                                            this.primaryObjectStructure.fieldValue.findIndex(
-                                                (x) => x.fieldApi === "Id"
-                                            ) == -1
-                                        ) {
-                                            fieldValue = {};
-                                            fieldValue.fieldApi = "Id";
-                                            fieldValue.inputValue = field.fieldData.recordId;
-                                            this.primaryObjectStructure.fieldValue.push(fieldValue);
-                                        }
-                                    }
-                                }
-                                if (
-                                    this.parentsObjectStructure &&
-                                    this.parentsObjectStructure.length
-                                ) {
-                                    this.parentsObjectStructure.forEach((parent) => {
-                                        // if(field.fieldData.objectName == parent.objectName){
-                                        if (
-                                            field.fieldData.objectName == parent.objectName &&
-                                            !field.fieldData.hide && !field.fieldData.isFormulaField
-                                        ) {
-                                            let fieldValue = {};
-                                            fieldValue.fieldApi = field.fieldData.fieldApi;
-                                            fieldValue.inputValue = field.fieldData.inputValue;
-                                            parent.fieldValue.push(fieldValue);
-                                        }
-                                    });
-                                }
-                                if (
-                                    this.childrenObjectStructure &&
-                                    this.childrenObjectStructure.length
-                                ) {
-                                    this.childrenObjectStructure.forEach((child) => {
-                                        // if(field.fieldData.objectName == child.objectName){
-                                        if (
-                                            field.fieldData.objectName == child.objectName &&
-                                            !field.fieldData.hide && !field.fieldData.isFormulaField
-                                        ) {
-                                            let fieldValue = {};
-                                            fieldValue.fieldApi = field.fieldData.fieldApi;
-                                            fieldValue.inputValue = field.fieldData.inputValue;
-                                            fieldValue.recordIdentifier = field.fieldData.identifier ?
-                                                parseInt(
-                                                    field.fieldData.identifier.charAt(
-                                                        field.fieldData.identifier.length - 1
-                                                    )
-                                                ) :
-                                                undefined;
-                                            child.fieldValue.push(fieldValue);
-                                        }
-                                    });
-                                }
-                                if (
-                                    this.grandChildrenObjectStructure &&
-                                    this.grandChildrenObjectStructure.length
-                                ) {
-                                    this.grandChildrenObjectStructure.forEach((grandchild) => {
-                                        // if(field.fieldData.objectName == grandchild.objectName){
-                                        if (
-                                            field.fieldData.objectName == grandchild.objectName &&
-                                            !field.fieldData.hide && !field.fieldData.isFormulaField
-                                        ) {
-                                            let fieldValue = {};
-                                            fieldValue.fieldApi = field.fieldData.fieldApi;
-                                            fieldValue.inputValue = field.fieldData.inputValue;
-                                            grandchild.fieldValue.push(fieldValue);
-                                        }
-                                    });
-                                }
-                                if (
-                                    field.fieldData &&
-                                    field.fieldData.objectName == "Question"
-                                ) {
-                                    //console.log('ques input >> ',JSON.stringify(field.fieldData.inputValue));
-                                    let questionData = {};
-                                    questionData.fieldApi = field.fieldData.fieldApi;
-                                    questionData.inputValue = [];
-                                    if (typeof field.fieldData.inputValue == "string") {
-                                        questionData.inputValue.push(field.fieldData.inputValue);
-                                    }
-                                    else {
-                                        questionData.inputValue = field.fieldData.inputValue;
-                                    }
-                                    //questionData.inputValue = field.fieldData.inputValue;
-                                    this.questionsResponses.push(questionData);
-                                }
-                            });
-                        }
-                    }
-                    else {
-                        if (section.fields && section.fields.length) {
-                            section.fields.forEach((record) => {
-                                if (record.recordFields && record.recordFields.length) {
-                                    record.recordFields.forEach((field) => {
-                                        if (
-                                            field.fieldData &&
-                                            field.fieldData.objectName ==
-                                            this.primaryObjectStructure.objectName &&
-                                            !field.fieldData.hide && !field.fieldData.isFormulaField
-                                        ) {
-                                            let fieldValue = {};
-                                            fieldValue.fieldApi = field.fieldData.fieldApi;
-                                            fieldValue.inputValue = field.fieldData.inputValue;
-                                            this.primaryObjectStructure.fieldValue.push(fieldValue);
-                                        }
-                                        if (
-                                            this.parentsObjectStructure &&
-                                            this.parentsObjectStructure.length
-                                        ) {
-                                            this.parentsObjectStructure.forEach((parent) => {
-                                                // if(field.fieldData.objectName == parent.objectName){
-                                                if (
-                                                    field.fieldData.objectName == parent.objectName &&
-                                                    !field.fieldData.hide && !field.fieldData.isFormulaField
-                                                ) {
-                                                    let fieldValue = {};
-                                                    fieldValue.fieldApi = field.fieldData.fieldApi;
-                                                    fieldValue.inputValue = field.fieldData.inputValue;
-                                                    parent.fieldValue.push(fieldValue);
-                                                }
-                                            });
-                                        }
-                                        if (
-                                            this.childrenObjectStructure &&
-                                            this.childrenObjectStructure.length
-                                        ) {
-                                            this.childrenObjectStructure.forEach((child) => {
-                                                if (
-                                                    field.fieldData.objectName == child.objectName &&
-                                                    !field.fieldData.hide && !field.fieldData.isFormulaField
-                                                ) {
-                                                    let fieldValue = {};
-                                                    fieldValue.fieldApi = field.fieldData.fieldApi;
-                                                    fieldValue.inputValue = field.fieldData.inputValue;
-                                                    fieldValue.recordIdentifier = record.recordIndex;
-                                                    child.fieldValue.push(fieldValue);
-                                                }
-                                            });
-                                        }
-                                        if (
-                                            this.grandChildrenObjectStructure &&
-                                            this.grandChildrenObjectStructure.length
-                                        ) {
-                                            this.grandChildrenObjectStructure.forEach(
-                                                (grandchild) => {
-                                                    // if(field.fieldData.objectName == grandchild.objectName){
-                                                    if (
-                                                        field.fieldData.objectName ==
-                                                        grandchild.objectName &&
-                                                        !field.fieldData.hide && !field.fieldData.isFormulaField
-                                                    ) {
-                                                        let fieldValue = {};
-                                                        fieldValue.fieldApi = field.fieldData.fieldApi;
-                                                        fieldValue.inputValue = field.fieldData.inputValue;
-                                                        grandchild.fieldValue.push(fieldValue);
-                                                    }
-                                                }
-                                            );
-                                        }
-                                    });
-                                }
-                            });
-                        }
+                        this.processSingleSectionFields(section);
+                    } else {
+                        this.processMultiSectionFields(section);
                     }
                 });
             }
         });
+    }
 
-        let primaryObjectStringBackup;
-        let childrenObjectStringBackup;
+    processSingleSectionFields(section) {
+        if (section.fields && section.fields.length) {
+            section.fields.forEach((field) => {
+                this.processField(field);
+            });
+        }
+    }
 
-            console.log('primary final >> ',JSON.stringify(this.primaryObjectStructure));
-            console.log('children final >> ',JSON.stringify(this.childrenObjectStructure));
-            console.log('parents >> ',JSON.stringify(this.parentsObjectStructure));
-            console.log('grandchildren >> ',JSON.stringify(this.grandChildrenObjectStructure));
-            console.log('questionsResponses >> ',JSON.stringify(this.questionsResponses));
-
-        if (!this.error) {
-            //this.dispatchEvent(new CustomEvent('formsubmitted'));
-            if (!this.isPDFOnly) {
-                this.isLoading = true;
-                const params = {
-                    parentObjectList: JSON.stringify(this.parentsObjectStructure),
-                    primaryObjectList: JSON.stringify(this.primaryObjectStructure),
-                    childObjectsList: JSON.stringify(this.childrenObjectStructure),
-                    grandChildObjectList: JSON.stringify(this.grandChildrenObjectStructure),
-                    questionObjectsList: JSON.stringify(this.questionsResponses),
-                    formId: this.formId,
-                    isVerifyApplication: false
-                };
-
-               /*  processRecords({params: JSON.stringify(params)})
-                .then((result) => {
-                    console.log('DONE !!! '+JSON.stringify(result));
-                    this.isLoading = false;
-                })
-                .catch((error) => {
-                    console.log('error >> ',JSON.stringify(error));
-                    this.isLoading = false;
-                }
-                ); */
-                
-                saveObjectStructure({ params: JSON.stringify(params) })
-                .then((result) => {
-                    this.isLoading = false;
-                    console.log("result - ", JSON.stringify(result));
-                    this.dataSaved = result.isSuccess;
-                    if (!this.dataSaved) {
-                        let errorMessageArr = result.errorMessage;
-                        this.error = errorMessageArr;
-                    }
-                    else {
-                        if (!this.isDraftSave) {
-                            this.primaryRecordId = result.primaryRecordId;
-                            this.movePrintFilesAndDeleteTrackerRecords(
-                                this.primaryRecordId
-                            );
-                            //console.log('primaryRecordId >> '+this.primaryRecordId);
-                            if (this.needPDF && this.pageData && this.pageData.length) {
-                                //UST-00422
-                                attachPrintJsonToRecord({
-                                        jsonData: JSON.stringify(this.pageData),
-                                        recordId: this.primaryRecordId,
-                                        formId: this.formId
-                                    })
-                                    .then((r) => {
-                                        if (r) {
-                                            this.savedPrintJsonWithDateTime = r;
-                                            console.log(
-                                                "this.savedPrintJsonWithDateTime >> " +
-                                                this.savedPrintJsonWithDateTime
-                                            );
-                                            if (this.needSignature) {
-                                                let convertedDataURI = this.signatureData.replace(
-                                                    /^data:image\/(png|jpg);base64,/,
-                                                    ""
-                                                );
-                                                if (this.signatureData && this.signatureData.length) {
-                                                    saveSignature({
-                                                            signElement: convertedDataURI,
-                                                            recId: this.primaryRecordId,
-                                                            signatureTitle: this.savedPrintJsonWithDateTime
-                                                        })
-                                                        .then((result) => {
-                                                            this.signatureData = undefined;
-                                                            this.error = undefined;
-                                                            this.dispatchEvent(
-                                                                new CustomEvent("formsubmitted")
-                                                            );
-                                                        })
-                                                        .catch((error) => {
-                                                            console.log("error >> ", JSON.stringify(error));
-                                                            this.error = JSON.stringify(error);
-                                                        });
-                                                }
-                                            }
-                                            else {
-                                                this.dispatchEvent(new CustomEvent("formsubmitted"));
-                                            }
-                                        }
-                                    })
-                                    .catch((e) => {
-                                        this.error = JSON.stringify(e);
-                                        console.error(JSON.stringify(e));
-                                    });
-                            }
-                            this.error = undefined;
-                            if (this.hasDocUpload) {
-                                if (this.uploadedDocuments && this.uploadedDocuments.length) {
-                                    console.log('Inside Doc Upload');
-                                    uploadFiles({
-                                            recordId: this.primaryRecordId,
-                                            filedata: JSON.stringify(this.uploadedDocuments)
-                                        })
-                                        .then((result) => {
-                                            console.log(result);
-                                            if (result && result == "success") {
-                                                this.uploadedDocuments = [];
-                                            }
-                                            this.error = undefined;
-                                        })
-                                        .catch((error) => {
-                                            console.error("error >> ", JSON.stringify(error));
-                                            this.error = JSON.stringify(error);
-                                        });
-                                }
-                            }
-                        }
-                    }
-                    this.isLoading = false;
-                })
-                .catch((error) => {
-                    console.log("error >> ", JSON.stringify(error));
-                    this.error = JSON.stringify(error);
-                });
-            }
-            else {
-                let recId;
-                if (this.isDependentForm) {
-                    recId = this.trackerRecordId;
-                }
-                else {
-                    recId = this.recordId;
-                }
-                console.log("recId >> " + recId);
-                if (!this.isDependentForm) {
-                    this.movePrintFilesAndDeleteTrackerRecords(recId);
-                }
-                attachPrintJsonToRecord({
-                        jsonData: JSON.stringify(this.pageData),
-                        recordId: recId,
-                        formId: this.formId
-                    })
-                    .then((r) => {
-                        if (r) {
-                            this.savedPrintJsonWithDateTime = r;
-                            if (this.signatureData && this.signatureData.length) {
-                                let convertedDataURI = this.signatureData.replace(
-                                    /^data:image\/(png|jpg);base64,/,
-                                    ""
-                                );
-                                saveSignature({
-                                        signElement: convertedDataURI,
-                                        recId: recId,
-                                        signatureTitle: this.savedPrintJsonWithDateTime
-                                    })
-                                    .then((result) => {
-                                        this.signatureData = undefined;
-                                        this.error = undefined;
-                                        this.dataSaved = true;
-                                        this.dispatchEvent(new CustomEvent("formsubmitted"));
-                                    })
-                                    .catch((error) => {
-                                        console.log("signature error >> ", JSON.stringify(error));
-                                        this.error = JSON.stringify(error);
-                                    });
-                            }
-                            else {
-                                this.dataSaved = true;
-                                this.dispatchEvent(new CustomEvent("formsubmitted"));
-                            }
-                        }
-                    })
-                    .catch((e) => {
-                        this.error = JSON.stringify(e);
-                        console.error(JSON.stringify(e));
+    processMultiSectionFields(section) {
+        if (section.fields && section.fields.length) {
+            section.fields.forEach((record) => {
+                if (record.recordFields && record.recordFields.length) {
+                    record.recordFields.forEach((field) => {
+                        this.processField(field, record.recordIndex);
                     });
+                }
+            });
+        }
+    }
+
+    processField(field, recordIndex) {
+        if (!field.fieldData) {
+            return;
+        }
+
+        const fieldData = field.fieldData;
+        const objectName = fieldData.objectName;
+
+        // Skip hidden or formula fields
+        if (fieldData.hide || fieldData.isFormulaField) {
+            return;
+        }
+
+        // Process primary object fields
+        if (objectName === this.primaryObjectStructure.objectName) {
+            this.addFieldToStructure(this.primaryObjectStructure, fieldData);
+            
+            // Add record ID if present
+            if (fieldData.recordId && fieldData.recordId.length) {
+                if (this.primaryObjectStructure.fieldValue.findIndex(
+                    (x) => x.fieldApi === "Id"
+                ) === -1) {
+                    this.primaryObjectStructure.fieldValue.push({
+                        fieldApi: "Id",
+                        inputValue: fieldData.recordId
+                    });
+                }
             }
         }
+
+        // Process parent object fields
+        if (this.parentsObjectStructure && this.parentsObjectStructure.length) {
+            this.parentsObjectStructure.forEach((parent) => {
+                if (objectName === parent.objectName) {
+                    this.addFieldToStructure(parent, fieldData);
+                }
+            });
+        }
+
+        // Process child object fields
+        if (this.childrenObjectStructure && this.childrenObjectStructure.length) {
+            this.childrenObjectStructure.forEach((child) => {
+                if (objectName === child.objectName) {
+                    const fieldValue = {
+                        fieldApi: fieldData.fieldApi,
+                        inputValue: fieldData.inputValue
+                    };
+                    if (recordIndex !== undefined) {
+                        fieldValue.recordIdentifier = recordIndex;
+                    } else if (fieldData.identifier) {
+                        fieldValue.recordIdentifier = parseInt(
+                            fieldData.identifier.charAt(fieldData.identifier.length - 1)
+                        );
+                    }
+                    child.fieldValue.push(fieldValue);
+                }
+            });
+        }
+
+        // Process grandchild object fields
+        if (this.grandChildrenObjectStructure && this.grandChildrenObjectStructure.length) {
+            this.grandChildrenObjectStructure.forEach((grandchild) => {
+                if (objectName === grandchild.objectName) {
+                    this.addFieldToStructure(grandchild, fieldData);
+                }
+            });
+        }
+
+        // Process question responses
+        if (objectName === "Question") {
+            const questionData = {
+                fieldApi: fieldData.fieldApi,
+                inputValue: typeof fieldData.inputValue === "string" 
+                    ? [fieldData.inputValue] 
+                    : fieldData.inputValue
+            };
+            this.questionsResponses.push(questionData);
+        }
+    }
+
+    addFieldToStructure(structure, fieldData) {
+        structure.fieldValue.push({
+            fieldApi: fieldData.fieldApi,
+            inputValue: fieldData.inputValue
+        });
+    }
+
+    saveFormData() {
+        this.isLoading = true;
+        const params = {
+            parentObjectList: JSON.stringify(this.parentsObjectStructure),
+            primaryObjectList: JSON.stringify(this.primaryObjectStructure),
+            childObjectsList: JSON.stringify(this.childrenObjectStructure),
+            grandChildObjectList: JSON.stringify(this.grandChildrenObjectStructure),
+            questionObjectsList: JSON.stringify(this.questionsResponses),
+            formId: this.formId,
+            isVerifyApplication: false
+        };
+
+        saveObjectStructure({ params: JSON.stringify(params) })
+            .then((result) => {
+                this.isLoading = false;
+                console.log("result - ", JSON.stringify(result));
+                this.dataSaved = result.isSuccess;
+                
+                if (!this.dataSaved) {
+                    this.error = result.errorMessage;
+                    this.dispatchFormSubmittedEvent(null, false);
+                } else {
+                    this.primaryRecordId = result.primaryRecordId;
+                    
+                    if (!this.isDraftSave) {
+                        this.handleSuccessfulSave();
+                    } else {
+                        // Draft save - dispatch event with recordId
+                        this.dispatchFormSubmittedEvent(this.primaryRecordId, true);
+                    }
+                }
+            })
+            .catch((error) => {
+                this.isLoading = false;
+                console.log("error >> ", JSON.stringify(error));
+                this.error = JSON.stringify(error);
+                this.dispatchFormSubmittedEvent(null, false);
+            });
+    }
+
+    handleSuccessfulSave() {
+        this.movePrintFilesAndDeleteTrackerRecords(this.primaryRecordId);
+        this.error = undefined;
+
+        // Handle PDF attachment if needed
+        if (this.needPDF && this.pageData && this.pageData.length) {
+            this.attachPDFAndComplete();
+        } else {
+            // No PDF needed - handle signature and documents, then dispatch event
+            this.handleSignatureAndDocuments()
+                .then(() => {
+                    this.dispatchFormSubmittedEvent(this.primaryRecordId, true);
+                })
+                .catch((error) => {
+                    console.error("Error in handleSignatureAndDocuments: ", error);
+                    this.dispatchFormSubmittedEvent(this.primaryRecordId, true);
+                });
+        }
+    }
+
+    attachPDFAndComplete() {
+        attachPrintJsonToRecord({
+            jsonData: JSON.stringify(this.pageData),
+            recordId: this.primaryRecordId,
+            formId: this.formId
+        })
+        .then((r) => {
+            if (r) {
+                this.savedPrintJsonWithDateTime = r;
+                console.log("this.savedPrintJsonWithDateTime >> " + this.savedPrintJsonWithDateTime);
+                
+                // Handle signature if needed
+                if (this.needSignature && this.signatureData && this.signatureData.length) {
+                    this.saveSignatureAndComplete(this.primaryRecordId, this.savedPrintJsonWithDateTime);
+                } else {
+                    // No signature needed - handle documents and dispatch event
+                    this.handleDocumentsUpload()
+                        .then(() => {
+                            this.dispatchFormSubmittedEvent(this.primaryRecordId, true);
+                        })
+                        .catch((error) => {
+                            console.error("Error in handleDocumentsUpload: ", error);
+                            this.dispatchFormSubmittedEvent(this.primaryRecordId, true);
+                        });
+                }
+            } else {
+                // PDF attachment returned no result - still dispatch event
+                this.handleDocumentsUpload()
+                    .then(() => {
+                        this.dispatchFormSubmittedEvent(this.primaryRecordId, true);
+                    })
+                    .catch((error) => {
+                        console.error("Error in handleDocumentsUpload: ", error);
+                        this.dispatchFormSubmittedEvent(this.primaryRecordId, true);
+                    });
+            }
+        })
+        .catch((e) => {
+            this.error = JSON.stringify(e);
+            console.error(JSON.stringify(e));
+            // Even on error, dispatch event
+            this.dispatchFormSubmittedEvent(this.primaryRecordId, false);
+        });
+    }
+
+    saveSignatureAndComplete(recordId, signatureTitle) {
+        let convertedDataURI = this.signatureData.replace(
+            /^data:image\/(png|jpg);base64,/,
+            ""
+        );
+        
+        saveSignature({
+            signElement: convertedDataURI,
+            recId: recordId,
+            signatureTitle: signatureTitle
+        })
+        .then((result) => {
+            this.signatureData = undefined;
+            this.error = undefined;
+            
+            // Handle documents upload, then dispatch event
+            this.handleDocumentsUpload()
+                .then(() => {
+                    this.dispatchFormSubmittedEvent(recordId, true);
+                })
+                .catch((error) => {
+                    console.error("Error in handleDocumentsUpload: ", error);
+                    this.dispatchFormSubmittedEvent(recordId, true);
+                });
+        })
+        .catch((error) => {
+            console.log("signature error >> ", JSON.stringify(error));
+            this.error = JSON.stringify(error);
+            // Even on signature error, dispatch event
+            this.handleDocumentsUpload()
+                .then(() => {
+                    this.dispatchFormSubmittedEvent(recordId, false);
+                })
+                .catch((docError) => {
+                    console.error("Error in handleDocumentsUpload: ", docError);
+                    this.dispatchFormSubmittedEvent(recordId, false);
+                });
+        });
+    }
+
+    handleSignatureAndDocuments() {
+        return new Promise((resolve) => {
+            const promises = [];
+            
+            // Handle signature if needed
+            if (this.needSignature && this.signatureData && this.signatureData.length) {
+                let convertedDataURI = this.signatureData.replace(
+                    /^data:image\/(png|jpg);base64,/,
+                    ""
+                );
+                promises.push(
+                    saveSignature({
+                        signElement: convertedDataURI,
+                        recId: this.primaryRecordId,
+                        signatureTitle: this.savedPrintJsonWithDateTime || new Date().toISOString()
+                    }).then(() => {
+                        this.signatureData = undefined;
+                    }).catch((error) => {
+                        console.error("Signature save error: ", error);
+                        // Continue even if signature fails
+                    })
+                );
+            }
+            
+            // Handle documents upload
+            promises.push(this.handleDocumentsUpload());
+            
+            Promise.allSettled(promises).then(() => {
+                resolve();
+            });
+        });
+    }
+
+    handleDocumentsUpload() {
+        return new Promise((resolve) => {
+            if (this.hasDocUpload && this.uploadedDocuments && this.uploadedDocuments.length) {
+                console.log('Inside Doc Upload');
+                uploadFiles({
+                    recordId: this.primaryRecordId,
+                    filedata: JSON.stringify(this.uploadedDocuments)
+                })
+                .then((result) => {
+                    console.log(result);
+                    if (result && result === "success") {
+                        this.uploadedDocuments = [];
+                    }
+                    this.error = undefined;
+                    resolve();
+                })
+                .catch((error) => {
+                    console.error("error >> ", JSON.stringify(error));
+                    this.error = JSON.stringify(error);
+                    // Resolve anyway to continue flow
+                    resolve();
+                });
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    savePDFOnlyForm() {
+        let recId;
+        if (this.isDependentForm) {
+            recId = this.trackerRecordId;
+        } else {
+            recId = this.recordId;
+        }
+        
+        console.log("recId >> " + recId);
+        
+        if (!this.isDependentForm) {
+            this.movePrintFilesAndDeleteTrackerRecords(recId);
+        }
+        
+        attachPrintJsonToRecord({
+            jsonData: JSON.stringify(this.pageData),
+            recordId: recId,
+            formId: this.formId
+        })
+        .then((r) => {
+            if (r) {
+                this.savedPrintJsonWithDateTime = r;
+                
+                if (this.signatureData && this.signatureData.length) {
+                    this.saveSignatureForPDFOnly(recId, this.savedPrintJsonWithDateTime);
+                } else {
+                    this.dataSaved = true;
+                    this.dispatchFormSubmittedEvent(recId, true);
+                }
+            } else {
+                // No result from attachPrintJsonToRecord - still dispatch event
+                this.dispatchFormSubmittedEvent(recId, false);
+            }
+        })
+        .catch((e) => {
+            this.error = JSON.stringify(e);
+            console.error(JSON.stringify(e));
+            // Even on error, dispatch event
+            this.dispatchFormSubmittedEvent(recId, false);
+        });
+    }
+
+    saveSignatureForPDFOnly(recId, signatureTitle) {
+        let convertedDataURI = this.signatureData.replace(
+            /^data:image\/(png|jpg);base64,/,
+            ""
+        );
+        
+        saveSignature({
+            signElement: convertedDataURI,
+            recId: recId,
+            signatureTitle: signatureTitle
+        })
+        .then((result) => {
+            this.signatureData = undefined;
+            this.error = undefined;
+            this.dataSaved = true;
+            this.dispatchFormSubmittedEvent(recId, true);
+        })
+        .catch((error) => {
+            console.log("signature error >> ", JSON.stringify(error));
+            this.error = JSON.stringify(error);
+            // Even on signature error, dispatch event
+            this.dispatchFormSubmittedEvent(recId, false);
+        });
+    }
+
+    dispatchFormSubmittedEvent(recordId, isSuccess) {
+        const eventDetail = {
+            recordId: recordId,
+            isSuccess: isSuccess,
+            isDraftSave: this.isDraftSave,
+            error: this.error
+        };
+        
+        console.log("=== FORM SUBMITTED EVENT DISPATCHED ===");
+        console.log("Event Details:", JSON.stringify(eventDetail, null, 2));
+        console.log("Record ID:", recordId);
+        console.log("Is Success:", isSuccess);
+        console.log("Is Draft Save:", this.isDraftSave);
+        console.log("Is PDF Only:", this.isPDFOnly);
+        console.log("Error:", this.error || "None");
+        console.log("========================================");
+        
+        this.dispatchEvent(
+            new CustomEvent("formsubmitted", {
+                detail: eventDetail
+            })
+        );
+        
+        console.log("formsubmitted event dispatched successfully");
     }
 
     movePrintFilesAndDeleteTrackerRecords(recId) {

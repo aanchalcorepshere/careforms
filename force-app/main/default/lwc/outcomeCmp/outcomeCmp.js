@@ -54,8 +54,15 @@ export default class OutcomeCmp extends NavigationMixin(LightningElement) {
     } */
 
     format(inputDate) {
+        // Check if inputDate is null, undefined, or empty
+        if (!inputDate) {
+            return null;
+        }
+        
+        // Try to parse the date
         var date = new Date(inputDate);
-        var date = new Date(inputDate);
+        
+        // Check if the date is valid
         if (!isNaN(date.getTime())) {
             var day = date.getDate().toString();
             var month = (date.getMonth() + 1).toString();
@@ -65,19 +72,24 @@ export default class OutcomeCmp extends NavigationMixin(LightningElement) {
             (day[1] ? day : '0' + day[0]) + '/' + 
             date.getFullYear();
         }
+        
+        // If date parsing failed, return the original value (might already be formatted)
+        return inputDate;
     }
 
     @wire(getOutcomes,{recordId : '$recordId'})
     wiredOutcomes(result){
         this.wiredOutcomesData = result;
         if(result.data){
+            // User has access if data is returned (WITH USER_MODE enforces sharing rules)
+            this.hasAccess = true;
             this.outcomeList = JSON.parse(JSON.stringify(result.data));
             console.log('this.outcomeList >> '+JSON.stringify(this.outcomeList));
             let seq = 1;
             if(this.outcomeList && this.outcomeList.length){
                 this.outcomeList.forEach(outcome => {
                     outcome.Name = (seq++)+'. '+outcome.Name;
-                    outcome.url = +'/c/OutcomeApp.app?outcomeId='+outcome.Id;
+                    outcome.url = +'/caresp/OutcomeApp.app?outcomeId='+outcome.Id;
                     //outcome.assessmentDate = this.format(outcome.Assessment_Date__c);
                     outcome.assessmentDate = outcome.AssessmentDate;
                     //console.log("this.profileName >> "+this.profileName);
@@ -90,11 +102,39 @@ export default class OutcomeCmp extends NavigationMixin(LightningElement) {
                         outcome.isAssessmentAccessible = false;
                     } */
                     console.log("outcome.assessmentUrl>> ",outcome.assessmentUrl);
-                    outcome.clientUrl = '/'+outcome.caresp__Client__c;
-                    outcome.createdbyUrl = '/'+outcome.CreatedBy.Id;
-                    outcome.lastmodifiedbyUrl = '/'+outcome.LastModifiedBy.Id;
-                    var date = new Date(outcome.LastModifiedDate);
-                    console.log(date.toDateString());
+                    if (outcome.caresp__Client__c) {
+                        outcome.clientUrl = '/'+outcome.caresp__Client__c;
+                    }
+                    // Normalize CreatedBy field names (handle both Name and name)
+                    if (outcome.CreatedBy) {
+                        if (outcome.CreatedBy.Id) {
+                            outcome.createdbyUrl = '/'+outcome.CreatedBy.Id;
+                        }
+                        // Ensure Name field is accessible (handle both cases)
+                        if (!outcome.CreatedBy.Name && outcome.CreatedBy.name) {
+                            outcome.CreatedBy.Name = outcome.CreatedBy.name;
+                        }
+                    }
+                    // Normalize LastModifiedBy field names (handle both Name and name)
+                    if (outcome.LastModifiedBy) {
+                        if (outcome.LastModifiedBy.Id) {
+                            outcome.lastmodifiedbyUrl = '/'+outcome.LastModifiedBy.Id;
+                        }
+                        // Ensure Name field is accessible (handle both cases)
+                        if (!outcome.LastModifiedBy.Name && outcome.LastModifiedBy.name) {
+                            outcome.LastModifiedBy.Name = outcome.LastModifiedBy.name;
+                        }
+                    }
+                    // Handle date formatting safely - editDate is already formatted from Apex
+                    if (outcome.editDate) {
+                        var date = new Date(outcome.editDate);
+                        if (!isNaN(date.getTime())) {
+                            console.log(date.toDateString());
+                        } else {
+                            // If parsing fails, use the formatted string as-is
+                            console.log(outcome.editDate);
+                        }
+                    }
                 })
             }else{
                 this.isNoOutcomes = true;
@@ -102,6 +142,18 @@ export default class OutcomeCmp extends NavigationMixin(LightningElement) {
             //console.log('this.outcomeList > ',JSON.stringify(this.outcomeList));
         }else if(result.error){
             console.error('ERROR : ',JSON.stringify(result.error));
+            // Check if error is access-related
+            const errorMessage = result.error?.body?.message || result.error?.message || JSON.stringify(result.error);
+            if (errorMessage && (
+                errorMessage.toLowerCase().includes('access') || 
+                errorMessage.toLowerCase().includes('insufficient access') ||
+                errorMessage.toLowerCase().includes('permission')
+            )) {
+                this.hasAccess = false;
+            } else {
+                // For other errors, still show access (let the error be displayed elsewhere)
+                this.hasAccess = true;
+            }
         }
     }
 

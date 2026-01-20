@@ -21,7 +21,7 @@ export default class OutcomeDetails extends LightningElement {
             console.log('Outcome Data >> '+JSON.stringify(result.data));
             this.outcome = JSON.parse(JSON.stringify(result.data));
             this.percentScore = this.percentage(this.outcome.totalScore, this.outcome.totalMaxScore);
-            this.assessmentDate =  this.format(this.outcome.assessmentDate) ;
+            this.assessmentDate = this.outcome.assessmentDate ? this.format(this.outcome.assessmentDate) : null;
             
             // Set record link and name - prioritize associatedRecordName
             if(this.outcome.associatedRecordName && this.outcome.associatedRecordId) {
@@ -53,8 +53,15 @@ export default class OutcomeDetails extends LightningElement {
     }
 
     format(inputDate) {
+        // Check if inputDate is null, undefined, or empty
+        if (!inputDate) {
+            return null;
+        }
+        
+        // Try to parse the date
         var date = new Date(inputDate);
-        var date = new Date(inputDate);
+        
+        // Check if the date is valid
         if (!isNaN(date.getTime())) {
             var day = date.getDate().toString();
             var month = (date.getMonth() + 1).toString();
@@ -64,6 +71,9 @@ export default class OutcomeDetails extends LightningElement {
             (day[1] ? day : '0' + day[0]) + '/' + 
             date.getFullYear();
         }
+        
+        // If date parsing failed, return the original value (might already be formatted)
+        return inputDate;
     }
 
     get objName(){

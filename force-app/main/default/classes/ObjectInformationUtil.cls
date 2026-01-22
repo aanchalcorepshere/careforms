@@ -25,9 +25,10 @@ public with sharing class ObjectInformationUtil {
             System.debug(LoggingLevel.Error ,'restrictedSObjectList - ' + restrictedSObjectList);
             
             Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
-            for (Schema.SObjectType gdValue : gd.values()) {
-                if (gdValue != null) {
-                    Schema.DescribeSObjectResult describeResult = gdValue.getDescribe();
+            for (String gdKeys : gd.keySet()) {
+                //if (gdValue != null) {
+                    Schema.SObjectType objType = gd.get(gdKeys);
+                    Schema.DescribeSObjectResult describeResult = objType.getDescribe();
                     String objName = describeResult.getName();
                     System.debug(LoggingLevel.Error ,'objName >> ' + objName);
                     
@@ -48,7 +49,7 @@ public with sharing class ObjectInformationUtil {
                         newObj.relation = 'self';
                         respList.add(newObj);
                     }
-                }
+                //}
             }
 
             return respList;

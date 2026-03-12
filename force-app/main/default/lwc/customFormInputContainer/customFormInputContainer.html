@@ -10,11 +10,11 @@
     <div class="vertical-center">{formName}</div>
   </div>
   <div
-    if:true={error}
+    if:true={displayBannerMessage}
     class="slds-notify slds-notify_alert slds-alert_error"
     role="alert"
   >
-    <b>{error}</b>
+    <b>{displayBannerMessage}</b>
   </div>
   <template if:false={dataSaved}>
     <div class="slds-theme_default slds-m-bottom_large">
@@ -43,6 +43,7 @@
                     key={section.sectionName}
                     page-index={page.pageIndex}
                     section={section}
+                    field-errors={fieldErrors}
                     onaddrow={handleAddRow}
                     ondeleterow={handleDeleteRow}
                     record-id={recordId}

@@ -169,10 +169,10 @@
         <excludedStandardButtons>OpenListInQuip</excludedStandardButtons>
         <excludedStandardButtons>NewFromDocument</excludedStandardButtons>
         <excludedStandardButtons>Accept</excludedStandardButtons>
-        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <excludedStandardButtons>PrintableListView</excludedStandardButtons>
         <excludedStandardButtons>Import</excludedStandardButtons>
         <excludedStandardButtons>MassChangeOwner</excludedStandardButtons>
-        <excludedStandardButtons>PrintableListView</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
         <searchResultsAdditionalFields>Assessment_Description__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Active__c</searchResultsAdditionalFields>
     </searchLayouts>

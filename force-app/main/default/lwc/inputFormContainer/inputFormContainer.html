@@ -8,8 +8,8 @@
             {formName}
         </div>
     </div>
-    <div if:true={error} class="slds-notify slds-notify_alert slds-alert_error" role="alert">
-        <b>{error}</b>
+    <div if:true={displayBannerMessage} class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+        <b>{displayBannerMessage}</b>
     </div>
     <!-- <template if:false={dataSaved}>
         <div style="position:absolute;display:inline-block;right:10px;top:10px;">
@@ -57,7 +57,7 @@
                         <template if:true={page.isFormPage}>
                             <div key={page.pageName} class="slds-box slds-m-around_medium">
                                 <template if:true={page.sections} for:each={page.sections} for:item="section">
-                                    <c-input-form-section key={section} page-index={page.pageIndex} section={section} onaddrow={handleAddRow} ondeleterow={handleDeleteRow}></c-input-form-section>
+                                    <c-input-form-section key={section} page-index={page.pageIndex} section={section} field-errors={fieldErrors} onaddrow={handleAddRow} ondeleterow={handleDeleteRow}></c-input-form-section>
                                 </template>
                             </div>
                         </template>

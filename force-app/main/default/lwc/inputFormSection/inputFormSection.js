@@ -3,6 +3,7 @@ import { LightningElement, api, track } from 'lwc';
 export default class InputFormSection extends LightningElement {
     @api section;
     @api pageIndex;
+    @api fieldErrors = {};
     initialFieldCount = 0;
 
     @api isSummary = false;

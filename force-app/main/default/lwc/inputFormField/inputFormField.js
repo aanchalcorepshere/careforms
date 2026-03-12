@@ -7,6 +7,7 @@ export default class InputFormField extends LightningElement {
     @api sectionIsMulti = false;
     @api recordIndex;
     @api isSummary = false;
+    @api fieldErrors = {};
 
     connectedCallback(){
         if(this.field.fieldData.dataType == 'BOOLEAN'){
@@ -69,5 +70,20 @@ export default class InputFormField extends LightningElement {
         if(input_key == 13){
             event.preventDefault();
         }
+    }
+
+    get fieldKey() {
+        if (this.recordIndex != null && this.recordIndex !== undefined && this.recordIndex !== '') {
+            return `${this.pageIndex}-${this.sectionIndex}-${this.recordIndex}-${this.field.fieldIndex}`;
+        }
+        return `${this.pageIndex}-${this.sectionIndex}-${this.field.fieldIndex}`;
+    }
+
+    get errorInfo() {
+        return this.fieldErrors && this.fieldErrors[this.fieldKey];
+    }
+
+    get fieldErrorClass() {
+        return this.errorInfo ? 'slds-has-error' : '';
     }
 }

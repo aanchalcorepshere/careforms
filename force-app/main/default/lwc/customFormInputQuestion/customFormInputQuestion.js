@@ -8,6 +8,7 @@ export default class CustomFormInputQuestion extends LightningElement {
     @api sectionIsMulti = false;
     @api recordIndex;
     @api isSummary = false;
+    @api fieldErrors = {};
     allOptions;
     
     @track options = [];
@@ -96,5 +97,20 @@ export default class CustomFormInputQuestion extends LightningElement {
                 value : val
             }
         }));
+    }
+
+    get fieldKey() {
+        if (this.recordIndex != null && this.recordIndex !== undefined && this.recordIndex !== '') {
+            return `${this.pageIndex}-${this.sectionIndex}-${this.recordIndex}-${this.question.fieldIndex}`;
+        }
+        return `${this.pageIndex}-${this.sectionIndex}-${this.question.fieldIndex}`;
+    }
+
+    get errorInfo() {
+        return this.fieldErrors && this.fieldErrors[this.fieldKey];
+    }
+
+    get fieldErrorClass() {
+        return this.errorInfo ? 'slds-has-error' : '';
     }
 }

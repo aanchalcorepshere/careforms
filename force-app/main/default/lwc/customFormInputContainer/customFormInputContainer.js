@@ -86,6 +86,7 @@ export default class CustomFormInputContainer extends LightningElement {
     confirmationMessage;
     progressStyle = stepProgressCss;
     error;
+    fieldErrors = {};
 
     @api formId;
 
@@ -458,6 +459,7 @@ export default class CustomFormInputContainer extends LightningElement {
             isCurrentPageValid = this.validatePage(currentPagePos);
             if (isCurrentPageValid && isCurrentPageReqDepFormsCompleted) {
                 this.error = undefined;
+                this.fieldErrors = {};
                 this.pageData[currentPagePos].className = "completed";
                 this.pageData[currentPagePos].current = false;
                 this.pageData[currentPagePos + 1].className = "active";
@@ -466,6 +468,7 @@ export default class CustomFormInputContainer extends LightningElement {
         }
         else if (buttonName == "previous") {
             let currentPagePos = this.pageData.findIndex((page) => page.current);
+            this.fieldErrors = {};
             this.pageData[currentPagePos].className = "";
             this.pageData[currentPagePos].current = false;
             this.pageData[currentPagePos - 1].className = "active";
@@ -591,6 +594,18 @@ export default class CustomFormInputContainer extends LightningElement {
             controllingFieldValue
         );
 
+        const key = this.getFieldKey(
+            event.detail.pageIndex,
+            event.detail.sectionIndex,
+            event.detail.sectionIsMulti ? event.detail.recordIndex : undefined,
+            event.detail.field.fieldIndex
+        );
+        if (this.fieldErrors && this.fieldErrors[key]) {
+            const next = { ...this.fieldErrors };
+            delete next[key];
+            this.fieldErrors = next;
+        }
+
         console.log("page data >> ", JSON.stringify(this.pageData));
     }
 
@@ -632,6 +647,9 @@ export default class CustomFormInputContainer extends LightningElement {
     validatePage(currentPagePos) {
         let valid = true;
         let householdFields = [];
+        const errors = {};
+        const requiredMessage = "This field is required.";
+        const phoneFormatMessage = "Please enter the phone number in correct format (e.g. 111-222-3333).";
         let pageName = this.pageData[currentPagePos].pageName;
         if (pageName == "Signature") {
             if (!this.signatureData || this.signatureData.length == 0) {
@@ -662,8 +680,6 @@ export default class CustomFormInputContainer extends LightningElement {
                                             let kk = !field.fieldData.hide;
                                             let vv;
 
-                                            //console.log("value  >> ",field.fieldData.inputValue);
-                                            //console.log("type of  >> ",typeof field.fieldData.inputValue);
                                             if (field.fieldData.inputValue) {
                                                 if (
                                                     typeof field.fieldData.inputValue == "number" &&
@@ -690,11 +706,10 @@ export default class CustomFormInputContainer extends LightningElement {
                                             if (field.fieldData.inputValue === 0) {
                                                 vv = "has value";
                                             }
-                                            // console.log('ss >> ',ss);
-                                            // console.log('vv >> ',vv);
                                             if (kk && ss && vv !== "has value") {
                                                 valid = false;
-                                                this.error = "Please complete all the required fields.";
+                                                const key = `${currentPagePos}-${section.sectionIndex}-${field.fieldIndex}`;
+                                                errors[key] = { message: requiredMessage, hasError: true };
                                             }
                                         }
                                         else {
@@ -704,17 +719,16 @@ export default class CustomFormInputContainer extends LightningElement {
                                             }
                                         }
 
-										if (field.fieldData.isQuestion && field.fieldData.dataType == 'PHONE') {
-											if(field.fieldData.inputValue && field.fieldData.inputValue.length > 0){
-												console.log('Phone >> '+field.fieldData.inputValue);
-												let isCorrectFormat = this.isPhone(field.fieldData.inputValue);
-												console.log(isCorrectFormat);
-												if (!isCorrectFormat) {
-													valid = false;
-													this.error = "Please enter the phone number in correct format i.e. 111-222-3333";
-												}
-											}
-										}
+                                        if (field.fieldData.isQuestion && field.fieldData.dataType == 'PHONE') {
+                                            if (field.fieldData.inputValue && field.fieldData.inputValue.length > 0) {
+                                                let isCorrectFormat = this.isPhone(field.fieldData.inputValue);
+                                                if (!isCorrectFormat) {
+                                                    valid = false;
+                                                    const key = `${currentPagePos}-${section.sectionIndex}-${field.fieldIndex}`;
+                                                    errors[key] = { message: phoneFormatMessage, hasError: true };
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             });
@@ -734,9 +748,6 @@ export default class CustomFormInputContainer extends LightningElement {
                                                     let vv;
 
                                                     if (field.fieldData.inputValue) {
-                                                        console.log(
-                                                            "&&&& >>" + typeof field.fieldData.inputValue
-                                                        );
                                                         if (
                                                             typeof field.fieldData.inputValue == "number" &&
                                                             (field.fieldData.inputValue != null ||
@@ -759,8 +770,8 @@ export default class CustomFormInputContainer extends LightningElement {
                                                     }
                                                     if (ss && vv !== "has value") {
                                                         valid = false;
-                                                        this.error =
-                                                            "Please complete all the required fields.";
+                                                        const key = `${currentPagePos}-${section.sectionIndex}-${record.recordIndex}-${field.fieldIndex}`;
+                                                        errors[key] = { message: requiredMessage, hasError: true };
                                                     }
                                                 }
                                                 else {
@@ -771,30 +782,22 @@ export default class CustomFormInputContainer extends LightningElement {
                                                     }
                                                 }
 
-												if (field.fieldData.isQuestion && field.fieldData.dataType == 'PHONE') {
-													if(field.fieldData.inputValue && field.fieldData.inputValue.length > 0){
-														console.log('Phone >> '+field.fieldData.inputValue);
-														let isCorrectFormat = this.isPhone(field.fieldData.inputValue);
-														console.log(isCorrectFormat);
-														if (!isCorrectFormat) {
-															valid = false;
-															this.error = "Please enter the phone number in correct format i.e. 111-222-3333";
-														}
-													}
-												}
+                                                if (field.fieldData.isQuestion && field.fieldData.dataType == 'PHONE') {
+                                                    if (field.fieldData.inputValue && field.fieldData.inputValue.length > 0) {
+                                                        let isCorrectFormat = this.isPhone(field.fieldData.inputValue);
+                                                        if (!isCorrectFormat) {
+                                                            valid = false;
+                                                            const key = `${currentPagePos}-${section.sectionIndex}-${record.recordIndex}-${field.fieldIndex}`;
+                                                            errors[key] = { message: phoneFormatMessage, hasError: true };
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                         else {
                                             valid = false;
                                         }
                                     });
-                                    /* if(this.isCreateApplication){
-                                                          if(!householdFields.includes('Client__c')){
-                                                              valid = false;
-                                                              this.error = 'Please select/create client for each member.';
-                                                          }    
-                                                          //valid = true;
-                                                      } */
                                 }
                             });
                         }
@@ -802,7 +805,23 @@ export default class CustomFormInputContainer extends LightningElement {
                 });
             }
         }
+        this.fieldErrors = errors;
         return valid;
+    }
+
+    getFieldKey(pageIndex, sectionIndex, recordIndex, fieldIndex) {
+        if (recordIndex != null && recordIndex !== undefined && recordIndex !== '') {
+            return `${pageIndex}-${sectionIndex}-${recordIndex}-${fieldIndex}`;
+        }
+        return `${pageIndex}-${sectionIndex}-${fieldIndex}`;
+    }
+
+    get displayBannerMessage() {
+        if (this.error) return this.error;
+        if (this.fieldErrors && Object.keys(this.fieldErrors).length > 0) {
+            return "Please fix the errors below.";
+        }
+        return undefined;
     }
 
     handleAddRow(event) {
@@ -924,6 +943,7 @@ export default class CustomFormInputContainer extends LightningElement {
         let isCurrentPageValid = false;
         isCurrentPageValid = this.validatePage(currentPagePos);
         if (isCurrentPageValid && isCurrentPageReqDepFormsCompleted) {
+            this.fieldErrors = {};
             this.isConfirmationBox = true;
         }
     }

@@ -7,6 +7,7 @@ export default class CustomFormInputField extends LightningElement {
     @api sectionIsMulti = false;
     @api recordIndex;
     @api isSummary = false;
+    @api fieldErrors = {};
     objectNameForCopy;
     @api isPrefillFieldsForm;
 
@@ -101,5 +102,20 @@ export default class CustomFormInputField extends LightningElement {
 
     get fieldName(){
         return this.pageIndex+'_'+this.sectionIndex+'_'+this.field.fieldIndex;
+    }
+
+    get fieldKey() {
+        if (this.recordIndex != null && this.recordIndex !== undefined && this.recordIndex !== '') {
+            return `${this.pageIndex}-${this.sectionIndex}-${this.recordIndex}-${this.field.fieldIndex}`;
+        }
+        return `${this.pageIndex}-${this.sectionIndex}-${this.field.fieldIndex}`;
+    }
+
+    get errorInfo() {
+        return this.fieldErrors && this.fieldErrors[this.fieldKey];
+    }
+
+    get fieldErrorClass() {
+        return this.errorInfo ? 'slds-has-error' : '';
     }
 }

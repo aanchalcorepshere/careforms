@@ -4,3 +4,9 @@
     color: gray;
     margin:5px;
 }
+
+.slds-has-error lightning-input,
+.slds-has-error lightning-combobox,
+.slds-has-error lightning-textarea {
+    --slds-c-input-color-border: var(--slds-c-input-color-border-error, #c23934);
+}

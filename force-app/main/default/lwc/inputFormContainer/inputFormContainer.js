@@ -42,6 +42,7 @@ export default class InputFormContainer extends LightningElement {
     confirmationMessage;
     progressStyle = stepProgressCss;
     error;
+    fieldErrors = {};
 
     @api formId;
 
@@ -182,16 +183,16 @@ export default class InputFormContainer extends LightningElement {
             console.log('isCurrentPageValid >> '+isCurrentPageValid);
             if(isCurrentPageValid){
                 console.log('currentPagePos >> ',currentPagePos);
+                this.fieldErrors = {};
                 this.pageData[currentPagePos].className='completed';
                 this.pageData[currentPagePos].current=false;
                 this.pageData[currentPagePos+1].className='active';
                 this.pageData[currentPagePos+1].current=true;
-            }else{
-                alert("Please enter value for all required fields");
             }
         }else if(buttonName == 'previous'){
             let currentPagePos = this.pageData.findIndex(page => page.current);
             console.log('currentPagePos >> ',currentPagePos);
+            this.fieldErrors = {};
             this.pageData[currentPagePos].className='';
             this.pageData[currentPagePos].current=false;
             this.pageData[currentPagePos-1].className='active';
@@ -235,6 +236,18 @@ export default class InputFormContainer extends LightningElement {
 
         this.updateControllingFieldValue(recordIndex, controllingFieldObject, controllingFieldApi, controllingFieldValue);
 
+        const key = this.getFieldKey(
+            event.detail.pageIndex,
+            event.detail.sectionIndex,
+            event.detail.sectionIsMulti ? event.detail.recordIndex : undefined,
+            event.detail.field.fieldIndex
+        );
+        if (this.fieldErrors && this.fieldErrors[key]) {
+            const next = { ...this.fieldErrors };
+            delete next[key];
+            this.fieldErrors = next;
+        }
+
         console.log("page data >> ",JSON.stringify(this.pageData));
     }
 
@@ -268,6 +281,8 @@ export default class InputFormContainer extends LightningElement {
 
     validatePage(currentPagePos){
         let valid = true;
+        const errors = {};
+        const requiredMessage = "This field is required.";
         if(this.pageData[currentPagePos].sections && this.pageData[currentPagePos].sections.length){
             this.pageData[currentPagePos].sections.forEach(section=>{
                 if(!section.isSectionMulti){
@@ -276,21 +291,16 @@ export default class InputFormContainer extends LightningElement {
                             if(field.fieldData.dataType != 'BOOLEAN'){
                                 let ss = field.fieldData.required;
                                 let vv;
-                                
-                                console.log("value  >> ",field.fieldData.inputValue);
-                                console.log("type of  >> ",typeof field.fieldData.inputValue);
                                 if(typeof field.fieldData.inputValue == 'string' && field.fieldData.inputValue.trim() !== ''){
                                     vv = 'has value';
                                 }else if(typeof field.fieldData.inputValue == 'object' && field.fieldData.inputValue.length){
                                     vv = 'has value';
-                                }/* else if(typeof field.fieldData.inputValue == 'boolean'){
-                                    vv = 'has value';
-                                } */
-                                console.log('ss >> ',ss);
-                                console.log('vv >> ',vv);
+                                }
                                 if(ss && vv !== 'has value' ){
                                     valid = false;
-                                } 
+                                    const key = `${currentPagePos}-${section.sectionIndex}-${field.fieldIndex}`;
+                                    errors[key] = { message: requiredMessage, hasError: true };
+                                }
                             }else{
                                 if(field.fieldData.inputValue == ""){
                                     var isTrueSet = (field.fieldData.defaultValue === 'true');
@@ -307,19 +317,16 @@ export default class InputFormContainer extends LightningElement {
                                     if(field.fieldData.dataType != 'BOOLEAN'){
                                         let ss = field.fieldData.required;
                                         let vv;
-                                        
                                         if(typeof field.fieldData.inputValue == 'string' && field.fieldData.inputValue.trim() !== ''){
                                             vv = 'has value';
                                         }else if(typeof field.fieldData.inputValue == 'object' && field.fieldData.inputValue.length){
                                             vv = 'has value';
-                                        }/* else if(typeof field.fieldData.inputValue == 'boolean'){
-                                            vv = 'has value';
-                                        } */
-                                        console.log('ss >> ',ss);
-                                        console.log('vv >> ',vv);
+                                        }
                                         if(ss && vv !== 'has value' ){
                                             valid = false;
-                                        } 
+                                            const key = `${currentPagePos}-${section.sectionIndex}-${record.recordIndex}-${field.fieldIndex}`;
+                                            errors[key] = { message: requiredMessage, hasError: true };
+                                        }
                                     }else{
                                         if(field.fieldData.inputValue == ""){
                                             var isTrueSet = (field.fieldData.defaultValue === 'true');
@@ -333,7 +340,23 @@ export default class InputFormContainer extends LightningElement {
                 }
             })
         }
+        this.fieldErrors = errors;
         return valid;
+    }
+
+    getFieldKey(pageIndex, sectionIndex, recordIndex, fieldIndex) {
+        if (recordIndex != null && recordIndex !== undefined && recordIndex !== '') {
+            return `${pageIndex}-${sectionIndex}-${recordIndex}-${fieldIndex}`;
+        }
+        return `${pageIndex}-${sectionIndex}-${fieldIndex}`;
+    }
+
+    get displayBannerMessage() {
+        if (this.error) return this.error;
+        if (this.fieldErrors && Object.keys(this.fieldErrors).length > 0) {
+            return "Please fix the errors below.";
+        }
+        return undefined;
     }
 
     handleAddRow(event){
@@ -413,6 +436,7 @@ export default class InputFormContainer extends LightningElement {
         isCurrentPageValid = this.validatePage(currentPagePos);
         console.log('isCurrentPageValid >> '+isCurrentPageValid);
         if(isCurrentPageValid){
+            this.fieldErrors = {};
             [this.primaryObjectStructure,this.parentsObjectStructure,this.childrenObjectStructure, this.grandChildrenObjectStructure] = this.createData();
 
             this.pageData.forEach(page => {
@@ -591,9 +615,7 @@ export default class InputFormContainer extends LightningElement {
             .catch(error => {
                 console.log('error >> ',JSON.stringify(error));
                 this.error = JSON.stringify(error);
-            }) 
-        }else{
-            alert("Please enter value for all required fields");
+            })
         }
     }
 

@@ -1,13 +1,14 @@
 <template>
     <template if:false={question.fieldData.hide}>
-        {primaryReason}
-        <div class="questext">
-            {question.fieldData.fieldName}<span if:true={question.fieldData.required} style="color:red">*</span>
-        </div>
-        <div if:true={question.fieldData.helpText} class="helptext">
-            {question.fieldData.helpText}
-        </div>
-        <template if:true={gotOptions}>
+        <div class={fieldErrorClass}>
+            {primaryReason}
+            <div class="questext">
+                {question.fieldData.fieldName}<span if:true={question.fieldData.required} style="color:red">*</span>
+            </div>
+            <div if:true={question.fieldData.helpText} class="helptext">
+                {question.fieldData.helpText}
+            </div>
+            <template if:true={gotOptions}>
             <template if:true={isCombobox}>
                 <lightning-combobox 
                 options={options} 
@@ -87,5 +88,9 @@
                 disabled={isSummary} 
                 onchange={handleResponse}></lightning-input>
         </template>
+            <template if:true={errorInfo}>
+                <div class="slds-form-element__help slds-text-color_error" role="alert">{errorInfo.message}</div>
+            </template>
+        </div>
     </template>
 </template>

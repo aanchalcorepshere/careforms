@@ -19,3 +19,5 @@ The `sfdx-project.json` file contains useful configuration information for your 
 
 
 V1.5.2 - updated Object Util class to work on keyset rather than values and removed the null check
+V1.5.4 - When a user skips required fields or enters an invalid phone, the form now shows an error on each invalid field and highlights that input (red border) instead of a single generic message or alert
+V1.6.0 - Implemented feature management

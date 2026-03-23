@@ -23,6 +23,8 @@
     <members>FileUploadMultiControllerTest</members>
     <members>FormsController</members>
     <members>FormsControllerTest</members>
+    <members>FormsFeatureUtil</members>
+    <members>FormsFeatureUtilTest</members>
     <members>FormsCustomException</members>
     <members>FormsHelper</members>
     <members>FormsHelperTest</members>
@@ -402,6 +404,10 @@
     <members>Caresphere_Plus_Forms_UtilityBar</members>
     <members>Caresphere_Plus_Plans_UtilityBar</members>
     <name>FlexiPage</name>
+  </types>
+  <types>
+    <members>FormsAvailable</members>
+    <name>FeatureParameterBoolean</name>
   </types>
   <types>
     <members>Document_Type</members>

@@ -3,6 +3,7 @@ public with sharing class FormsHelper {
 
     @AuraEnabled
     public static InsertResult saveObjectStructure(String params) {
+        FormsFeatureUtil.assertFormsAvailable();
         InsertResult result = new InsertResult();
         if (String.isBlank(params)) {
             result.errorMessage = 'Input parameters cannot be null or empty.';
@@ -832,6 +833,7 @@ public with sharing class FormsHelper {
 // Attaches a JSON string as a file to Salesforce for later PDF generation
 @AuraEnabled
 public static void attachJSONForPDF(String jsonString, String formId) {
+    FormsFeatureUtil.assertFormsAvailable();
     if (String.isNotBlank(jsonString)) {
         ContentVersion cvOBJ = new ContentVersion();
         cvOBJ.VersionData = Blob.valueOf(jsonString);
@@ -847,6 +849,7 @@ public static void attachJSONForPDF(String jsonString, String formId) {
 // Generates a PDF from a Visualforce page and attaches it to a specified record
 @AuraEnabled
 public static void attachPdfToRecord(String formId, String parentId) {
+    FormsFeatureUtil.assertFormsAvailable();
     PageReference pdfPage = Page.generateFormDataPDF;
     String theTitle = UserInfo.getUserId() + '_' + formId;
     pdfPage.getParameters().put('theTitle', theTitle);
@@ -896,6 +899,7 @@ public static void attachPdfToRecord(String formId, String parentId) {
    // Generates a PDF from a Visualforce page and attaches it to a specified parent record
 @AuraEnabled
 public static void attachPDF(String jsonString, String parentId) {
+    FormsFeatureUtil.assertFormsAvailable();
     PageReference pdfPage = Page.generateFormDataPDF;
     pdfPage.getParameters().put('pdfDetails', jsonString);
 
@@ -937,6 +941,7 @@ public static void attachPDF(String jsonString, String parentId) {
 // Copies document links from a staging record to the specified application record
 @AuraEnabled
 public static void attachDocsToApplication(String applicationId, String stagingId) {
+    FormsFeatureUtil.assertFormsAvailable();
     List<ContentDocumentLink> cdlList = [
         SELECT Id, LinkedEntityId, ContentDocumentId, Visibility, shareType
         FROM ContentDocumentLink
@@ -967,6 +972,7 @@ public static void attachDocsToApplication(String applicationId, String stagingI
 //UST-00422
 @AuraEnabled
 public static String attachPrintJsonToRecord(String jsonData, String recordId, String formId) {
+    FormsFeatureUtil.assertFormsAvailable();
     String formName = [SELECT Id, Form_Name__c FROM form__c WHERE Id = :formId WITH USER_MODE].Form_Name__c;
     String resp;
     DateTime dt = Datetime.now();
@@ -991,6 +997,7 @@ public static String attachPrintJsonToRecord(String jsonData, String recordId, S
 // Retrieves a list of forms for the given primary object and wraps them in PicklistWrapper objects
 @AuraEnabled
 public static List<PicklistWrapper> getFormsForPrimaryObject(String objectApiName, Boolean isListView) {
+    FormsFeatureUtil.assertFormsAvailable();
     List<PicklistWrapper> respList = new List<PicklistWrapper>();
     List<caresp__Form__c> formsList = new List<caresp__Form__c>();
 
@@ -1015,6 +1022,7 @@ public static List<PicklistWrapper> getFormsForPrimaryObject(String objectApiNam
 // Creates a tracker record for dependent forms if one does not already exist and returns its ID
 @AuraEnabled
 public static String createDependentFormsTrackerRecord(String parentFormJSId, String parentFormId, String dependentFormId, Boolean required) {
+    FormsFeatureUtil.assertFormsAvailable();
     String theId;
     List<caresp__Dependent_Forms_Tracker__c> dependentFormList = [
         SELECT Id 
@@ -1044,6 +1052,7 @@ public static String createDependentFormsTrackerRecord(String parentFormJSId, St
 // Deletes an existing dependent forms tracker record if it exists and is deletable
 @AuraEnabled
 public static void deleteDependentFormsTrackerRecord(String parentFormJSId, String parentFormId, String dependentFormId, Boolean required) {
+    FormsFeatureUtil.assertFormsAvailable();
     List<caresp__Dependent_Forms_Tracker__c> dependentFormList = [
         SELECT Id 
         FROM Dependent_Forms_Tracker__c 
@@ -1061,6 +1070,7 @@ public static void deleteDependentFormsTrackerRecord(String parentFormJSId, Stri
 // Retrieves all completed tracker records for a given parent JS ID
 @AuraEnabled
 public static List<caresp__Dependent_Forms_Tracker__c> getTrackerRecordStatus(String parentJSId) {
+    FormsFeatureUtil.assertFormsAvailable();
     List<caresp__Dependent_Forms_Tracker__c> trackerList = [
         SELECT Id, Completed__c 
         FROM Dependent_Forms_Tracker__c 
@@ -1074,6 +1084,7 @@ public static List<caresp__Dependent_Forms_Tracker__c> getTrackerRecordStatus(St
 // Moves JSON files from tracker records to the primary record and deletes the tracker records
 @AuraEnabled
 public static String moveJsonsAndDeleteTrackerRecords(String primaryRecordId, List<String> trackerRecordIds) {
+    FormsFeatureUtil.assertFormsAvailable();
     List<ContentDocumentLink> cdRecords = new List<ContentDocumentLink>();
     List<ContentDocumentLink> recordsToBeInserted = new List<ContentDocumentLink>();
     if (trackerRecordIds != null && trackerRecordIds.size() > 0) {
@@ -1111,6 +1122,7 @@ public static String moveJsonsAndDeleteTrackerRecords(String primaryRecordId, Li
    // Marks a dependent forms tracker record as completed
 @AuraEnabled
 public static void markAdditionalFormComplete(String trackerRecordId) {
+    FormsFeatureUtil.assertFormsAvailable();
     update as user (Security.stripInaccessible(
         AccessType.UPDATABLE, 
         new List<caresp__Dependent_Forms_Tracker__c>{

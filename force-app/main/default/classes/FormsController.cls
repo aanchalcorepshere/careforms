@@ -68,6 +68,7 @@
       public static List<ObjectWrapperCategory> getRelatedObjectsList(
         String parentObjectName
       ) {
+        FormsFeatureUtil.assertFormsAvailable();
         List<ObjectWrapperCategory> respList = new List<ObjectWrapperCategory>();
     
         Map<string, string> objectRelationshipMap = new Map<string, string>();
@@ -218,6 +219,7 @@
         List<String> objectList,
         Boolean prefillFields
       ) {
+        FormsFeatureUtil.assertFormsAvailable();
         List<FieldsWrapper> fieldsWrapperList = new List<FieldsWrapper>();
         System.debug(LoggingLevel.Error ,'objectList - ' + objectList);
     
@@ -490,6 +492,7 @@
 
   @AuraEnabled
   public static List<RecordTypeWrapper> getRecordTypes(String objectApiName) {
+    FormsFeatureUtil.assertFormsAvailable();
     System.debug(LoggingLevel.Error ,'objectApiName >> ' + objectApiName);
     List<RecordTypeWrapper> respList = new List<RecordTypeWrapper>();
     Map<String, Schema.SObjectType> schemaMap = Schema.getGlobalDescribe();
@@ -520,6 +523,7 @@
   */
      @AuraEnabled
     public static String createFormRecord(String formName, Boolean isEdit, String recordId, String confirmationMessage, Boolean requiresSignature, Boolean requiresTextOnSignaturePage, String signaturePageText, Boolean requiresDocUpload, Boolean showSummary, Boolean generatePDF, Boolean prefillFields, String primaryObjectForPrefillForm, Boolean isPDFOnly) {
+        FormsFeatureUtil.assertFormsAvailable();
         System.debug(LoggingLevel.Error ,'isEdit >> ' + isEdit);
         System.debug(LoggingLevel.Error ,'recordId >> ' + recordId);
         System.debug(LoggingLevel.Error ,'requiresSignature >> ' + requiresSignature);
@@ -591,6 +595,7 @@
     */
     @AuraEnabled
     public static String saveFormData(String recordId, String objectStructureJson, String pageDataJson, String rulesJson, Boolean isEdit) {
+        FormsFeatureUtil.assertFormsAvailable();
         // public static String saveFormData(String recordId, String objectStructureJson, String pageDataJson, String rulesJson, Boolean isEdit, String pageData) {
         // public static String saveFormData(String recordId, String objectStructureJson, String pageDataJson, String rulesJson) { //without Edit
         System.debug(LoggingLevel.Error ,'recordId >> ' + recordId);
@@ -707,6 +712,7 @@
   */
       @AuraEnabled(cacheable=true)
       public static FormDataWrapper fetchFormData(String formId) {
+        FormsFeatureUtil.assertFormsAvailable();
         System.debug(LoggingLevel.Error ,'formId >> ' + formId);
         List<String> cDocList = new List<String>();
         FormDataWrapper formDataWrap = new FormDataWrapper();
@@ -788,6 +794,7 @@
   public static List<Question_Answer_Option__c> getQuestionAnswerOptions(
     String quesId
   ) {
+    FormsFeatureUtil.assertFormsAvailable();
     return [
       SELECT Id, Answer_Text__c
       FROM Question_Answer_Option__c 
@@ -946,6 +953,7 @@
 
   @AuraEnabled(cacheable=true)
   public static List<Doc_Category_Help_Text__mdt> getDocumentTypes() {
+    FormsFeatureUtil.assertFormsAvailable();
     return [
       SELECT Id, label, DeveloperName, Help_Text_Value__c
       FROM Doc_Category_Help_Text__mdt WITH USER_MODE
@@ -964,6 +972,7 @@ public static PrintWrapper getPrintJson(
     String recordId,
     String printJsonTitle
 ) {
+    FormsFeatureUtil.assertFormsAvailable();
     System.debug(LoggingLevel.Error ,'printJsonTitle >> ' + printJsonTitle);
     List<String> cDocList = new List<String>();
     PrintWrapper resp = new PrintWrapper();
@@ -1018,6 +1027,7 @@ public static PrintWrapper getPrintJson(
 // Retrieves the list of forms available for printing for a given record
 @AuraEnabled
 public static List<FormOptionsWrapper> getFormsAvailableForPrint(String recordId) {
+    FormsFeatureUtil.assertFormsAvailable();
     List<String> cDocList = new List<String>();
     List<FormOptionsWrapper> resp = new List<FormOptionsWrapper>();
     List<String> formIdList = new List<String>();
@@ -1088,6 +1098,7 @@ private static FormOptionsWrapper createWrapper(String formDateTimeStr, String f
 // Retrieves a list of forms with their Id and Name (limited to 200 records)
 @AuraEnabled(cacheable=true)
 public static List<caresp__Form__c> getFormsList() {
+    FormsFeatureUtil.assertFormsAvailable();
     return [SELECT Id, Form_Name__c FROM Form__c WITH USER_MODE LIMIT 200];
 }
 

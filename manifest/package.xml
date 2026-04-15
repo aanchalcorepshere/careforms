@@ -58,6 +58,7 @@
     <members>testFactory</members>
     <members>TriggerDispatcher</members>
     <members>IAssessmentAdditionalLookupProvider</members>
+    <members>FormsErrorUtil</members>
     <name>ApexClass</name>
   </types>
   <types>
@@ -511,6 +512,8 @@
     <members>questions</members>
     <members>questionsPage</members>
     <members>signatureCmpForForms</members>
+    <members>formsUnavailablePanel</members>
+    <members>formsErrorUtils</members>
     <name>LightningComponentBundle</name>
   </types>
   <types>

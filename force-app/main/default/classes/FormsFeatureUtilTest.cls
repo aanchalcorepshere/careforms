@@ -48,4 +48,23 @@ private class FormsFeatureUtilTest {
         System.FeatureManagement.setPackageBooleanValue('FormsAvailable', false);
         System.assertEquals(false, FormsFeatureUtil.isFormsAvailable());
     }
+
+    @isTest
+    static void testGetFormsFeatureGate_whenTrue() {
+        System.FeatureManagement.setPackageBooleanValue('FormsAvailable', true);
+        FormsFeatureUtil.FormsFeatureGateDto dto = FormsFeatureUtil.getFormsFeatureGate();
+        System.assertEquals(true, dto.formsEnabled, 'formsEnabled must be true when parameter is true.');
+        System.assertEquals(null, dto.unavailableMessage, 'Message must be null when enabled.');
+    }
+
+    @isTest
+    static void testGetFormsFeatureGate_whenFalse() {
+        System.FeatureManagement.setPackageBooleanValue('FormsAvailable', false);
+        FormsFeatureUtil.FormsFeatureGateDto dto = FormsFeatureUtil.getFormsFeatureGate();
+        System.assertEquals(false, dto.formsEnabled, 'formsEnabled must be false when parameter is false.');
+        System.assertEquals(
+            'The Forms module is not available for your subscription. Please contact your administrator.',
+            dto.unavailableMessage
+        );
+    }
 }

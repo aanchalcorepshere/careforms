@@ -48,12 +48,21 @@ public with sharing class FormsHelper {
             result.isSuccess = false;
             result.errorMessage = rse.getMessage();
             result.failedObjectName = rse.objectName;
+            result.fieldApiNames = rse.fieldApiNames;
+            result.errorStatusCode = rse.errorStatusCode;
             return result;
         } catch (Exception e) {
             Database.rollback(sp);
             result.isSuccess = false;
             result.errorMessage = sanitizeException(e);
             result.failedObjectName = extractFailedObjectName(e);
+            if (e instanceof DmlException) {
+                DmlException dmx = (DmlException) e;
+                if (dmx.getNumDml() > 0) {
+                    result.fieldApiNames = FormsErrorUtil.fieldApiNamesFromDmlException(dmx, 0);
+                    result.errorStatusCode = dmx.getDmlStatusCode(0);
+                }
+            }
             return result;
         }
     }
@@ -135,10 +144,17 @@ public with sharing class FormsHelper {
             PreparedRecord prepared = recordGroup[i];
             if (!sr.isSuccess()) {
                 Database.Error firstError = sr.getErrors()[0];
-                throw new RecordSaveException(
-                    prepared.getObjectName(),
-                    firstError != null ? firstError.getMessage() : 'Unexpected error while saving records.'
-                );
+                String objectApi = prepared.getObjectName();
+                String friendly = firstError != null
+                    ? FormsErrorUtil.userMessageFromDatabaseError(firstError, objectApi)
+                    : FormsErrorUtil.GENERIC_SAVE_MESSAGE;
+                List<String> fieldApis = (firstError != null && firstError.getFields() != null)
+                    ? firstError.getFields()
+                    : new List<String>();
+                String statusStr = firstError != null && firstError.getStatusCode() != null
+                    ? String.valueOf(firstError.getStatusCode())
+                    : null;
+                throw new RecordSaveException(objectApi, friendly, fieldApis, statusStr);
             }
             Id savedId = sr.getId();
             prepared.record.put('Id', savedId);
@@ -399,9 +415,7 @@ public with sharing class FormsHelper {
             if (defaultValue != null) {
                 return Boolean.valueOf(String.valueOf(defaultValue));
             }
-            if (describeField.isDefaultedOnCreate()) {
-                return true;
-            }
+            // Match UI: unresolved describe default treats as unchecked (see FormsController.booleanFieldDefaultValueString).
         }
         return false;
     }
@@ -664,7 +678,10 @@ public with sharing class FormsHelper {
 
     private static String sanitizeException(Exception e) {
         if (e == null) {
-            return 'An unexpected error occurred.';
+            return FormsErrorUtil.GENERIC_SAVE_MESSAGE;
+        }
+        if (e instanceof DmlException) {
+            return FormsErrorUtil.userMessageFromDmlException((DmlException) e);
         }
         if (e instanceof AuraHandledException) {
             return e.getMessage();
@@ -672,7 +689,7 @@ public with sharing class FormsHelper {
         if (e.getMessage() != null) {
             return e.getMessage();
         }
-        return 'An unexpected error occurred.';
+        return FormsErrorUtil.GENERIC_SAVE_MESSAGE;
     }
 
     private static String extractFailedObjectName(Exception e) {
@@ -815,9 +832,18 @@ public with sharing class FormsHelper {
 
     private class RecordSaveException extends Exception {
         public String objectName;
+        public List<String> fieldApiNames;
+        public String errorStatusCode;
 
-        public RecordSaveException(String objectName, String message) {
+        public RecordSaveException(
+            String objectName,
+            String message,
+            List<String> fieldApiNames,
+            String errorStatusCode
+        ) {
             this.objectName = objectName;
+            this.fieldApiNames = fieldApiNames == null ? new List<String>() : fieldApiNames;
+            this.errorStatusCode = errorStatusCode;
             this.setMessage(message);
         }
     }
@@ -1254,6 +1280,10 @@ public class InsertResult {
     public String errorMessage;
     @AuraEnabled
     public String failedObjectName;
+    @AuraEnabled
+    public List<String> fieldApiNames;
+    @AuraEnabled
+    public String errorStatusCode;
     @AuraEnabled
     public Id primaryRecordId;
     @AuraEnabled

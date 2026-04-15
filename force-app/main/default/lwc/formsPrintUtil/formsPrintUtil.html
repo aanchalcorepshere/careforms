@@ -1,4 +1,15 @@
 <template>
+  <template if:true={featureGateLoading}>
+    <lightning-spinner
+      alternative-text="Loading"
+      size="medium"
+      variant="brand"
+    ></lightning-spinner>
+  </template>
+  <template if:true={showFormsUnavailable}>
+    <c-forms-unavailable-panel message={formsUnavailableMessage}></c-forms-unavailable-panel>
+  </template>
+  <template if:true={showPrintShell}>
   <div class="slds-clearfix">
     <div
       class="slds-float_right slds-no-print slds-m-right_medium slds-m-top_small"
@@ -47,4 +58,5 @@
 		<b>Date Time :</b> 03/04/2024 09:55:44 AM
 	</div> -->
   </div>
+  </template>
 </template>

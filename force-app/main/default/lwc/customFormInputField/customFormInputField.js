@@ -15,6 +15,12 @@ export default class CustomFormInputField extends LightningElement {
        if(!this.field.fieldData.hasOnLoadRun && (this.isPrefillFieldsForm)){
             let val;
             val = this.template.querySelector('.thecopyfield').value;
+            if (this.field.fieldData.dataType === "BOOLEAN") {
+                val =
+                    val === true || val === "true" || val === "True"
+                        ? "true"
+                        : "false";
+            }
             //console.log('val>>>> ',val);
             this.dispatchEvent(new CustomEvent('valueupdate',
             {
@@ -30,24 +36,33 @@ export default class CustomFormInputField extends LightningElement {
       }
     }
 
-    connectedCallback(){
-        //console.log('isPrefillFieldsForm from field >> ',this.isPrefillFieldsForm);
-        if(this.field.fieldData.dataType == 'BOOLEAN'){
-            //console.log('default val >> '+this.field.fieldData.defaultValue);
-            if(this.isApplicationForm){
-                this.dispatchEvent(new CustomEvent('valueupdate',
-                {
-                    bubbles: true, composed: true,detail: {
-                        pageIndex:this.pageIndex,
-                        sectionIndex:this.sectionIndex,
-                        field : this.field,
-                        value : this.field.fieldData.defaultValue,
-                        sectionIsMulti : this.sectionIsMulti,
-                        recordIndex : this.recordIndex
-                    }
-                }))
-            }
+    /**
+     * BOOLEAN: lightning-input-field expects boolean `value`; strings like "false" are truthy and show checked.
+     */
+    get inputValueForField() {
+        if (!this.field || !this.field.fieldData) {
+            return "";
         }
+        const fd = this.field.fieldData;
+        if (fd.dataType === "BOOLEAN") {
+            return this.coerceBooleanModelToPrimitive(fd.inputValue, fd.defaultValue);
+        }
+        return fd.inputValue;
+    }
+
+    coerceBooleanModelToPrimitive(inputValue, defaultValue) {
+        if (
+            inputValue === "" ||
+            inputValue === undefined ||
+            inputValue === null
+        ) {
+            return defaultValue === "true";
+        }
+        if (typeof inputValue === "boolean") {
+            return inputValue;
+        }
+        const s = String(inputValue).trim().toLowerCase();
+        return s === "true" || s === "1";
     }
 
     get label(){
@@ -76,9 +91,17 @@ export default class CustomFormInputField extends LightningElement {
     }
 
     handleChange(event){
-        //let recEditForm = this.template.querySelector('lightning-input-field');
-        let val = event.target.value;
-        
+        let val =
+            event.detail && event.detail.value !== undefined
+                ? event.detail.value
+                : event.target.value;
+        if (this.field.fieldData.dataType === "BOOLEAN") {
+            val =
+                val === true || val === "true" || val === "True"
+                    ? "true"
+                    : "false";
+        }
+
         this.dispatchEvent(new CustomEvent('valueupdate',
         {
             bubbles: true, composed: true,detail: {

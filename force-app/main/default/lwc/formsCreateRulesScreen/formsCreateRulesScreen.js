@@ -1,24 +1,58 @@
-import ContentLocation from '@salesforce/schema/ContentVersion.ContentLocation';
 import { LightningElement, track, api } from 'lwc';
 
 export default class FormsCreateRulesScreen extends LightningElement {
-    @track rules =[
-         {
-            ruleIndex : 0,
-            ruleName : 'Rule 1',
-            primaryField : '',
-            secondaryField : '',
-            value : '',
+    @track rules = [
+        {
+            ruleId: 'rid_1',
+            ruleIndex: 0,
+            ruleName: 'Rule 1',
+            primaryField: '',
+            secondaryField: '',
+            value: '',
             operator: '',
-            dependentType:'',
-            required:false
-         }
+            dependentType: '',
+            required: false
+        }
     ];
 
     @api pageData;
     @api existingRules;
     primaryFieldList = [];
     secondaryFieldList = [];
+    nextRuleId = 2;
+
+    newRuleId() {
+        return `rid_${this.nextRuleId++}`;
+    }
+
+    ensureRuleIds() {
+        this.rules.forEach((rule) => {
+            if (rule.ruleId == null || rule.ruleId === '') {
+                rule.ruleId = this.newRuleId();
+            }
+        });
+        this.syncNextRuleIdFromRuleIds();
+    }
+
+    syncNextRuleIdFromRuleIds() {
+        let maxSeq = 0;
+        this.rules.forEach((rule) => {
+            const match = /^rid_(\d+)$/.exec(String(rule.ruleId || ''));
+            if (match) {
+                maxSeq = Math.max(maxSeq, parseInt(match[1], 10));
+            }
+        });
+        if (maxSeq > 0) {
+            this.nextRuleId = Math.max(this.nextRuleId, maxSeq + 1);
+        }
+    }
+
+    reindexRules() {
+        this.rules.forEach((rule, idx) => {
+            rule.ruleIndex = idx;
+            rule.ruleName = `Rule ${idx + 1}`;
+        });
+    }
 
     connectedCallback(){
         let rawPrimaryFieldList = [];
@@ -73,37 +107,38 @@ export default class FormsCreateRulesScreen extends LightningElement {
                 })
             }
 
-            if(filteredRuleList && filteredRuleList.length){
+            if (filteredRuleList && filteredRuleList.length) {
                 this.rules = filteredRuleList;
             }
         }
-        //console.log("this.pageData >> ",JSON.stringify(this.pageData));
+        this.ensureRuleIds();
+        this.reindexRules();
     }
 
-    addRule(){
-        console.log('RULES LENGTH >> '+this.rules.length);
-        this.rules.push(
-            {
-               ruleIndex : this.rules.length,
-               ruleName : 'Rule '+parseInt(this.rules.length+1),
-               primaryField : '',
-               secondaryField : '',
-               value : '',
-               operator: '',
-               dependentType: '',
-               required : false
+    addRule() {
+        this.rules.push({
+            ruleId: this.newRuleId(),
+            ruleIndex: 0,
+            ruleName: '',
+            primaryField: '',
+            secondaryField: '',
+            value: '',
+            operator: '',
+            dependentType: '',
+            required: false
+        });
+        this.reindexRules();
+    }
+
+    handleDeleteRule(event) {
+        const ruleId = event.detail.ruleId;
+        if (this.rules.length !== 1) {
+            const idx = this.rules.findIndex((r) => r.ruleId === ruleId);
+            if (idx >= 0) {
+                this.rules.splice(idx, 1);
+                this.reindexRules();
             }
-        )
-        console.log('RULES >> '+JSON.stringify(this.rules));
-    }
-
-    handleDeleteRule(event){
-        console.log('delete function called');
-        if(this.rules.length != 1){
-            let ruleIndex = event.detail.ruleIndex;
-            console.log('ruleIndex >> ',ruleIndex);
-            this.rules.splice(ruleIndex,1);
-        }else{
+        } else {
             this.rules[0].primaryField = undefined;
             this.rules[0].secondaryField = undefined;
             this.rules[0].value = undefined;
@@ -113,26 +148,34 @@ export default class FormsCreateRulesScreen extends LightningElement {
         }
     }
 
-    updateRuleData(event){
-         let ruleIndex = event.detail.ruleIndex;
-         let rulePos = this.rules.findIndex(r => r.ruleIndex == ruleIndex);
-         if(event.detail.primaryField)
-         this.rules[rulePos].primaryField = event.detail.primaryField;
-         if(event.detail.secondaryField)
-         this.rules[rulePos].secondaryField = event.detail.secondaryField;
-         if(event.detail.value)
-         this.rules[rulePos].value = event.detail.value;
-         if(event.detail.operator)
-         this.rules[rulePos].operator = event.detail.operator;
-         if(event.detail.dependentType)
-         this.rules[rulePos].dependentType = event.detail.dependentType;
+    updateRuleData(event) {
+        const ruleId = event.detail.ruleId;
+        const rulePos = this.rules.findIndex((r) => r.ruleId === ruleId);
+        if (rulePos < 0) {
+            return;
+        }
+        if (event.detail.primaryField) {
+            this.rules[rulePos].primaryField = event.detail.primaryField;
+        }
+        if (event.detail.secondaryField) {
+            this.rules[rulePos].secondaryField = event.detail.secondaryField;
+        }
+        if (event.detail.value) {
+            this.rules[rulePos].value = event.detail.value;
+        }
+        if (event.detail.operator) {
+            this.rules[rulePos].operator = event.detail.operator;
+        }
+        if (event.detail.dependentType) {
+            this.rules[rulePos].dependentType = event.detail.dependentType;
+        }
 
-         this.rules[rulePos].required = event.detail.required;
+        this.rules[rulePos].required = event.detail.required;
 
-         console.log("rules >> ",JSON.stringify(this.rules));
-
-         this.dispatchEvent(new CustomEvent('rulesupdate',{
-               detail: this.rules
-         }));
+        this.dispatchEvent(
+            new CustomEvent('rulesupdate', {
+                detail: this.rules
+            })
+        );
     }
 }

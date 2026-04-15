@@ -9,9 +9,11 @@
                     <b>Rules (Optional)</b>
                 </div>
                 <template if:true={rules} for:each={rules} for:item="rule">
-                    <c-forms-rule key={rule.ruleIndex} rule={rule} primary-field-list={primaryFieldList} secondary-field-list={secondaryFieldList} onupdateruledata={updateRuleData} ondeleterule={handleDeleteRule}></c-forms-rule>
-                    <div key={rule.ruleIndex} class="slds-align_absolute-center">
-                        <a href="#" class="addrule" onclick={addRule}>Add Rule</a>
+                    <div key={rule.ruleId} class="rule-row">
+                        <c-forms-rule rule={rule} primary-field-list={primaryFieldList} secondary-field-list={secondaryFieldList} onupdateruledata={updateRuleData} ondeleterule={handleDeleteRule}></c-forms-rule>
+                        <div class="slds-align_absolute-center">
+                            <a href="#" class="addrule" onclick={addRule}>Add Rule</a>
+                        </div>
                     </div>
                 </template>
             </div>

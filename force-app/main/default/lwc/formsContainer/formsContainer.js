@@ -1,5 +1,6 @@
 import { LightningElement, wire, track, api } from 'lwc';
 import getObjectsList from '@salesforce/apex/ObjectInformationUtil.getObjectsList';
+import getFormsFeatureGate from '@salesforce/apex/FormsFeatureUtil.getFormsFeatureGate';
 import createFormRecord from '@salesforce/apex/FormsController.createFormRecord';
 import saveFormData from '@salesforce/apex/FormsController.saveFormData';
 import fetchFormData from '@salesforce/apex/FormsController.fetchFormData';
@@ -36,6 +37,69 @@ export default class FormsContainer extends LightningElement {
 
     isLoading = false; //for toggling spinner
 
+    featureGateReady = false;
+    formsFeatureGate;
+    editFormLoading = false;
+    _editLoadStarted = false;
+
+    @wire(getFormsFeatureGate)
+    wiredFeatureGate(result) {
+        const { data, error } = result;
+        if (data) {
+            this.formsFeatureGate = data;
+            this.featureGateReady = true;
+            this.maybeStartEditLoad();
+        } else if (error) {
+            this.formsFeatureGate = {
+                formsEnabled: false,
+                unavailableMessage:
+                    'Unable to verify Forms availability. Please refresh the page or contact your administrator.'
+            };
+            this.featureGateReady = true;
+        }
+    }
+
+    renderedCallback() {
+        this.maybeStartEditLoad();
+    }
+
+    maybeStartEditLoad() {
+        if (
+            !this.formsFeatureGate ||
+            this.formsFeatureGate.formsEnabled === false ||
+            !this.isEdit ||
+            !this.editFormId ||
+            this._editLoadStarted
+        ) {
+            return;
+        }
+        this._editLoadStarted = true;
+        this.editFormLoading = true;
+        fetchFormData({ formId: this.editFormId })
+            .then((result) => {
+                console.log('result >> ',JSON.stringify(result));
+                this.formName = result.formName;
+                this.confirmationMessage = result.confirmationMessage;
+                this.requiresSignature = result.requiresSignature;
+                this.requiresTextOnSignaturePage = result.requiresTextOnSignaturePage;
+                this.signaturePageText = result.signaturePageText;
+                this.requiresDocUpload = result.requiresDocUpload;
+                this.showSummary = result.hasSummary;
+                this.createPDFOnly = result.pdfOnly;
+                this.generatePDF = result.generatePDF;
+                this.prefillFields = result.prefillFields;
+                this.objectStructureData = JSON.parse(result.objectStructure);
+                this.pageData = JSON.parse(result.pageData);
+                this.rules = result.rules ? JSON.parse(result.rules) : undefined;
+            })
+            .catch(() => {
+                /* keep existing behavior: no toast; unblock loading */
+            })
+            .finally(() => {
+                this.editFormLoading = false;
+            });
+    }
+
     //get all the objects from salesforce org.
     @wire(getObjectsList)
     wiredObjects (result) {
@@ -43,30 +107,6 @@ export default class FormsContainer extends LightningElement {
             let objectList = JSON.parse(JSON.stringify(result.data));
             objectList.sort(this.sortObjectList);
             this.objectListAll = objectList;
-        }
-    }
-
-    connectedCallback(){
-        if(this.isEdit){
-            fetchFormData({formId:this.editFormId})
-            .then(result => {
-                this.formName = result.formName;
-                this.confirmationMessage = result.confirmationMessage;
-                this.requiresSignature = result.requiresSignature;
-                this.requiresTextOnSignaturePage = result.requiresTextOnSignaturePage;
-                this.signaturePageText = result.signaturePageText;
-                                this.requiresDocUpload = result.requiresDocUpload;
-                this.showSummary = result.hasSummary;
-                 this.createPDFOnly = result.pdfOnly;
-                this.generatePDF = result.generatePDF;
-                this.prefillFields = result.prefillFields;
-                this.objectStructureData = JSON.parse(result.objectStructure);
-                this.pageData = JSON.parse(result.pageData);
-                this.rules = result.rules?JSON.parse(result.rules):undefined;
-            })
-            .catch(error => {
-
-            })
         }
     }
 
@@ -80,8 +120,37 @@ export default class FormsContainer extends LightningElement {
         return 0;
     }
 
-    get dataLoading(){
+    get dataLoading() {
+        if (!this.featureGateReady) {
+            return true;
+        }
+        if (!this.formsFeatureGate || this.formsFeatureGate.formsEnabled === false) {
+            return false;
+        }
+        if (this.isEdit && this.editFormLoading) {
+            return true;
+        }
         return !this.objectListAll;
+    }
+
+    get showFormsUnavailable() {
+        return (
+            this.featureGateReady &&
+            this.formsFeatureGate &&
+            this.formsFeatureGate.formsEnabled === false
+        );
+    }
+
+    get showWizardShell() {
+        return (
+            this.featureGateReady &&
+            this.formsFeatureGate &&
+            this.formsFeatureGate.formsEnabled === true
+        );
+    }
+
+    get formsUnavailableMessage() {
+        return this.formsFeatureGate ? this.formsFeatureGate.unavailableMessage : '';
     }
 
     //handle navigation forward

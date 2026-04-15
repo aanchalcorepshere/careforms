@@ -1,4 +1,11 @@
 <template>
+    <template if:true={featureGateLoading}>
+        <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+    </template>
+    <template if:true={showFormsUnavailable}>
+        <c-forms-unavailable-panel message={formsUnavailableMessage}></c-forms-unavailable-panel>
+    </template>
+    <template if:true={showLauncherShell}>
     <div class="slds-box slds-theme_default">
         <template lwc:if={formLauncher}>
             <div style="height:100vh;">
@@ -52,4 +59,5 @@
             <c-custom-form-input-container form-id={selectedForm} is-prefill-fields-form={isPrefillFieldsForm} primary-object-for-prefill={objectApiName} record-id={recordId} onformsubmitted={handleSubmitForm}></c-custom-form-input-container>
         </template>
     </div>
+    </template>
 </template>

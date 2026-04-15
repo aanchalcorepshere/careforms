@@ -64,6 +64,49 @@ private class FormsControllerTest {
         System.assert(resultWithoutPrefill.size() > 1, 'Should include questions wrapper without prefill');
     }
 
+    @isTest
+    static void testGetFieldsData_booleanDefaultMatchesInputValue() {
+        List<String> objectList = new List<String>{ 'Contact#false#false' };
+        caresp__Question__c testQuestion = new caresp__Question__c(
+            caresp__Question_Text__c = 'Test Question?',
+            caresp__Question_Data_type__c = 'Text'
+        );
+        insert testQuestion;
+
+        Test.startTest();
+        List<FormsController.FieldsWrapper> withPrefill = FormsController.getFieldsData(objectList, true);
+        List<FormsController.FieldsWrapper> noPrefill = FormsController.getFieldsData(objectList, false);
+        Test.stopTest();
+
+        System.assert(!withPrefill.isEmpty(), 'Should return fields for Contact');
+        Integer booleanCount = 0;
+        for (FormsController.Fields f : withPrefill[0].fields) {
+            if (f.dataType == 'BOOLEAN') {
+                booleanCount++;
+                System.assert(
+                    f.defaultValue == 'true' || f.defaultValue == 'false',
+                    'BOOLEAN defaultValue must be true/false: ' + f.fieldApi
+                );
+                System.assertEquals(
+                    f.defaultValue,
+                    f.inputValue,
+                    'BOOLEAN inputValue must match default: ' + f.fieldApi
+                );
+            }
+        }
+        System.assert(booleanCount > 0, 'Contact should include at least one BOOLEAN field in describe');
+
+        for (FormsController.Fields f : noPrefill[0].fields) {
+            if (f.dataType == 'BOOLEAN') {
+                System.assertEquals(
+                    f.defaultValue,
+                    f.inputValue,
+                    'No-prefill BOOLEAN inputValue must match default: ' + f.fieldApi
+                );
+            }
+        }
+    }
+
     // Test method for getRecordTypes
     @isTest
     static void testGetRecordTypes() {

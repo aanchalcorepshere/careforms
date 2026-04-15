@@ -1,4 +1,11 @@
 <template>
+    <template if:true={featureGateLoading}>
+        <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+    </template>
+    <template if:true={showFormsUnavailable}>
+        <c-forms-unavailable-panel message={formsUnavailableMessage}></c-forms-unavailable-panel>
+    </template>
+    <template if:true={showPrintShell}>
     <div if:true={error} class="slds-notify slds-notify_alert slds-alert_error" role="alert">
         <b>{error}</b>
     </div>
@@ -16,4 +23,5 @@
             <lightning-button name="print" label="Print" variant="brand" onclick={handleSubmit}></lightning-button>
         </div>
     </div>
+    </template>
 </template>

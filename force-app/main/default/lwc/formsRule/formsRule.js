@@ -33,7 +33,6 @@ export default class FormsRule extends LightningElement {
     ];
 
     connectedCallback(){
-        console.log('this.rule >> '+JSON.stringify(this.rule));
         getFormsList()
         .then(result => {
             let tempData = JSON.parse(JSON.stringify(result));
@@ -97,7 +96,7 @@ export default class FormsRule extends LightningElement {
             console.log('event.target >> '+event.target.label);
         }else if(targetName == 'operator'){
             this.selectedOperator = event.target.value;
-        }else if(targetName == this.rule.ruleIndex){
+        }else if(targetName === this.rule.ruleId){
             this.dependentType = event.target.value;
             this.typeSelected = true;
         }else if(targetName == 'required'){
@@ -114,6 +113,7 @@ export default class FormsRule extends LightningElement {
         {
             detail:
             {
+                ruleId: this.rule.ruleId,
                 ruleIndex: this.rule.ruleIndex,
                 primaryField: this.selectedParent,
                 secondaryField: this.selectedChild,
@@ -126,12 +126,11 @@ export default class FormsRule extends LightningElement {
     }
 
     handleRuleDelete(){
-        console.log('this.rule.ruleIndex >> ',this.rule.ruleIndex);
         this.dispatchEvent(new CustomEvent('deleterule',
         {
             detail:
             {
-                ruleIndex: this.rule.ruleIndex
+                ruleId: this.rule.ruleId
             }
         }));
     }

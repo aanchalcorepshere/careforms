@@ -1,4 +1,14 @@
 <template>
+  <template if:true={featureGateLoading}>
+    <lightning-spinner
+      alternative-text="Loading"
+      size="large"
+    ></lightning-spinner>
+  </template>
+  <template if:true={showFormsUnavailable}>
+    <c-forms-unavailable-panel message={formsUnavailableMessage}></c-forms-unavailable-panel>
+  </template>
+  <template if:true={showFormShell}>
   <div class="theTop"></div>
   <div if:true={isLoading}>
     <lightning-spinner
@@ -32,7 +42,7 @@
         <template if:true={pageData} for:each={pageData} for:item="page">
           <template if:true={page.current}>
             <template if:true={page.isFormPage}>
-              <div key={page.pageName} class="slds-box slds-m-around_medium">
+              <div key={page.pageName} class="slds-box slds-m-vertical_small">
                 <template
                   if:true={page.sections}
                   for:each={page.sections}
@@ -53,7 +63,7 @@
               </div>
             </template>
             <template if:true={page.isSignature}>
-              <div key={page.pageName} class="slds-box slds-m-around_medium">
+              <div key={page.pageName} class="slds-box slds-m-vertical_small">
                 <c-forms-signature-page
                   onuploadsignature={handleSignature}
                   existing-signature={signatureData}
@@ -63,7 +73,7 @@
               </div>
             </template>
             <template if:true={page.isDocUpload}>
-              <div key={page.pageName} class="slds-box slds-m-around_medium">
+              <div key={page.pageName} class="slds-box slds-m-vertical_small">
                 <c-doc-collection-public
                   existing-documents={uploadedDocuments}
                   ondocsupload={handleDocuments}
@@ -240,4 +250,5 @@
     </div>
   </template>
   <!-- Modal end -->
+  </template>
 </template>

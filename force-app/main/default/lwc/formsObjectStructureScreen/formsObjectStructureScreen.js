@@ -34,9 +34,48 @@ export default class FormsObjectStructureScreen extends LightningElement {
     childicon = childiconres;
     childwithmultiicon = childwithmultiiconres;
     grandchildicon = grandchildiconres;
-    @api existingData;
-    @api existingFormName;
-    @api existingConfirmationMessage;
+    _existingData;
+    @api
+    get existingData() {
+        return this._existingData;
+    }
+    set existingData(value) {
+        const prev = this._existingData;
+        this._existingData = value;
+        // Hydrate only; do not sendDataToContainer() here — parent already owns this JSON from fetch,
+        // and dispatching would update the parent and re-enter this setter (tab freeze).
+        if (value && value !== prev) {
+            this.hydrateObjectStructureFromExistingPayload();
+            if (this.existingFormName) {
+                this.formName = this.existingFormName;
+            }
+            if (this.existingConfirmationMessage) {
+                this.confirmationMessage = this.existingConfirmationMessage;
+            }
+        }
+    }
+    _existingFormName;
+    @api
+    get existingFormName() {
+        return this._existingFormName;
+    }
+    set existingFormName(value) {
+        this._existingFormName = value;
+        if (value !== undefined && value !== null) {
+            this.formName = value;
+        }
+    }
+    _existingConfirmationMessage;
+    @api
+    get existingConfirmationMessage() {
+        return this._existingConfirmationMessage;
+    }
+    set existingConfirmationMessage(value) {
+        this._existingConfirmationMessage = value;
+        if (value !== undefined && value !== null) {
+            this.confirmationMessage = value;
+        }
+    }
     @api existingRequiresSignature;
     @api existingRequiresTextOnSignaturePage;
     @api existingSignaturePageText;
@@ -57,27 +96,29 @@ export default class FormsObjectStructureScreen extends LightningElement {
 
     @api isEdit = false;
 
+    hydrateObjectStructureFromExistingPayload() {
+        this.objectStructure = JSON.parse(JSON.stringify(this._existingData));
+        this.showSummary = this.existingShowSummary;
+        this.createPDFOnly = this.existingCreatePdfOnly;
+        this.requiresSignature = this.existingRequiresSignature;
+        this.prefillFields = this.existingPrefillFields;
+        this.requiresTextOnSignaturePage = this.existingRequiresTextOnSignaturePage;
+        if (this.requiresTextOnSignaturePage) {
+            this.showSignaturePageTextButton = true;
+        }
+        this.signaturePageText = this.existingSignaturePageText;
+        this.requiresDocUpload = this.existingRequiresDocUpload;
+        this.generatePDF = this.existingGeneratePdf;
+    }
+
     connectedCallback() {
-        if(!this.isEdit && !this.existingData){
+        if (!this.isEdit && !this.existingData) {
             this.openPrefillFieldsModal = true;
         }
 
-        if(this.existingData){
-            // If back button is clicked or existed form is being edited the loading the existing structure
-            this.objectStructure = JSON.parse(JSON.stringify(this.existingData));
-            this.showSummary = this.existingShowSummary;
-            this.createPDFOnly = this.existingCreatePdfOnly;
-            this.requiresSignature = this.existingRequiresSignature;
-            this.prefillFields = this.existingPrefillFields;
-            this.requiresTextOnSignaturePage = this.existingRequiresTextOnSignaturePage;
-            if(this.requiresTextOnSignaturePage){
-                this.showSignaturePageTextButton = true;
-            }
-            this.signaturePageText = this.existingSignaturePageText;
-            this.requiresDocUpload = this.existingRequiresDocUpload;
-            this.generatePDF = this.existingGeneratePdf;
-        }else{
-            // else initiating the base JSON structure
+        if (this.existingData) {
+            this.hydrateObjectStructureFromExistingPayload();
+        } else {
             this.objectStructure = {
                 level: 1,
                 selectedValue: "",
@@ -85,8 +126,8 @@ export default class FormsObjectStructureScreen extends LightningElement {
                 fieldlabel: "Primary Object",
                 disabled: false,
                 type: "primary",
-                isChild:false,
-                isMulti:false,
+                isChild: false,
+                isMulti: false,
                 showAddButton: false,
                 allowRelated: false,
                 showRelated: false,
@@ -94,26 +135,22 @@ export default class FormsObjectStructureScreen extends LightningElement {
                 parent: "",
                 grandParent: "",
                 objectList: undefined,
-                usedObjects:[],
-                relatedList: [
-        
-                ]
-            }
+                usedObjects: [],
+                relatedList: []
+            };
         }
 
-        // loading existing form name in case of edit or back
-        if(this.existingFormName){
+        if (this.existingFormName) {
             this.formName = this.existingFormName;
         }
-        // loading existing confirmation message in case of edit or back
-        if(this.existingConfirmationMessage){
+        if (this.existingConfirmationMessage) {
             this.confirmationMessage = this.existingConfirmationMessage;
         }
 
-        
-        
-        //send initial data to container component
-        this.sendDataToContainer();
+        // Avoid pushing an empty placeholder to the parent while edit JSON is still loading (race with fetchFormData).
+        if (!this.isEdit || this.existingData) {
+            this.sendDataToContainer();
+        }
     }
 
     get formTypeOptions() {

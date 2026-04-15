@@ -11,6 +11,7 @@ public with sharing class FormsFeatureUtil {
      */
     public static void assertFormsAvailable() {
         Boolean formsAvailable = System.FeatureManagement.checkPackageBooleanValue(PARAM_FORMS_AVAILABLE);
+        //Boolean formsAvailable = false;
         if (formsAvailable == false) {
             throw new AuraHandledException(ERROR_FORMS_UNAVAILABLE);
         }
@@ -19,5 +20,26 @@ public with sharing class FormsFeatureUtil {
     /** Returns the raw flag value. Callers must treat null as enabled. */
     public static Boolean isFormsAvailable() {
         return System.FeatureManagement.checkPackageBooleanValue(PARAM_FORMS_AVAILABLE);
+    }
+
+    /** Payload for LWC feature gating (null flag = enabled). */
+    public class FormsFeatureGateDto {
+        @AuraEnabled
+        public Boolean formsEnabled { get; set; }
+        @AuraEnabled
+        public String unavailableMessage { get; set; }
+    }
+
+    /**
+     * Read-only gate for Forms UI. Null FormsAvailable is treated as enabled.
+     */
+    @AuraEnabled(cacheable=true)
+    public static FormsFeatureGateDto getFormsFeatureGate() {
+        FormsFeatureGateDto dto = new FormsFeatureGateDto();
+        Boolean raw = System.FeatureManagement.checkPackageBooleanValue(PARAM_FORMS_AVAILABLE);
+        //Boolean raw = false;
+        dto.formsEnabled = (raw != false);
+        dto.unavailableMessage = dto.formsEnabled ? null : ERROR_FORMS_UNAVAILABLE;
+        return dto;
     }
 }

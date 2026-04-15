@@ -8,6 +8,11 @@
     </template>
     <!-- SPINNER ENDS -->
 
+    <template if:true={showFormsUnavailable}>
+        <c-forms-unavailable-panel message={formsUnavailableMessage}></c-forms-unavailable-panel>
+    </template>
+
+    <template if:true={showWizardShell}>
     <!-- HEADER AND NAVIAGATION BUTTONS STARTS -->
     <div class="headerBox">
         <div class="slds-grid slds-gutters slds-clearfix">
@@ -63,7 +68,7 @@
 
     <!-- FORM STRUCTURE COMPONENT STARTS -->
     <template if:true={isFormStructure}>
-        <c-forms-create-form-screen form-name={formName} object-structure={objectStructureData} onpagesdata={handlePagesData} existing-data={pageData} existing-fields={filteredFields}  prefill-fields={prefillFields}></c-forms-create-form-screen>
+        <c-forms-create-form-screen form-name={formName} object-structure={objectStructureData} onpagesdata={handlePagesData} existing-data={pageData} existing-fields={filteredFields} prefill-fields={prefillFields} is-edit={isEdit}></c-forms-create-form-screen>
     </template>
     <!-- FORM STRUCTURE COMPONENT ENDS -->
 
@@ -84,4 +89,5 @@
     <!-- FORM SAVED SCREEN - ENDS -->
     
     <!-- CHILD COMPONENTS ENDS -->
+    </template>
 </template>

@@ -9,6 +9,7 @@ import saveSignature from '@salesforce/apex/SignatureController.saveSignature';
 import attachPDF from '@salesforce/apex/FormsHelper.attachPDF';
 import attachJSONForPDF from '@salesforce/apex/FormsHelper.attachJSONForPDF';
 import attachPdfToRecord from '@salesforce/apex/FormsHelper.attachPdfToRecord';
+import { getApexErrorMessage } from 'c/formsErrorUtils';
 
 export default class InputFormContainer extends LightningElement {
 
@@ -570,10 +571,10 @@ export default class InputFormContainer extends LightningElement {
                 console.log('result - ', JSON.stringify(result));
                 this.dataSaved = result.isSuccess;
                 if(!this.dataSaved){
-                    let errorMessageArr = (result.message).split(',');
-                    this.error = errorMessageArr[1];
+                    this.error = result.errorMessage || 'Unable to save the form.';
                 }else{
-                    this.primaryRecordId = result.message;
+                    const primaryId = result.primaryRecordId;
+                    this.primaryRecordId = primaryId;
                     if(this.needPDF && this.pageData && this.pageData.length){
                         this.generatePDF();
                     }
@@ -581,31 +582,31 @@ export default class InputFormContainer extends LightningElement {
                     if(this.hasDocUpload){
                         if(this.uploadedDocuments && this.uploadedDocuments.length){
                             uploadFiles({
-                                recordId : result.message,
+                                recordId : primaryId,
                                 filedata : JSON.stringify(this.uploadedDocuments)
                             })
-                            .then(result => {
-                                console.log(result);
-                                if(result && result == 'success') {
+                            .then(uploadResult => {
+                                console.log(uploadResult);
+                                if(uploadResult && uploadResult == 'success') {
                                     this.uploadedDocuments = [];
                                 } else {
                                     
                                 }
                             }).catch(error => {
                                 console.log('error >> ',JSON.stringify(error));
-                                this.error = JSON.stringify(error);
+                                this.error = getApexErrorMessage(error);
                             })
                         }
                     }
                     if(this.needSignature){
                         if(this.signatureData && this.signatureData.length){
-                            saveSignature({ signElement: this.signatureData, recId: result.message })
-                        .then(result => {
+                            saveSignature({ signElement: this.signatureData, recId: primaryId })
+                        .then(() => {
                             this.signatureData = undefined;
                         })
                         .catch(error => {
                             console.log('error >> ',JSON.stringify(error));
-                            this.error = JSON.stringify(error);
+                            this.error = getApexErrorMessage(error);
                         });
                         }
                     }
@@ -614,7 +615,7 @@ export default class InputFormContainer extends LightningElement {
             })
             .catch(error => {
                 console.log('error >> ',JSON.stringify(error));
-                this.error = JSON.stringify(error);
+                this.error = getApexErrorMessage(error);
             })
         }
     }
@@ -945,12 +946,12 @@ export default class InputFormContainer extends LightningElement {
                 alert('attached');
             })
             .catch(error1 => {
-                this.error = JSON.stringify(error1);
+                this.error = getApexErrorMessage(error1);
                 console.error('ERROR OCCURED  >> '+JSON.stringify(error1));
             })
         })
         .catch(error => {
-            this.error = JSON.stringify(error);
+            this.error = getApexErrorMessage(error);
             console.error('ERROR OCCURED  >> '+JSON.stringify(error));
         })
         /* attachPDF({jsonString : JSON.stringify(pageDataForApex), parentId : this.formId})

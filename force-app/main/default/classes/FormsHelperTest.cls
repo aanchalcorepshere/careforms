@@ -373,6 +373,44 @@ private class FormsHelperTest {
             runAsResult.errorMessage,
             'Error message should be returned.'
         );
+        System.assert(
+            !runAsResult.errorMessage.contains('Insert failed. First exception on row'),
+            'Error should not expose raw DML boilerplate: ' + runAsResult.errorMessage
+        );
+    }
+
+    @IsTest
+    static void testSaveObjectStructure_missingRequiredField_userFriendlyMessage() {
+        FormsHelper.RecordData primaryContact = recordData(
+            'Contact',
+            null,
+            new List<FormsHelper.FieldValue>{
+                fieldValue('FirstName', 'NoLastName')
+            },
+            null
+        );
+
+        Test.startTest();
+        FormsHelper.InsertResult result = FormsHelper.saveObjectStructure(
+            buildPayload(
+                primaryContact,
+                new List<FormsHelper.RecordData>(),
+                new List<FormsHelper.RecordData>(),
+                new List<FormsHelper.RecordData>()
+            )
+        );
+        Test.stopTest();
+
+        System.assertEquals(false, result.isSuccess, 'Save should fail without LastName.');
+        System.assertNotEquals(null, result.errorMessage, 'Error message expected.');
+        System.assert(
+            !result.errorMessage.contains('REQUIRED_FIELD_MISSING:'),
+            'Should not show raw status prefix: ' + result.errorMessage
+        );
+        System.assert(
+            !result.errorMessage.contains('Insert failed. First exception on row'),
+            'Should not show DML boilerplate: ' + result.errorMessage
+        );
     }
 
     @IsTest

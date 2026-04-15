@@ -14,6 +14,7 @@ import {
     getFieldValue
 }
 from "lightning/uiRecordApi";
+import getFormsFeatureGate from "@salesforce/apex/FormsFeatureUtil.getFormsFeatureGate";
 import fetchFormData from "@salesforce/apex/FormsController.fetchFormData";
 import saveObjectStructure from "@salesforce/apex/FormsHelper.saveObjectStructure";
 import stepProgressCss from "@salesforce/resourceUrl/stepProgressCss";
@@ -26,6 +27,7 @@ import deleteDependentFormsTrackerRecord from "@salesforce/apex/FormsHelper.dele
 import getTrackerRecordStatus from "@salesforce/apex/FormsHelper.getTrackerRecordStatus";
 import moveJsonsAndDeleteTrackerRecords from "@salesforce/apex/FormsHelper.moveJsonsAndDeleteTrackerRecords";
 import ORG_URL from "@salesforce/label/c.Org_URL";
+import { getApexErrorMessage } from "c/formsErrorUtils";
 //import processRecords from "@salesforce/apex/TestInsertRecords.processRecords";
 
 //import NAME_FIELD from '@salesforce/schema/Application_Staging__c.Name';
@@ -71,6 +73,10 @@ export default class CustomFormInputContainer extends LightningElement {
     @api trackerRecordId;
     isConfirmationBox = false;
 
+    featureGateReady = false;
+    formsFeatureGate;
+    _formIdForWire;
+
     @api recordId;
 
     hasSummary = false;
@@ -105,11 +111,70 @@ export default class CustomFormInputContainer extends LightningElement {
         }
     }
 
+    @wire(getFormsFeatureGate)
+    wiredFeatureGate(result) {
+        const { data, error } = result;
+        if (data) {
+            this.formsFeatureGate = data;
+            this.featureGateReady = true;
+            this._syncFormIdForWire();
+        } else if (error) {
+            this.formsFeatureGate = {
+                formsEnabled: false,
+                unavailableMessage:
+                    "Unable to verify Forms availability. Please refresh the page or contact your administrator."
+            };
+            this.featureGateReady = true;
+            this._syncFormIdForWire();
+        }
+    }
+
+    renderedCallback() {
+        this._syncFormIdForWire();
+    }
+
+    _syncFormIdForWire() {
+        const next =
+            this.featureGateReady &&
+            this.formsFeatureGate &&
+            this.formsFeatureGate.formsEnabled !== false &&
+            this.formId
+                ? this.formId
+                : undefined;
+        if (next !== this._formIdForWire) {
+            this._formIdForWire = next;
+        }
+    }
+
+    get featureGateLoading() {
+        return !this.featureGateReady;
+    }
+
+    get showFormsUnavailable() {
+        return (
+            this.featureGateReady &&
+            this.formsFeatureGate &&
+            this.formsFeatureGate.formsEnabled === false
+        );
+    }
+
+    get showFormShell() {
+        return (
+            this.featureGateReady &&
+            this.formsFeatureGate &&
+            this.formsFeatureGate.formsEnabled === true
+        );
+    }
+
+    get formsUnavailableMessage() {
+        return this.formsFeatureGate ? this.formsFeatureGate.unavailableMessage : "";
+    }
+
     /* @wire(getRecord, { recordId: '$primaryRecordId', fields })
       primaryRecord; */
 
     @wire(fetchFormData, {
-        formId: "$formId"
+        formId: "$_formIdForWire"
     })
     wiredJsons(result) {
         if (result.data) {
@@ -275,6 +340,8 @@ export default class CustomFormInputContainer extends LightningElement {
             pageDataRaw.push(summaryPage);
         }
 
+        this.normalizeBooleanFieldsInPageData(pageDataRaw);
+
         if (this.isPrefillFieldsForm) {
             this.populateRecordIds(JSON.parse(JSON.stringify(pageDataRaw)));
         }
@@ -282,6 +349,57 @@ export default class CustomFormInputContainer extends LightningElement {
             this.pageData = JSON.parse(JSON.stringify(pageDataRaw));
         }
         console.log("this.pageData >> " + JSON.stringify(this.pageData));
+    }
+
+    /**
+     * Legacy drafts may store BOOLEAN inputValue as "". Align with field default for display/save.
+     */
+    normalizeBooleanFieldsInPageData(pageData) {
+        if (!pageData || !pageData.length) {
+            return;
+        }
+        pageData.forEach((page) => {
+            if (!page.sections || !page.sections.length) {
+                return;
+            }
+            page.sections.forEach((section) => {
+                if (!section.isSectionMulti && section.fields) {
+                    section.fields.forEach((field) => {
+                        if (
+                            field.isField &&
+                            field.fieldData &&
+                            field.fieldData.dataType === "BOOLEAN" &&
+                            (field.fieldData.inputValue === "" ||
+                                field.fieldData.inputValue === undefined ||
+                                field.fieldData.inputValue === null)
+                        ) {
+                            field.fieldData.inputValue =
+                                field.fieldData.defaultValue === "true" ? "true" : "false";
+                        }
+                    });
+                } else if (section.isSectionMulti && section.fields) {
+                    section.fields.forEach((record) => {
+                        if (record.recordFields) {
+                            record.recordFields.forEach((field) => {
+                                if (
+                                    field.isField &&
+                                    field.fieldData &&
+                                    field.fieldData.dataType === "BOOLEAN" &&
+                                    (field.fieldData.inputValue === "" ||
+                                        field.fieldData.inputValue === undefined ||
+                                        field.fieldData.inputValue === null)
+                                ) {
+                                    field.fieldData.inputValue =
+                                        field.fieldData.defaultValue === "true"
+                                            ? "true"
+                                            : "false";
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        });
     }
 
     populateRecordIds(pageData) {
@@ -505,7 +623,7 @@ export default class CustomFormInputContainer extends LightningElement {
                 }
             })
             .catch((error) => {
-                this.error = JSON.stringify(error);
+                this.error = getApexErrorMessage(error);
                 console.log(JSON.stringify(error));
             }); */
     }
@@ -712,12 +830,6 @@ export default class CustomFormInputContainer extends LightningElement {
                                                 errors[key] = { message: requiredMessage, hasError: true };
                                             }
                                         }
-                                        else {
-                                            if (field.fieldData.inputValue == "") {
-                                                var isTrueSet = field.fieldData.defaultValue === "true";
-                                                field.fieldData.inputValue == isTrueSet;
-                                            }
-                                        }
 
                                         if (field.fieldData.isQuestion && field.fieldData.dataType == 'PHONE') {
                                             if (field.fieldData.inputValue && field.fieldData.inputValue.length > 0) {
@@ -772,13 +884,6 @@ export default class CustomFormInputContainer extends LightningElement {
                                                         valid = false;
                                                         const key = `${currentPagePos}-${section.sectionIndex}-${record.recordIndex}-${field.fieldIndex}`;
                                                         errors[key] = { message: requiredMessage, hasError: true };
-                                                    }
-                                                }
-                                                else {
-                                                    if (field.fieldData.inputValue == "") {
-                                                        var isTrueSet =
-                                                            field.fieldData.defaultValue === "true";
-                                                        field.fieldData.inputValue == isTrueSet;
                                                     }
                                                 }
 
@@ -841,7 +946,12 @@ export default class CustomFormInputContainer extends LightningElement {
         tempRecord.recordIndex = sectionFieldsLength + 1;
         if (tempRecord.recordFields) {
             tempRecord.recordFields.forEach((field) => {
-                field.fieldData.inputValue = "";
+                field.fieldData.inputValue =
+                    field.fieldData.dataType === "BOOLEAN"
+                        ? field.fieldData.defaultValue === "true"
+                            ? "true"
+                            : "false"
+                        : "";
                 field.fieldData.recordId = "";
                 field.fieldData.identifier = tempRecord.recordIndex;
                 if (field.fieldData.controllingFieldValue) {
@@ -1148,7 +1258,7 @@ export default class CustomFormInputContainer extends LightningElement {
             .catch((error) => {
                 this.isLoading = false;
                 console.log("error >> ", JSON.stringify(error));
-                this.error = JSON.stringify(error);
+                this.error = getApexErrorMessage(error);
                 this.dispatchFormSubmittedEvent(null, false);
             });
     }
@@ -1211,7 +1321,7 @@ export default class CustomFormInputContainer extends LightningElement {
             }
         })
         .catch((e) => {
-            this.error = JSON.stringify(e);
+            this.error = getApexErrorMessage(e);
             console.error(JSON.stringify(e));
             // Even on error, dispatch event
             this.dispatchFormSubmittedEvent(this.primaryRecordId, false);
@@ -1245,7 +1355,7 @@ export default class CustomFormInputContainer extends LightningElement {
         })
         .catch((error) => {
             console.log("signature error >> ", JSON.stringify(error));
-            this.error = JSON.stringify(error);
+            this.error = getApexErrorMessage(error);
             // Even on signature error, dispatch event
             this.handleDocumentsUpload()
                 .then(() => {
@@ -1309,7 +1419,7 @@ export default class CustomFormInputContainer extends LightningElement {
                 })
                 .catch((error) => {
                     console.error("error >> ", JSON.stringify(error));
-                    this.error = JSON.stringify(error);
+                    this.error = getApexErrorMessage(error);
                     // Resolve anyway to continue flow
                     resolve();
                 });
@@ -1354,7 +1464,7 @@ export default class CustomFormInputContainer extends LightningElement {
             }
         })
         .catch((e) => {
-            this.error = JSON.stringify(e);
+            this.error = getApexErrorMessage(e);
             console.error(JSON.stringify(e));
             // Even on error, dispatch event
             this.dispatchFormSubmittedEvent(recId, false);
@@ -1380,7 +1490,7 @@ export default class CustomFormInputContainer extends LightningElement {
         })
         .catch((error) => {
             console.log("signature error >> ", JSON.stringify(error));
-            this.error = JSON.stringify(error);
+            this.error = getApexErrorMessage(error);
             // Even on signature error, dispatch event
             this.dispatchFormSubmittedEvent(recId, false);
         });
@@ -1435,7 +1545,7 @@ export default class CustomFormInputContainer extends LightningElement {
                 }
             })
             .catch((error) => {
-                this.error = JSON.stringify(error);
+                this.error = getApexErrorMessage(error);
             }); */
     }
 
@@ -1595,7 +1705,7 @@ export default class CustomFormInputContainer extends LightningElement {
                                     console.log("updated form link >> " + eachForm.formLink);
                                 })
                                 .catch((error) => {
-                                    this.error = JSON.stringify(error);
+                                    this.error = getApexErrorMessage(error);
                                 }); */
                         }
                         else {
@@ -1615,7 +1725,7 @@ export default class CustomFormInputContainer extends LightningElement {
                                     console.log("eachForm.formLink >> " + eachForm.formLink);
                                 })
                                 .catch((error) => {
-                                    this.error = JSON.stringify(error);
+                                    this.error = getApexErrorMessage(error);
                                 }); */
                         }
                     }

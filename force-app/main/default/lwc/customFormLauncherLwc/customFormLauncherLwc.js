@@ -1,4 +1,5 @@
 import { LightningElement, api, wire } from 'lwc';
+import getFormsFeatureGate from '@salesforce/apex/FormsFeatureUtil.getFormsFeatureGate';
 import getFormsForPrimaryObject from '@salesforce/apex/FormsHelper.getFormsForPrimaryObject';
 //import getClientAndEmails from '@salesforce/apex/FormsHelper.getClientAndEmails';
 //import sendFormToClient from '@salesforce/apex/FormsHelper.sendFormToClient';
@@ -6,6 +7,7 @@ import { CurrentPageReference } from 'lightning/navigation';
 /* import getUserInfo from '@salesforce/apex/userDetails.getUserInfo';
 import checkUserAccess from '@salesforce/apex/CheckAccessUtil.checkAccessOnRecord'; */
 import USER_ID from '@salesforce/user/Id';
+import { getApexErrorMessage } from 'c/formsErrorUtils';
 
 export default class CustomFormLauncherLwc extends LightningElement {
     @api recordId;
@@ -28,6 +30,52 @@ export default class CustomFormLauncherLwc extends LightningElement {
     selectedClient;
     clientsList;
 
+    featureGateReady = false;
+    formsFeatureGate;
+    pageRef;
+
+    @wire(getFormsFeatureGate)
+    wiredFeatureGate(result) {
+        const { data, error } = result;
+        if (data) {
+            this.formsFeatureGate = data;
+            this.featureGateReady = true;
+            this.tryLoadFormsForObject();
+        } else if (error) {
+            this.formsFeatureGate = {
+                formsEnabled: false,
+                unavailableMessage:
+                    'Unable to verify Forms availability. Please refresh the page or contact your administrator.'
+            };
+            this.featureGateReady = true;
+        }
+    }
+
+    tryLoadFormsForObject() {
+        if (
+            !this.featureGateReady ||
+            !this.formsFeatureGate ||
+            this.formsFeatureGate.formsEnabled === false ||
+            !this.pageRef ||
+            !this.objectApiName
+        ) {
+            return;
+        }
+        getFormsForPrimaryObject({ objectApiName: this.objectApiName })
+            .then((result) => {
+                if (result && result.length) {
+                    this.formsOptions = JSON.parse(JSON.stringify(result));
+                    this.showCombobox = true;
+                    this.error = undefined;
+                } else {
+                    this.error = 'No forms are available for this Object.';
+                }
+            })
+            .catch((error) => {
+                this.error = getApexErrorMessage(error);
+            });
+    }
+
     get recipientOptions(){
         return [
             {label:'Client(s)', value:'clients'},
@@ -37,21 +85,32 @@ export default class CustomFormLauncherLwc extends LightningElement {
 
     @wire(CurrentPageReference)
     getStateParameters(currentPageReference) {
-       if (currentPageReference) {
-            getFormsForPrimaryObject({objectApiName:this.objectApiName})
-            .then(result => {
-                if(result && result.length){
-                    this.formsOptions = JSON.parse(JSON.stringify(result));
-                    this.showCombobox = true;
-                    this.error = undefined
-                }else{
-                    this.error = 'No forms are available for this Object.';
-                }
-            })
-            .catch(error => {
-                this.error = JSON.stringify(error);
-            })
-       }
+        this.pageRef = currentPageReference;
+        this.tryLoadFormsForObject();
+    }
+
+    get featureGateLoading() {
+        return !this.featureGateReady;
+    }
+
+    get showFormsUnavailable() {
+        return (
+            this.featureGateReady &&
+            this.formsFeatureGate &&
+            this.formsFeatureGate.formsEnabled === false
+        );
+    }
+
+    get showLauncherShell() {
+        return (
+            this.featureGateReady &&
+            this.formsFeatureGate &&
+            this.formsFeatureGate.formsEnabled === true
+        );
+    }
+
+    get formsUnavailableMessage() {
+        return this.formsFeatureGate ? this.formsFeatureGate.unavailableMessage : '';
     }
 
     connectedCallback(){
@@ -156,12 +215,23 @@ export default class CustomFormLauncherLwc extends LightningElement {
         }
     } */
 
-    handleSubmitForm(){
-        console.log('event from launcher lwc');
-        //this.dispatchEvent(new CustomEvent('formsubmitted'));
-        this.dispatchEvent(new CustomEvent('closequickaction',{
-            detail: {data: 'close form'}
-        }));
+    handleSubmitForm(event){
+        const detail = event && event.detail ? event.detail : {};
+        const isSuccess = detail.isSuccess === true;
+        const hasError = detail.error && String(detail.error).trim().length > 0;
+
+        console.log('event from launcher lwc', JSON.stringify(detail));
+
+        // Close quick action only when the save call succeeded.
+        // On backend validation errors, keep the form open so user can correct data.
+        if (isSuccess) {
+            this.dispatchEvent(new CustomEvent('closequickaction',{
+                detail: {data: 'close form'}
+            }));
+        } else if (hasError) {
+            // Keep launcher shell hidden and allow child component to show the backend error banner.
+            this.error = undefined;
+        }
     }
 
     handleCancel(){

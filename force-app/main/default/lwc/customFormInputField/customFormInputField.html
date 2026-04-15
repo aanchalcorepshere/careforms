@@ -13,7 +13,7 @@
                     <div if:true={field.fieldData.controllingField} style="display: none;">
                         <lightning-input-field disabled={isSummary} value={field.fieldData.controllingFieldValue} field-name={field.fieldData.controllingField}> </lightning-input-field>    
                     </div>
-                    <lightning-input-field disabled={isSummary} onchange={handleChange} onkeydown={handleKeyPress} value={field.fieldData.inputValue} variant="label-hidden" field-name={field.fieldData.fieldApi}></lightning-input-field>
+                    <lightning-input-field disabled={isSummary} onchange={handleChange} onkeydown={handleKeyPress} value={inputValueForField} variant="label-hidden" field-name={field.fieldData.fieldApi}></lightning-input-field>
                 </lightning-record-edit-form>
                 <template if:true={errorInfo}>
                     <div class="slds-form-element__help slds-text-color_error" role="alert">{errorInfo.message}</div>

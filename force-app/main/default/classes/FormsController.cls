@@ -351,12 +351,20 @@
                   fieldsObj.customlabel = '';
                   /* System.debug('fieldName >> '+fieldsObj.fieldName);
                    System.debug('default value >> '+String.valueOf(fieldMap.get(fieldName).getDescribe().getDefaultValue())); */
-                  fieldsObj.defaultValue = String.valueOf(
-                    fieldMap.get(fieldName).getDescribe().getDefaultValue()
-                  );
+                  Schema.DescribeFieldResult fieldDescribeForDefaults = fieldMap.get(fieldName)
+                    .getDescribe();
+                  if (fieldsObj.dataType == 'BOOLEAN') {
+                    String boolStr = booleanFieldDefaultValueString(fieldDescribeForDefaults);
+                    fieldsObj.defaultValue = boolStr;
+                    fieldsObj.inputValue = boolStr;
+                  } else {
+                    fieldsObj.defaultValue = String.valueOf(
+                      fieldDescribeForDefaults.getDefaultValue()
+                    );
+                    fieldsObj.inputValue = '';
+                  }
                   fieldsObj.isLabelEdit = false;
                   fieldsObj.isQuestion = false;
-                  fieldsObj.inputValue = '';
                   fieldsObj.identifier = 'Record1'; //this identifier will help in identification of records in case 'multi' is seleted.
                   fieldsWrpObj.fields.add(fieldsObj);
                 }
@@ -401,12 +409,20 @@
                   fieldsObj.customlabel = '';
                   /* System.debug('fieldName >> '+fieldsObj.fieldName);
                    System.debug('default value >> '+String.valueOf(fieldMap.get(fieldName).getDescribe().getDefaultValue())); */
-                  fieldsObj.defaultValue = String.valueOf(
-                    fieldMap.get(fieldName).getDescribe().getDefaultValue()
-                  );
+                  Schema.DescribeFieldResult fieldDescribeForDefaults2 = fieldMap.get(fieldName)
+                    .getDescribe();
+                  if (fieldsObj.dataType == 'BOOLEAN') {
+                    String boolStr2 = booleanFieldDefaultValueString(fieldDescribeForDefaults2);
+                    fieldsObj.defaultValue = boolStr2;
+                    fieldsObj.inputValue = boolStr2;
+                  } else {
+                    fieldsObj.defaultValue = String.valueOf(
+                      fieldDescribeForDefaults2.getDefaultValue()
+                    );
+                    fieldsObj.inputValue = '';
+                  }
                   fieldsObj.isLabelEdit = false;
                   fieldsObj.isQuestion = false;
-                  fieldsObj.inputValue = '';
                   fieldsObj.identifier = 'Record1'; //this identifier will help in identification of records in case 'multi' is seleted.
                   fieldsWrpObj.fields.add(fieldsObj);
                 }
@@ -477,6 +493,25 @@
     }
 
     return fieldsWrapperList;
+  }
+
+  /**
+   * Normalized 'true'/'false' for BOOLEAN fields from field describe (default unchecked => 'false').
+   */
+  private static String booleanFieldDefaultValueString(
+    Schema.DescribeFieldResult fieldDescribe
+  ) {
+    if (fieldDescribe == null || fieldDescribe.getType() != Schema.DisplayType.BOOLEAN) {
+      return 'false';
+    }
+    Object dv = fieldDescribe.getDefaultValue();
+    if (dv instanceof Boolean) {
+      return ((Boolean) dv) ? 'true' : 'false';
+    }
+    if (dv != null) {
+      return Boolean.valueOf(String.valueOf(dv)) ? 'true' : 'false';
+    }
+    return 'false';
   }
 
   /*
@@ -569,13 +604,18 @@
                     // Handle failure
                     for (Database.Error err : result.getErrors()) {
                         System.debug(LoggingLevel.Error ,'Error during upsert: ' + err.getMessage());
-                        throw new AuraHandledException('Upsert failed: ' + err.getMessage());
+                        throw new AuraHandledException(
+                            FormsErrorUtil.userMessageFromDatabaseError(
+                                err,
+                                caresp__Form__c.SObjectType.getDescribe().getName()
+                            )
+                        );
                     }
                 }
             }
         } catch (Exception ex) {
             System.debug(LoggingLevel.Error ,'Exception - ' + ex.getMessage());
-            throw new AuraHandledException(ex.getMessage());
+            throw new AuraHandledException(FormsErrorUtil.messageForClient(ex));
         }
     
         return null;  // In case of failure, return null
@@ -621,7 +661,7 @@
                         delete as user cdConDocIdListToDelete;
                     } catch (Exception ex) {
                         System.debug(LoggingLevel.Error ,'Exception - ' + ex.getMessage());
-                        throw new AuraHandledException(ex.getMessage());
+                        throw new AuraHandledException(FormsErrorUtil.messageForClient(ex));
                     }
                 }
             }
@@ -662,7 +702,7 @@
                 insert as user cvList;
             } catch (Exception ex) {
                 System.debug(LoggingLevel.Error ,'Exception - ' + ex.getMessage());
-                throw new AuraHandledException(ex.getMessage());
+                throw new AuraHandledException(FormsErrorUtil.messageForClient(ex));
             }
 
             for (ContentVersion cv: cvList) {
@@ -691,7 +731,7 @@
                 insert as user cdlList;
             } catch (Exception ex) {
                 System.debug(LoggingLevel.Error ,'Exception - ' + ex.getMessage());
-                throw new AuraHandledException(ex.getMessage());
+                throw new AuraHandledException(FormsErrorUtil.messageForClient(ex));
             }
         }
 

@@ -1,8 +1,10 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import getFormsFeatureGate from '@salesforce/apex/FormsFeatureUtil.getFormsFeatureGate';
 import getFormsAvailableForPrint from '@salesforce/apex/FormsController.getFormsAvailableForPrint';
 //import checkUserAccess from '@salesforce/apex/CheckAccessUtil.checkAccessOnRecord';
 import USER_ID from '@salesforce/user/Id';
+import { getApexErrorMessage } from 'c/formsErrorUtils';
 //import APPLICATION_FORM from '@salesforce/label/c.Application_Form';
 
 export default class FormsPrintRequestLwc extends LightningElement {
@@ -14,6 +16,78 @@ export default class FormsPrintRequestLwc extends LightningElement {
     hasAccess;
     error;
     //applicationForm = APPLICATION_FORM;
+
+    featureGateReady = false;
+    formsFeatureGate;
+    _printListLoadStarted = false;
+
+    @wire(getFormsFeatureGate)
+    wiredFeatureGate(result) {
+        const { data, error } = result;
+        if (data) {
+            this.formsFeatureGate = data;
+            this.featureGateReady = true;
+            this.tryLoadFormsForPrint();
+        } else if (error) {
+            this.formsFeatureGate = {
+                formsEnabled: false,
+                unavailableMessage:
+                    'Unable to verify Forms availability. Please refresh the page or contact your administrator.'
+            };
+            this.featureGateReady = true;
+        }
+    }
+
+    renderedCallback() {
+        this.tryLoadFormsForPrint();
+    }
+
+    tryLoadFormsForPrint() {
+        if (
+            !this.featureGateReady ||
+            !this.formsFeatureGate ||
+            this.formsFeatureGate.formsEnabled === false ||
+            !this.recordId ||
+            this._printListLoadStarted
+        ) {
+            return;
+        }
+        this._printListLoadStarted = true;
+        getFormsAvailableForPrint({ recordId: this.recordId })
+            .then((result) => {
+                let tempFormsList = JSON.parse(JSON.stringify(result));
+                console.log('tempFormsList >> ' + JSON.stringify(tempFormsList));
+                this.formsList = JSON.parse(JSON.stringify(tempFormsList));
+                console.log('this.formsList >> ' + JSON.stringify(this.formsList));
+            })
+            .catch((error) => {
+                this.error = getApexErrorMessage(error);
+            });
+    }
+
+    get featureGateLoading() {
+        return !this.featureGateReady;
+    }
+
+    get showFormsUnavailable() {
+        return (
+            this.featureGateReady &&
+            this.formsFeatureGate &&
+            this.formsFeatureGate.formsEnabled === false
+        );
+    }
+
+    get showPrintShell() {
+        return (
+            this.featureGateReady &&
+            this.formsFeatureGate &&
+            this.formsFeatureGate.formsEnabled === true
+        );
+    }
+
+    get formsUnavailableMessage() {
+        return this.formsFeatureGate ? this.formsFeatureGate.unavailableMessage : '';
+    }
 
     // connectedCallback(){
     //     checkUserAccess({ recId: this.recordId, userId: this.loggedInUserID})
@@ -57,20 +131,6 @@ export default class FormsPrintRequestLwc extends LightningElement {
     //         this.error = JSON.stringify(error);
     //     })
     // }
-
-    connectedCallback() {
-        getFormsAvailableForPrint({ recordId: this.recordId })
-            .then(result => {
-                let tempFormsList = JSON.parse(JSON.stringify(result));
-                console.log('tempFormsList >> ' + JSON.stringify(tempFormsList));
-                this.formsList = JSON.parse(JSON.stringify(tempFormsList));
-                console.log('this.formsList >> ' + JSON.stringify(this.formsList));
-            })
-            .catch(error => {
-                this.error = JSON.stringify(error);
-            });
-    }
-
 
     handleChange(event) {
         this.selectedForm = event.detail.value;

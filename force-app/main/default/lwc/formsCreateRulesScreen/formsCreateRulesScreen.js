@@ -54,57 +54,62 @@ export default class FormsCreateRulesScreen extends LightningElement {
         });
     }
 
-    connectedCallback(){
+    connectedCallback() {
         let rawPrimaryFieldList = [];
         let rawSecondaryFieldList = [];
-        //console.log(" page data from rule screen  >> ",JSON.stringify(this.pageData));
-        this.pageData.forEach(page => {
-            page.sections.forEach(section => {
-                section.fields.forEach(field => {
-                    if(field.fieldData.fieldName){
-                        if(!field.fieldData.isQuestion){
-                            if(!section.isSectionMulti){
-                                this.primaryFieldList.push({label:field.fieldData.fieldUniqueName,value:field.fieldData.fieldUniqueName});
+        this.pageData.forEach((page) => {
+            page.sections.forEach((section) => {
+                section.fields.forEach((field) => {
+                    if (field.fieldData.fieldName) {
+                        if (!field.fieldData.isQuestion) {
+                            if (!section.isSectionMulti) {
+                                this.primaryFieldList.push({
+                                    label: field.fieldData.fieldUniqueName,
+                                    value: field.fieldData.fieldUniqueName
+                                });
                                 rawPrimaryFieldList.push(field.fieldData.fieldUniqueName);
-                                this.secondaryFieldList.push({label:field.fieldData.fieldUniqueName,value:field.fieldData.fieldUniqueName});
+                                this.secondaryFieldList.push({
+                                    label: field.fieldData.fieldUniqueName,
+                                    value: field.fieldData.fieldUniqueName
+                                });
                                 rawSecondaryFieldList.push(field.fieldData.fieldUniqueName);
                             }
-                            /* if(!field.fieldData.required && !section.isSectionMulti){
-                                this.secondaryFieldList.push({label:field.fieldData.fieldUniqueName,value:field.fieldData.fieldUniqueName});
-                                rawSecondaryFieldList.push(field.fieldData.fieldUniqueName);
-                            } */
-                        }else{
-                            if(!section.isSectionMulti){
-                                this.primaryFieldList.push({label:field.fieldData.fieldName,value:field.fieldData.fieldUniqueName});
+                        } else {
+                            if (!section.isSectionMulti) {
+                                this.primaryFieldList.push({
+                                    label: field.fieldData.fieldName,
+                                    value: field.fieldData.fieldUniqueName
+                                });
                                 rawPrimaryFieldList.push(field.fieldData.fieldUniqueName);
-                                this.secondaryFieldList.push({label:field.fieldData.fieldName,value:field.fieldData.fieldUniqueName});
+                                this.secondaryFieldList.push({
+                                    label: field.fieldData.fieldName,
+                                    value: field.fieldData.fieldUniqueName
+                                });
                                 rawSecondaryFieldList.push(field.fieldData.fieldUniqueName);
                             }
-                            /* if(!field.fieldData.required && !section.isSectionMulti){
-                                this.secondaryFieldList.push({label:field.fieldData.fieldName,value:field.fieldData.fieldUniqueName});
-                                rawSecondaryFieldList.push(field.fieldData.fieldUniqueName);
-                            } */
                         }
                     }
-                })
-            })
-        })
-        if(this.existingRules){
-            //console.log("this.existingRules >> ",JSON.stringify(this.existingRules));
+                });
+            });
+        });
+        if (this.existingRules) {
             let tempExisingRules = JSON.parse(JSON.stringify(this.existingRules));
             let filteredRuleList = [];
-            if(tempExisingRules && tempExisingRules.length){
-                tempExisingRules.forEach(rule => {
-                    if(rule.dependentType == 'field'){
-                        if(rawPrimaryFieldList.includes(rule.primaryField) && rawSecondaryFieldList.includes(rule.secondaryField)){
+            if (tempExisingRules && tempExisingRules.length) {
+                tempExisingRules.forEach((rule) => {
+                    if (rule.dependentType == 'field') {
+                        if (
+                            rawPrimaryFieldList.includes(rule.primaryField) &&
+                            rawSecondaryFieldList.includes(rule.secondaryField)
+                        ) {
                             filteredRuleList.push(rule);
                         }
-                    }else{
-                        if(rawPrimaryFieldList.includes(rule.primaryField)){
+                    } else {
+                        if (rawPrimaryFieldList.includes(rule.primaryField)) {
                             filteredRuleList.push(rule);
                         }
                     }
-                })
+                });
             }
 
             if (filteredRuleList && filteredRuleList.length) {

@@ -1,9 +1,9 @@
 import { LightningElement, wire, track, api } from 'lwc';
 import getObjectsList from '@salesforce/apex/ObjectInformationUtil.getObjectsList';
-import getFormsFeatureGate from '@salesforce/apex/FormsFeatureUtil.getFormsFeatureGate';
 import createFormRecord from '@salesforce/apex/FormsController.createFormRecord';
 import saveFormData from '@salesforce/apex/FormsController.saveFormData';
 import fetchFormData from '@salesforce/apex/FormsController.fetchFormData';
+import getFormsFeatureGate from '@salesforce/apex/FormsFeatureUtil.getFormsFeatureGate';
 
 export default class FormsContainer extends LightningElement {
     
@@ -36,11 +36,23 @@ export default class FormsContainer extends LightningElement {
     error; //error
 
     isLoading = false; //for toggling spinner
-
     featureGateReady = false;
     formsFeatureGate;
-    editFormLoading = false;
-    _editLoadStarted = false;
+    editDataLoaded = false;
+
+    //get all the objects from salesforce org.
+    @wire(getObjectsList)
+    wiredObjects (result) {
+        if (result.data) {
+            let objectList = JSON.parse(JSON.stringify(result.data));
+            objectList.sort(this.sortObjectList);
+            this.objectListAll = objectList;
+        }
+    }
+
+    connectedCallback(){
+        this.tryLoadEditForm();
+    }
 
     @wire(getFormsFeatureGate)
     wiredFeatureGate(result) {
@@ -48,7 +60,7 @@ export default class FormsContainer extends LightningElement {
         if (data) {
             this.formsFeatureGate = data;
             this.featureGateReady = true;
-            this.maybeStartEditLoad();
+            this.tryLoadEditForm();
         } else if (error) {
             this.formsFeatureGate = {
                 formsEnabled: false,
@@ -59,25 +71,20 @@ export default class FormsContainer extends LightningElement {
         }
     }
 
-    renderedCallback() {
-        this.maybeStartEditLoad();
-    }
-
-    maybeStartEditLoad() {
+    tryLoadEditForm() {
         if (
-            !this.formsFeatureGate ||
-            this.formsFeatureGate.formsEnabled === false ||
+            this.editDataLoaded ||
             !this.isEdit ||
-            !this.editFormId ||
-            this._editLoadStarted
+            !this.featureGateReady ||
+            !this.formsFeatureGate ||
+            this.formsFeatureGate.formsEnabled === false
         ) {
             return;
         }
-        this._editLoadStarted = true;
-        this.editFormLoading = true;
-        fetchFormData({ formId: this.editFormId })
-            .then((result) => {
-                console.log('result >> ',JSON.stringify(result));
+
+        this.editDataLoaded = true;
+        fetchFormData({formId:this.editFormId})
+            .then(result => {
                 this.formName = result.formName;
                 this.confirmationMessage = result.confirmationMessage;
                 this.requiresSignature = result.requiresSignature;
@@ -90,24 +97,35 @@ export default class FormsContainer extends LightningElement {
                 this.prefillFields = result.prefillFields;
                 this.objectStructureData = JSON.parse(result.objectStructure);
                 this.pageData = JSON.parse(result.pageData);
-                this.rules = result.rules ? JSON.parse(result.rules) : undefined;
+                this.rules = result.rules?JSON.parse(result.rules):undefined;
             })
-            .catch(() => {
-                /* keep existing behavior: no toast; unblock loading */
-            })
-            .finally(() => {
-                this.editFormLoading = false;
+            .catch(error => {
+                this.editDataLoaded = false;
             });
     }
 
-    //get all the objects from salesforce org.
-    @wire(getObjectsList)
-    wiredObjects (result) {
-        if (result.data) {
-            let objectList = JSON.parse(JSON.stringify(result.data));
-            objectList.sort(this.sortObjectList);
-            this.objectListAll = objectList;
-        }
+    get featureGateLoading() {
+        return !this.featureGateReady;
+    }
+
+    get showFormsUnavailable() {
+        return (
+            this.featureGateReady &&
+            this.formsFeatureGate &&
+            this.formsFeatureGate.formsEnabled === false
+        );
+    }
+
+    get showFormShell() {
+        return (
+            this.featureGateReady &&
+            this.formsFeatureGate &&
+            this.formsFeatureGate.formsEnabled === true
+        );
+    }
+
+    get formsUnavailableMessage() {
+        return this.formsFeatureGate ? this.formsFeatureGate.unavailableMessage : '';
     }
 
     sortObjectList(a, b) {
@@ -120,37 +138,8 @@ export default class FormsContainer extends LightningElement {
         return 0;
     }
 
-    get dataLoading() {
-        if (!this.featureGateReady) {
-            return true;
-        }
-        if (!this.formsFeatureGate || this.formsFeatureGate.formsEnabled === false) {
-            return false;
-        }
-        if (this.isEdit && this.editFormLoading) {
-            return true;
-        }
+    get dataLoading(){
         return !this.objectListAll;
-    }
-
-    get showFormsUnavailable() {
-        return (
-            this.featureGateReady &&
-            this.formsFeatureGate &&
-            this.formsFeatureGate.formsEnabled === false
-        );
-    }
-
-    get showWizardShell() {
-        return (
-            this.featureGateReady &&
-            this.formsFeatureGate &&
-            this.formsFeatureGate.formsEnabled === true
-        );
-    }
-
-    get formsUnavailableMessage() {
-        return this.formsFeatureGate ? this.formsFeatureGate.unavailableMessage : '';
     }
 
     //handle navigation forward

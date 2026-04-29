@@ -19,16 +19,7 @@ export default class FormsCreateFormScreen extends LightningElement {
     isLocalDrag = false;
     /* sectionDrag = false;
     fieldDrag = false; */
-    _existingData;
-    @api
-    get existingData() {
-        return this._existingData;
-    }
-    set existingData(value) {
-        // Do not call tryStart here: parent binds pageData from handlePagesData, which echoes
-        // sendPagesDataToContainer() and would cause an infinite load loop / tab freeze.
-        this._existingData = value;
-    }
+    @api existingData;
     @api existingFields;
     fieldsToFilterFromFieldList = [];
     draggedSectionPageIndex;
@@ -40,26 +31,7 @@ export default class FormsCreateFormScreen extends LightningElement {
     ];
     isSectionTypeModalOpen = false;
 
-    _objectStructure;
-    @api
-    get objectStructure() {
-        return this._objectStructure;
-    }
-    set objectStructure(value) {
-        this._objectStructure = value;
-    }
-
-    _isEdit;
-    @api
-    get isEdit() {
-        return this._isEdit;
-    }
-    set isEdit(value) {
-        this._isEdit = this.normalizeBooleanFlag(value);
-    }
-
-    _formBuilderLoadInProgress = false;
-    _initialFormBuilderLoadComplete = false;
+    @api objectStructure;
 
     @track pages;
     @api prefillFields;
@@ -84,201 +56,147 @@ export default class FormsCreateFormScreen extends LightningElement {
     }
 
     connectedCallback() {
-        this._initialFormBuilderLoadComplete = false;
-        this.tryStartFormBuilderLoad();
-    }
-
-    renderedCallback() {
-        if (this._initialFormBuilderLoadComplete || this._formBuilderLoadInProgress) {
-            return;
-        }
-        if (!this.objectStructure || !this.objectStructure.selectedValue) {
-            return;
-        }
-        if (this._isEdit && !this._existingData) {
-            return;
-        }
-        this.tryStartFormBuilderLoad();
-    }
-
-    tryStartFormBuilderLoad() {
-        if (this._initialFormBuilderLoadComplete) {
-            return;
-        }
-        if (this._formBuilderLoadInProgress) {
-            return;
-        }
-        if (this._isEdit === undefined) {
-            return;
-        }
-        if (!this.objectStructure || !this.objectStructure.selectedValue) {
-            return;
-        }
-        if (this._isEdit && !this._existingData) {
-            return;
-        }
-
         this.isLoading = true;
-        this.objectList = [];
-        this.fieldsToFilterFromFieldList = [];
-
-        if (this._existingData) {
-            this.pages = JSON.parse(JSON.stringify(this._existingData));
-            if (this.pages.length) {
-                this.pages.forEach((page) => {
-                    if (page.sections.length) {
-                        page.sections.forEach((section) => {
-                            if (section.fields.length) {
-                                section.fields.forEach((field) => {
-                                    this.fieldsToFilterFromFieldList.push(
-                                        field.fieldData.objectName + '#' + field.fieldData.fieldApi
-                                    );
-                                });
+        if(this.existingData){
+            this.pages = JSON.parse(JSON.stringify(this.existingData));
+            if(this.pages.length){
+                this.pages.forEach(page => {
+                    if(page.sections.length){
+                        page.sections.forEach(section => {
+                            if(section.fields.length){
+                                section.fields.forEach(field => {
+                                    this.fieldsToFilterFromFieldList.push(field.fieldData.objectName+'#'+field.fieldData.fieldApi);
+                                })
                             }
-                        });
+                        })
                     }
-                });
+                })
             }
-        } else {
+        }else{
             this.pages = this.initializePages();
         }
 
-        this.objectList.push(
-            this.objectStructure.selectedValue +
-                '#' +
-                this.objectStructure.isChild +
-                '#' +
-                this.objectStructure.isMulti
-        );
+        //console.log("pages >> ",JSON.stringify(this.pages));
+
+        this.objectList.push(this.objectStructure.selectedValue + "#" + this.objectStructure.isChild + "#" + this.objectStructure.isMulti);
         if (this.objectStructure.relatedList) {
-            this.objectStructure.relatedList.forEach((relLevel1) => {
-                this.objectList.push(
-                    relLevel1.selectedValue + '#' + relLevel1.isChild + '#' + relLevel1.isMulti
-                );
+            this.objectStructure.relatedList.forEach(relLevel1 => {
+                this.objectList.push(relLevel1.selectedValue + "#" + relLevel1.isChild + "#" + relLevel1.isMulti);
                 if (relLevel1.relatedList) {
-                    relLevel1.relatedList.forEach((relLevel2) => {
-                        this.objectList.push(
-                            relLevel2.selectedValue + '#' + relLevel2.isChild + '#' + relLevel2.isMulti
-                        );
-                    });
+                    relLevel1.relatedList.forEach(relLevel2 => {
+                        this.objectList.push(relLevel2.selectedValue + "#" + relLevel2.isChild + "#" + relLevel2.isMulti);
+                    })
                 }
-            });
+            })
         }
 
-        this._formBuilderLoadInProgress = true;
-        getFieldsData({ objectList: this.objectList, prefillFields: this.prefillFields })
-            .then((result) => {
-                this.fieldList = JSON.parse(JSON.stringify(result));
-                if (this._existingData) {
-                    this.fieldList.forEach((obj) => {
-                        this.fieldsToFilterFromFieldList.forEach((removeField) => {
-                            obj.fields = obj.fields.filter(function (el) {
-                                return el.objectName + '#' + el.fieldApi != removeField;
-                            });
-                        });
-                        obj.fields.sort(this.sortFieldList);
-                    });
-                } else {
-                    let i = 0;
-                    let fieldsToBeRemoved = [];
-                    this.fieldList.forEach((obj) => {
-                        if (!obj.isMulti) {
-                            obj.fields.forEach((field) => {
-                                if (field.required && obj.objectName != 'Question') {
-                                    this.pages[0].sections[0].fields[i].isField = true;
-                                    this.pages[0].sections[0].fields[i].isRichTextBox = false;
-                                    this.pages[0].sections[0].fields[i].fieldData = JSON.parse(JSON.stringify(field));
-                                    this.pages[0].sections[0].fields.push({
-                                        fieldIndex: i + 1,
-                                        isLabelEdit: false,
-                                        fieldClass: 'field' + (i + 1),
-                                        customlabel: '',
-                                        isField: true,
-                                        isRichTextBox: false,
-                                        fieldData: {}
-                                    });
-                                    i++;
-                                    fieldsToBeRemoved.push(field.fieldUniqueName);
-                                }
-                            });
-                        } else {
-                            let tempSection = {
-                                sectionIndex: this.pages[0].sections.length,
-                                sectionName: 'New Section',
-                                sectionClass: 'section' + this.pages[0].sections.length,
-                                isLabelEdit: false,
-                                isSectionMulti: true,
-                                columns: 12,
-                                isFieldsSection: true,
-                                isRichTextSection: false,
-                                fields: [
-                                    {
-                                        fieldIndex: 0,
-                                        isLabelEdit: false,
-                                        fieldClass: 'field' + 0,
-                                        customlabel: '',
-                                        isField: true,
-                                        isRichTextBox: false,
-                                        fieldData: {}
+        if (this.objectList) {
+            this.isLoading = true;
+            console.log('objectList >> ', JSON.stringify(this.objectList));
+            getFieldsData({ objectList: this.objectList, prefillFields:this.prefillFields })
+                .then(result => {
+                    this.fieldList = JSON.parse(JSON.stringify(result));
+                    //console.log('fieldlist >> ', JSON.stringify(this.fieldList));
+                    if(this.existingData){
+                        this.fieldList.forEach(obj => {
+                            this.fieldsToFilterFromFieldList.forEach(removeField => {
+                                obj.fields = obj.fields.filter(function (el) {
+                                    return (el.objectName+"#"+el.fieldApi) != removeField;
+                                });
+                            })
+                            obj.fields.sort(this.sortFieldList);
+                        })
+                    }else{
+                        let i = 0;
+                        let fieldsToBeRemoved = [];
+                        this.fieldList.forEach(obj => {
+                            if (!obj.isMulti) {
+                                obj.fields.forEach(field => {
+                                    if (field.required && obj.objectName != 'Question') {
+                                        this.pages[0].sections[0].fields[i].isField = true;
+                                        this.pages[0].sections[0].fields[i].isRichTextBox = false;
+                                        this.pages[0].sections[0].fields[i].fieldData = JSON.parse(JSON.stringify(field));
+                                        this.pages[0].sections[0].fields.push(
+                                            {
+                                                fieldIndex: (i+1),
+                                                isLabelEdit: false,
+                                                fieldClass:"field"+(i+1),
+                                                customlabel: "",
+                                                isField:true,
+                                                isRichTextBox:false,
+                                                fieldData: {}
+                                            }
+                                        )
+                                        i++;
+                                        fieldsToBeRemoved.push(field.fieldUniqueName);
                                     }
-                                ]
-                            };
-                            this.pages[0].sections.push(tempSection);
-                            let j = 0;
-                            obj.fields.forEach((field) => {
-                                if (field.required) {
-                                    this.pages[0].sections[this.pages[0].sections.length - 1].multiObjUniqueName =
-                                        obj.objectUniqueName;
-                                    this.pages[0].sections[this.pages[0].sections.length - 1].fields[j].fieldData =
-                                        JSON.parse(JSON.stringify(field));
-                                    this.pages[0].sections[this.pages[0].sections.length - 1].fields.push({
-                                        fieldIndex: j + 1,
-                                        isLabelEdit: false,
-                                        fieldClass: 'field' + (j + 1),
-                                        customlabel: '',
-                                        fieldData: {}
-                                    });
-                                    fieldsToBeRemoved.push(field.fieldUniqueName);
-                                    j++;
-                                }
-                            });
-                        }
-                    });
-
-                    this.fieldList.forEach((obj) => {
-                        fieldsToBeRemoved.forEach((removeField) => {
-                            obj.fields = obj.fields.filter(function (el) {
-                                return el.fieldUniqueName != removeField;
-                            });
+                                })
+                            } else {
+                                let tempSection = {
+                                    sectionIndex: this.pages[0].sections.length,
+                                    sectionName: "New Section",
+                                    sectionClass: "section"+this.pages[0].sections.length,
+                                    isLabelEdit: false,
+                                    isSectionMulti:true,
+                                    columns: 12,
+                                    isFieldsSection:true,
+                                    isRichTextSection:false,
+                                    fields: [
+                                        {
+                                            fieldIndex: 0,
+                                            isLabelEdit: false,
+                                            fieldClass:"field"+0,
+                                            customlabel: "",
+                                            isField:true,
+                                            isRichTextBox:false,
+                                            fieldData: {}
+                                        },
+                                    ]
+                                };
+                                this.pages[0].sections.push(tempSection);
+                                let j = 0;
+                                obj.fields.forEach(field => {
+                                    if (field.required) {
+                                        this.pages[0].sections[this.pages[0].sections.length - 1].multiObjUniqueName = obj.objectUniqueName;
+                                        this.pages[0].sections[this.pages[0].sections.length - 1].fields[j].fieldData = JSON.parse(JSON.stringify(field));
+                                        this.pages[0].sections[this.pages[0].sections.length - 1].fields.push(
+                                            {
+                                                fieldIndex: (j+1),
+                                                isLabelEdit: false,
+                                                fieldClass:"field"+(j+1),
+                                                customlabel: "",
+                                                fieldData: {}
+                                            }
+                                        )
+                                        fieldsToBeRemoved.push(field.fieldUniqueName);
+                                        j++;
+                                    }
+                                })
+                            }
                         });
-                        obj.fields.sort(this.sortFieldList);
-                    });
-                }
-                this._initialFormBuilderLoadComplete = true;
-                this.isLoading = false;
-                this.unfilteredFieldList = JSON.parse(JSON.stringify(this.fieldList));
-                this.sendPagesDataToContainer();
-            })
-            .catch((error) => {
-                this.error = JSON.stringify(error);
-                this.isLoading = false;
-                this._initialFormBuilderLoadComplete = true;
-                console.error('ERROR >> ', JSON.stringify(error));
-            })
-            .finally(() => {
-                this._formBuilderLoadInProgress = false;
-                this.isLoading = false;
-            });
-    }
 
-    normalizeBooleanFlag(value) {
-        if (value === true || value === 'true' || value === 'True') {
-            return true;
+                        this.fieldList.forEach(obj => {
+                            fieldsToBeRemoved.forEach(removeField => {
+                                obj.fields = obj.fields.filter(function (el) {
+                                    return el.fieldUniqueName != removeField;
+                                });
+                            })
+                            obj.fields.sort(this.sortFieldList);
+                        })
+                    }
+                    this.isLoading = false;
+                    this.unfilteredFieldList = JSON.parse(JSON.stringify(this.fieldList));
+                    /* this.unfilteredFieldList.forEach(type => {
+                        console.log(' <<data>>',type.objectName,'<<length>>',type.fields.length);
+                    })
+                    console.log('page data >>> ',JSON.stringify(this.pages)); */
+                    this.sendPagesDataToContainer();
+                })
+                .catch(error => {
+                    this.error = JSON.stringify(error);
+                    console.error('ERROR >> ',JSON.stringify(error));
+                })
         }
-        if (value === false || value === 'false' || value === 'False') {
-            return false;
-        }
-        return undefined;
     }
 
     initializePages(){

@@ -75,4 +75,18 @@ export default class CustomFormInputSection extends LightningElement {
             }
         }));
     }
+
+    @api
+    scrollToError(errorKey) {
+        const children = this.template.querySelectorAll(
+            'c-custom-form-input-field, c-custom-form-input-question'
+        );
+        if (children && children.length) {
+            children.forEach((child) => {
+                if (child && typeof child.scrollToError === 'function') {
+                    child.scrollToError(errorKey);
+                }
+            });
+        }
+    }
 }

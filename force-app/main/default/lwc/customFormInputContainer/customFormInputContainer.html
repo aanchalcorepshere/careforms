@@ -18,6 +18,27 @@
   </div>
   <div class="headerBox">
     <div class="vertical-center">{formName}</div>
+    <div class="zoomControls slds-no-print">
+      <lightning-button-icon
+        icon-name="utility:zoomout"
+        variant="border-inverse"
+        size="medium"
+        alternative-text="Zoom out"
+        title="Zoom out"
+        onclick={handleZoomOut}
+        disabled={isZoomOutDisabled}
+      ></lightning-button-icon>
+      <lightning-button-icon
+        icon-name="utility:zoomin"
+        variant="border-inverse"
+        size="medium"
+        alternative-text="Zoom in"
+        title="Zoom in"
+        onclick={handleZoomIn}
+        disabled={isZoomInDisabled}
+        class="slds-m-left_x-small"
+      ></lightning-button-icon>
+    </div>
   </div>
   <div
     if:true={displayBannerMessage}
@@ -27,7 +48,7 @@
     <b>{displayBannerMessage}</b>
   </div>
   <template if:false={dataSaved}>
-    <div class="slds-theme_default slds-m-bottom_large">
+    <div class="slds-theme_default slds-m-bottom_large form-body" style={zoomStyle}>
       <div class="slds-m-top_medium">
         <ul class="progress-indicator">
           <template if:true={pageData} for:each={pageData} for:item="page">

@@ -94,6 +94,11 @@ export default class CustomFormInputContainer extends LightningElement {
     error;
     fieldErrors = {};
 
+    @track zoomLevel = 1.2;
+    zoomStep = 0.1;
+    zoomMin = 0.8;
+    zoomMax = 2.0;
+
     @api formId;
 
     constructor() {
@@ -790,55 +795,53 @@ export default class CustomFormInputContainer extends LightningElement {
                     if (!section.isSectionMulti) {
                         if (section.fields.length) {
                             section.fields.forEach((field) => {
-                                if (valid) {
-                                    if (field.isField) {
-                                        field.fieldData.hasOnLoadRun = true;
-                                        if (field.fieldData.dataType != "BOOLEAN") {
-                                            let ss = field.fieldData.required;
-                                            let kk = !field.fieldData.hide;
-                                            let vv;
+                                if (field.isField) {
+                                    field.fieldData.hasOnLoadRun = true;
+                                    if (field.fieldData.dataType != "BOOLEAN") {
+                                        let ss = field.fieldData.required;
+                                        let kk = !field.fieldData.hide;
+                                        let vv;
 
-                                            if (field.fieldData.inputValue) {
-                                                if (
-                                                    typeof field.fieldData.inputValue == "number" &&
-                                                    (field.fieldData.inputValue != null ||
-                                                        field.fieldData.inputValue == 0)
-                                                ) {
-                                                    vv = "has value";
-                                                }
-                                                else if (
-                                                    (typeof field.fieldData.inputValue == "string" &&
-                                                        field.fieldData.inputValue.trim() !== "") ||
-                                                    field.fieldData.inputValue == 0
-                                                ) {
-                                                    vv = "has value";
-                                                }
-                                                else if (
-                                                    typeof field.fieldData.inputValue == "object" &&
-                                                    field.fieldData.inputValue.length
-                                                ) {
-                                                    vv = "has value";
-                                                }
-                                            }
-
-                                            if (field.fieldData.inputValue === 0) {
+                                        if (field.fieldData.inputValue) {
+                                            if (
+                                                typeof field.fieldData.inputValue == "number" &&
+                                                (field.fieldData.inputValue != null ||
+                                                    field.fieldData.inputValue == 0)
+                                            ) {
                                                 vv = "has value";
                                             }
-                                            if (kk && ss && vv !== "has value") {
-                                                valid = false;
-                                                const key = `${currentPagePos}-${section.sectionIndex}-${field.fieldIndex}`;
-                                                errors[key] = { message: requiredMessage, hasError: true };
+                                            else if (
+                                                (typeof field.fieldData.inputValue == "string" &&
+                                                    field.fieldData.inputValue.trim() !== "") ||
+                                                field.fieldData.inputValue == 0
+                                            ) {
+                                                vv = "has value";
+                                            }
+                                            else if (
+                                                typeof field.fieldData.inputValue == "object" &&
+                                                field.fieldData.inputValue.length
+                                            ) {
+                                                vv = "has value";
                                             }
                                         }
 
-                                        if (field.fieldData.isQuestion && field.fieldData.dataType == 'PHONE') {
-                                            if (field.fieldData.inputValue && field.fieldData.inputValue.length > 0) {
-                                                let isCorrectFormat = this.isPhone(field.fieldData.inputValue);
-                                                if (!isCorrectFormat) {
-                                                    valid = false;
-                                                    const key = `${currentPagePos}-${section.sectionIndex}-${field.fieldIndex}`;
-                                                    errors[key] = { message: phoneFormatMessage, hasError: true };
-                                                }
+                                        if (field.fieldData.inputValue === 0) {
+                                            vv = "has value";
+                                        }
+                                        if (kk && ss && vv !== "has value") {
+                                            valid = false;
+                                            const key = `${currentPagePos}-${section.sectionIndex}-${field.fieldIndex}`;
+                                            errors[key] = { message: requiredMessage, hasError: true };
+                                        }
+                                    }
+
+                                    if (field.fieldData.isQuestion && field.fieldData.dataType == 'PHONE') {
+                                        if (field.fieldData.inputValue && field.fieldData.inputValue.length > 0) {
+                                            let isCorrectFormat = this.isPhone(field.fieldData.inputValue);
+                                            if (!isCorrectFormat) {
+                                                valid = false;
+                                                const key = `${currentPagePos}-${section.sectionIndex}-${field.fieldIndex}`;
+                                                errors[key] = { message: phoneFormatMessage, hasError: true };
                                             }
                                         }
                                     }
@@ -852,55 +855,50 @@ export default class CustomFormInputContainer extends LightningElement {
                                 if (record.recordFields.length) {
                                     householdFields = [];
                                     record.recordFields.forEach((field) => {
-                                        if (valid) {
-                                            if (field.isField) {
-                                                field.fieldData.hasOnLoadRun = true;
-                                                if (field.fieldData.dataType != "BOOLEAN") {
-                                                    let ss = field.fieldData.required;
-                                                    let vv;
+                                        if (field.isField) {
+                                            field.fieldData.hasOnLoadRun = true;
+                                            if (field.fieldData.dataType != "BOOLEAN") {
+                                                let ss = field.fieldData.required;
+                                                let vv;
 
-                                                    if (field.fieldData.inputValue) {
-                                                        if (
-                                                            typeof field.fieldData.inputValue == "number" &&
-                                                            (field.fieldData.inputValue != null ||
-                                                                field.fieldData.inputValue == 0)
-                                                        ) {
-                                                            vv = "has value";
-                                                        }
-                                                        else if (
-                                                            typeof field.fieldData.inputValue == "string" &&
-                                                            field.fieldData.inputValue.trim() !== ""
-                                                        ) {
-                                                            vv = "has value";
-                                                        }
-                                                        else if (
-                                                            typeof field.fieldData.inputValue == "object" &&
-                                                            field.fieldData.inputValue.length
-                                                        ) {
-                                                            vv = "has value";
-                                                        }
+                                                if (field.fieldData.inputValue) {
+                                                    if (
+                                                        typeof field.fieldData.inputValue == "number" &&
+                                                        (field.fieldData.inputValue != null ||
+                                                            field.fieldData.inputValue == 0)
+                                                    ) {
+                                                        vv = "has value";
                                                     }
-                                                    if (ss && vv !== "has value") {
-                                                        valid = false;
-                                                        const key = `${currentPagePos}-${section.sectionIndex}-${record.recordIndex}-${field.fieldIndex}`;
-                                                        errors[key] = { message: requiredMessage, hasError: true };
+                                                    else if (
+                                                        typeof field.fieldData.inputValue == "string" &&
+                                                        field.fieldData.inputValue.trim() !== ""
+                                                    ) {
+                                                        vv = "has value";
+                                                    }
+                                                    else if (
+                                                        typeof field.fieldData.inputValue == "object" &&
+                                                        field.fieldData.inputValue.length
+                                                    ) {
+                                                        vv = "has value";
                                                     }
                                                 }
+                                                if (ss && vv !== "has value") {
+                                                    valid = false;
+                                                    const key = `${currentPagePos}-${section.sectionIndex}-${record.recordIndex}-${field.fieldIndex}`;
+                                                    errors[key] = { message: requiredMessage, hasError: true };
+                                                }
+                                            }
 
-                                                if (field.fieldData.isQuestion && field.fieldData.dataType == 'PHONE') {
-                                                    if (field.fieldData.inputValue && field.fieldData.inputValue.length > 0) {
-                                                        let isCorrectFormat = this.isPhone(field.fieldData.inputValue);
-                                                        if (!isCorrectFormat) {
-                                                            valid = false;
-                                                            const key = `${currentPagePos}-${section.sectionIndex}-${record.recordIndex}-${field.fieldIndex}`;
-                                                            errors[key] = { message: phoneFormatMessage, hasError: true };
-                                                        }
+                                            if (field.fieldData.isQuestion && field.fieldData.dataType == 'PHONE') {
+                                                if (field.fieldData.inputValue && field.fieldData.inputValue.length > 0) {
+                                                    let isCorrectFormat = this.isPhone(field.fieldData.inputValue);
+                                                    if (!isCorrectFormat) {
+                                                        valid = false;
+                                                        const key = `${currentPagePos}-${section.sectionIndex}-${record.recordIndex}-${field.fieldIndex}`;
+                                                        errors[key] = { message: phoneFormatMessage, hasError: true };
                                                     }
                                                 }
                                             }
-                                        }
-                                        else {
-                                            valid = false;
                                         }
                                     });
                                 }
@@ -911,7 +909,22 @@ export default class CustomFormInputContainer extends LightningElement {
             }
         }
         this.fieldErrors = errors;
+        if (!valid && Object.keys(errors).length > 0) {
+            const firstErrorKey = Object.keys(errors)[0];
+            setTimeout(() => this.scrollToFirstError(firstErrorKey), 0);
+        }
         return valid;
+    }
+
+    scrollToFirstError(errorKey) {
+        const sections = this.template.querySelectorAll("c-custom-form-input-section");
+        if (sections && sections.length) {
+            sections.forEach((section) => {
+                if (section && typeof section.scrollToError === "function") {
+                    section.scrollToError(errorKey);
+                }
+            });
+        }
     }
 
     getFieldKey(pageIndex, sectionIndex, recordIndex, fieldIndex) {
@@ -1989,5 +2002,27 @@ export default class CustomFormInputContainer extends LightningElement {
     topFunction() {
         let containerChoosen = this.template.querySelector(".theTop");
         containerChoosen.scrollIntoView();
+    }
+
+    handleZoomIn() {
+        const next = Math.min(this.zoomMax, +(this.zoomLevel + this.zoomStep).toFixed(2));
+        this.zoomLevel = next;
+    }
+
+    handleZoomOut() {
+        const next = Math.max(this.zoomMin, +(this.zoomLevel - this.zoomStep).toFixed(2));
+        this.zoomLevel = next;
+    }
+
+    get zoomStyle() {
+        return `font-size: ${Math.round(this.zoomLevel * 100)}%;`;
+    }
+
+    get isZoomInDisabled() {
+        return this.zoomLevel >= this.zoomMax;
+    }
+
+    get isZoomOutDisabled() {
+        return this.zoomLevel <= this.zoomMin;
     }
 }

@@ -24,11 +24,21 @@
 
 .helptext{
     font-style: italic;
-    font-size: 10px;
+    font-size: 0.714em;
     color: gray;
     margin:5px;
 }
 
 .slds-has-error lightning-input-field {
     --slds-c-input-color-border: var(--slds-c-input-color-border-error, #c23934);
+}
+
+@keyframes formFieldErrorFlash {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(194, 57, 52, 0.18); }
+}
+
+.field-error-highlight {
+    animation: formFieldErrorFlash 0.6s ease-in-out 2;
+    border-radius: 4px;
 }

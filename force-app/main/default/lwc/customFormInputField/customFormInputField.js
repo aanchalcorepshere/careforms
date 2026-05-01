@@ -141,4 +141,21 @@ export default class CustomFormInputField extends LightningElement {
     get fieldErrorClass() {
         return this.errorInfo ? 'slds-has-error' : '';
     }
+
+    @api
+    scrollToError(errorKey) {
+        if (this.fieldKey !== errorKey) {
+            return;
+        }
+        const target = this.template.querySelector('.slds-has-error');
+        if (!target) {
+            return;
+        }
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.classList.add('field-error-highlight');
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        setTimeout(() => {
+            target.classList.remove('field-error-highlight');
+        }, 1500);
+    }
 }

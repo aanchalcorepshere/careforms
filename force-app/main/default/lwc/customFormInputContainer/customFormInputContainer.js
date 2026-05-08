@@ -94,7 +94,7 @@ export default class CustomFormInputContainer extends LightningElement {
     error;
     fieldErrors = {};
 
-    @track zoomLevel = 1.2;
+    @track zoomLevel = 1.3;
     zoomStep = 0.1;
     zoomMin = 0.8;
     zoomMax = 2.0;
@@ -927,6 +927,130 @@ export default class CustomFormInputContainer extends LightningElement {
         }
     }
 
+    /**
+     * Maps a server-returned validation error to the offending field in pageData,
+     * marks it via fieldErrors so SLDS error styling lights up, switches the
+     * wizard to the page that owns the field if needed, then scroll-focuses it
+     * via the existing scrollToError chain.
+     * @returns {boolean} true if a field was located and navigated to.
+     */
+    navigateToServerErrorField(failedObjectName, fieldApiNames, message) {
+        if (!fieldApiNames || !fieldApiNames.length) {
+            return false;
+        }
+        if (!this.pageData || !this.pageData.length) {
+            return false;
+        }
+
+        const apiSet = new Set(
+            fieldApiNames.map((a) => String(a).toLowerCase())
+        );
+        // failedObjectName narrows matches when present; null/empty means match
+        // by field API alone (any visible field whose fieldApi appears in the list).
+        const objectFilter =
+            typeof failedObjectName === "string" && failedObjectName.length > 0
+                ? failedObjectName
+                : null;
+        const errors = { ...(this.fieldErrors || {}) };
+        let firstKey;
+        let firstPageIndex;
+
+        const matchAndRecord = (field, page, section, recordIndex) => {
+            if (!field || !field.fieldData) {
+                return;
+            }
+            const fd = field.fieldData;
+            // Skip fields that aren't visible right now; they cannot have caused the save error.
+            if (fd.hide) {
+                return;
+            }
+            if (objectFilter && fd.objectName !== objectFilter) {
+                return;
+            }
+            if (!apiSet.has(String(fd.fieldApi).toLowerCase())) {
+                return;
+            }
+            const key = this.getFieldKey(
+                page.pageIndex,
+                section.sectionIndex,
+                recordIndex,
+                field.fieldIndex
+            );
+            errors[key] = {
+                message: message || "Please review this field.",
+                hasError: true
+            };
+            if (!firstKey) {
+                firstKey = key;
+                firstPageIndex = page.pageIndex;
+            }
+        };
+
+        this.pageData.forEach((page) => {
+            if (!page.sections || !page.sections.length) {
+                return;
+            }
+            page.sections.forEach((section) => {
+                if (!section.fields || !section.fields.length) {
+                    return;
+                }
+                if (!section.isSectionMulti) {
+                    section.fields.forEach((f) => matchAndRecord(f, page, section));
+                } else {
+                    section.fields.forEach((rec) => {
+                        if (rec.recordFields) {
+                            rec.recordFields.forEach((f) =>
+                                matchAndRecord(f, page, section, rec.recordIndex)
+                            );
+                        }
+                    });
+                }
+            });
+        });
+
+        if (!firstKey) {
+            return false;
+        }
+
+        this.fieldErrors = errors;
+
+        // Submit may have been triggered from Summary or a different page; switch the wizard
+        // to the page that actually owns the field before scrolling.
+        const currentPageIndex = this.pageData.findIndex((p) => p.current);
+        if (
+            firstPageIndex !== undefined &&
+            firstPageIndex !== currentPageIndex &&
+            currentPageIndex !== -1
+        ) {
+            this.pageData[currentPageIndex].className = "";
+            this.pageData[currentPageIndex].current = false;
+            this.pageData[firstPageIndex].className = "active";
+            this.pageData[firstPageIndex].current = true;
+        }
+
+        // Defer one tick so re-render flushes the page swap and slds-has-error class.
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        setTimeout(() => this.scrollToFirstError(firstKey), 0);
+        return true;
+    }
+
+    /**
+     * Fallback: brings the top error banner into view when the server response
+     * has no usable field info (e.g. feature-gate failure, generic Apex throw,
+     * or a post-save side-effect failure where the record already exists).
+     */
+    scrollToErrorBanner() {
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        setTimeout(() => {
+            const banner =
+                this.template.querySelector('[data-id="form-error-banner"]') ||
+                this.template.querySelector('[role="alert"].slds-alert_error');
+            if (banner) {
+                banner.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        }, 0);
+    }
+
     getFieldKey(pageIndex, sectionIndex, recordIndex, fieldIndex) {
         if (recordIndex != null && recordIndex !== undefined && recordIndex !== '') {
             return `${pageIndex}-${sectionIndex}-${recordIndex}-${fieldIndex}`;
@@ -1256,6 +1380,14 @@ export default class CustomFormInputContainer extends LightningElement {
                 
                 if (!this.dataSaved) {
                     this.error = result.errorMessage;
+                    const navigated = this.navigateToServerErrorField(
+                        result.failedObjectName,
+                        result.fieldApiNames,
+                        result.errorMessage
+                    );
+                    if (!navigated) {
+                        this.scrollToErrorBanner();
+                    }
                     this.dispatchFormSubmittedEvent(null, false);
                 } else {
                     this.primaryRecordId = result.primaryRecordId;
@@ -1272,6 +1404,7 @@ export default class CustomFormInputContainer extends LightningElement {
                 this.isLoading = false;
                 console.log("error >> ", JSON.stringify(error));
                 this.error = getApexErrorMessage(error);
+                this.scrollToErrorBanner();
                 this.dispatchFormSubmittedEvent(null, false);
             });
     }
@@ -1336,6 +1469,7 @@ export default class CustomFormInputContainer extends LightningElement {
         .catch((e) => {
             this.error = getApexErrorMessage(e);
             console.error(JSON.stringify(e));
+            this.scrollToErrorBanner();
             // Even on error, dispatch event
             this.dispatchFormSubmittedEvent(this.primaryRecordId, false);
         });
@@ -1369,6 +1503,7 @@ export default class CustomFormInputContainer extends LightningElement {
         .catch((error) => {
             console.log("signature error >> ", JSON.stringify(error));
             this.error = getApexErrorMessage(error);
+            this.scrollToErrorBanner();
             // Even on signature error, dispatch event
             this.handleDocumentsUpload()
                 .then(() => {
@@ -1433,6 +1568,7 @@ export default class CustomFormInputContainer extends LightningElement {
                 .catch((error) => {
                     console.error("error >> ", JSON.stringify(error));
                     this.error = getApexErrorMessage(error);
+                    this.scrollToErrorBanner();
                     // Resolve anyway to continue flow
                     resolve();
                 });
@@ -1479,6 +1615,7 @@ export default class CustomFormInputContainer extends LightningElement {
         .catch((e) => {
             this.error = getApexErrorMessage(e);
             console.error(JSON.stringify(e));
+            this.scrollToErrorBanner();
             // Even on error, dispatch event
             this.dispatchFormSubmittedEvent(recId, false);
         });
@@ -1504,6 +1641,7 @@ export default class CustomFormInputContainer extends LightningElement {
         .catch((error) => {
             console.log("signature error >> ", JSON.stringify(error));
             this.error = getApexErrorMessage(error);
+            this.scrollToErrorBanner();
             // Even on signature error, dispatch event
             this.dispatchFormSubmittedEvent(recId, false);
         });

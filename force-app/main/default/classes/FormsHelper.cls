@@ -118,7 +118,12 @@ public with sharing class FormsHelper {
             if (records.isEmpty()) {
                 continue;
             }
-            Database.SaveResult[] saveResults = Database.insert(records, true);
+            Database.SaveResult[] saveResults;
+            try {
+                saveResults = Database.insert(records, true);
+            } catch (DmlException dmx) {
+                throw rebrandDmlException(dmx, objectName);
+            }
             handleDmlResults(saveResults, recordGroup, registry);
         }
 
@@ -129,9 +134,32 @@ public with sharing class FormsHelper {
             if (records.isEmpty()) {
                 continue;
             }
-            Database.SaveResult[] saveResults = Database.update(records, true);
+            Database.SaveResult[] saveResults;
+            try {
+                saveResults = Database.update(records, true);
+            } catch (DmlException dmx) {
+                throw rebrandDmlException(dmx, objectName);
+            }
             handleDmlResults(saveResults, recordGroup, registry);
         }
+    }
+
+    /**
+     * Database.insert/update with allOrNone=true throws DmlException directly,
+     * which would otherwise reach the outer catch (Exception) without an object
+     * context. We rebrand to RecordSaveException so the InsertResult contract
+     * (errorMessage + failedObjectName + fieldApiNames + errorStatusCode) is
+     * populated consistently for the LWC's field-navigation flow.
+     */
+    private static RecordSaveException rebrandDmlException(DmlException dmx, String objectName) {
+        String friendly = FormsErrorUtil.userMessageFromDmlException(dmx);
+        List<String> fieldApis = dmx.getNumDml() > 0
+            ? FormsErrorUtil.fieldApiNamesFromDmlException(dmx, 0)
+            : new List<String>();
+        String statusStr = dmx.getNumDml() > 0 && dmx.getDmlStatusCode(0) != null
+            ? dmx.getDmlStatusCode(0)
+            : null;
+        return new RecordSaveException(objectName, friendly, fieldApis, statusStr);
     }
 
     private static void handleDmlResults(

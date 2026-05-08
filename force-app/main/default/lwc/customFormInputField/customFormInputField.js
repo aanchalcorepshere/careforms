@@ -157,5 +157,42 @@ export default class CustomFormInputField extends LightningElement {
         setTimeout(() => {
             target.classList.remove('field-error-highlight');
         }, 1500);
+        this.focusInputElement();
+    }
+
+    /**
+     * Moves keyboard focus into the underlying input element so the user can
+     * immediately correct the offending value. lightning-input-field exposes
+     * focus(); native inputs are reachable via the inner DOM.
+     */
+    focusInputElement() {
+        const candidates = [
+            'lightning-input-field',
+            'lightning-input',
+            'lightning-textarea',
+            'lightning-combobox',
+            'lightning-radio-group',
+            'lightning-checkbox-group'
+        ];
+        let focusable;
+        for (const tag of candidates) {
+            focusable = this.template.querySelector(tag);
+            if (focusable) {
+                break;
+            }
+        }
+        if (!focusable) {
+            return;
+        }
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        setTimeout(() => {
+            try {
+                if (typeof focusable.focus === 'function') {
+                    focusable.focus();
+                }
+            } catch (e) {
+                // Silently swallow — focus is a UX nice-to-have, not a correctness requirement.
+            }
+        }, 0);
     }
 }

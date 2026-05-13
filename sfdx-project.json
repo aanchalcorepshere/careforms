@@ -6,7 +6,7 @@
       "ancestorVersion": "HIGHEST",
       "package": "coresphereplus_2g",
       "versionName": "ver 0.1",
-      "versionNumber": "1.7.3.0",
+      "versionNumber": "1.9.0.0",
       "versionDescription": "",
       "apexTestAccess": {
         "permissionSets": [
@@ -38,6 +38,8 @@
     "coresphereplus_2g@1.7.0": "04tUK000000AP5BYAW",
     "coresphereplus_2g@1.7.1": "04tUK000000AeQnYAK",
     "coresphereplus_2g@1.7.2": "04tUK000000Cw8HYAS",
-    "coresphereplus_2g@1.7.3": "04tUK000000DZUbYAO"
+    "coresphereplus_2g@1.7.3": "04tUK000000DZUbYAO",
+    "coresphereplus_2g@1.8.0": "04tUK000000EfzNYAS",
+    "coresphereplus_2g@1.9.0": "04tUK000000EgFVYA0"
   }
 }

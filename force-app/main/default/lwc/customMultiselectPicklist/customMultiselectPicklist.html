@@ -14,7 +14,7 @@
 			<h3>Selected Options</h3>
 			<ul>
 				<template for:each={selectedOptions} for:item="option">
-					<li key={option.value} draggable="true" data-value={option.value} ondragstart={handleDragStart}>
+					<li key={option.value} draggable="true" data-value={option.value} data-locked={option.isLocked} ondragstart={handleDragStart}>
 						<span>{option.label}</span>
 					</li>
 				</template>

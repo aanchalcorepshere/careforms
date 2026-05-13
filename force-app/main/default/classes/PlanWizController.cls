@@ -193,15 +193,35 @@ public with sharing class PlanWizController
     public static List<ServicePlanWizClientsWrapper> getClientsDynamically(String asID, Id planId, String objectApiName, Boolean isGoalNStepTempCreated) {   
         System.debug('asID>>' + asID);
         List<sObject> planRecList = new List<sObject>();
+        Boolean showGoalSectionHeadings = false;
         String parentObjName;
         if(objectApiName == 'caresp__Plan__c') {
             List<String> fieldNames = getFieldNames('caresp__Plan__c');
             String query = 'SELECT ' + String.join(fieldNames, ', ') + ' FROM caresp__Plan__c WHERE Id =: escapedAsId WITH SECURITY_ENFORCED';
             String escapedAsId = String.escapeSingleQuotes(asID);
             planRecList = Database.query(query.replace(':escapedAsId', '\'' + escapedAsId + '\''));
-            parentObjName = (String.valueOf(planRecList[0].get('caresp__Parent_Child_Name__c'))).split('-')[0];
+            String planParentChildName = String.valueOf(planRecList[0].get('caresp__Parent_Child_Name__c'));
+            parentObjName = (planParentChildName).split('-')[0];
+            showGoalSectionHeadings = String.isNotBlank(planParentChildName) && planParentChildName.contains('-');
         } else {
             parentObjName = objectApiName;
+        }
+
+        // For parent-launched flows, resolve Parent_Child_Name__c from the plan itself so
+        // heading visibility is consistent for new/edit/finalized/new-version scenarios.
+        if (planId != null && !showGoalSectionHeadings) {
+            try {
+                caresp__Plan__c headingPlan = [
+                    SELECT caresp__Parent_Child_Name__c
+                    FROM caresp__Plan__c
+                    WHERE Id = :planId
+                    WITH SECURITY_ENFORCED
+                    LIMIT 1
+                ];
+                showGoalSectionHeadings = String.isNotBlank(headingPlan.caresp__Parent_Child_Name__c) && headingPlan.caresp__Parent_Child_Name__c.contains('-');
+            } catch (Exception ex) {
+                System.debug('Unable to resolve Parent_Child_Name__c for heading display: ' + ex.getMessage());
+            }
         }
         
         Set<Id> setIdsChildsParentRec = new Set<Id>();
@@ -254,14 +274,71 @@ public with sharing class PlanWizController
         
         setIdsChildsParentRec.clear();
         
-        ProcessJunctionObjReturnWrapper processJunctionObjReturnWrapper1 = prepareMapChildIdToCWRec(finalFetchedDataChild, lstWrapperFieldName, lstFieldToDisplay, planObjConfig, lstObjFieldForWrapperField);
+        ProcessJunctionObjReturnWrapper processJunctionObjReturnWrapper1 = prepareMapChildIdToCWRec(finalFetchedDataChild, lstWrapperFieldName, lstFieldToDisplay, planObjConfig, lstObjFieldForWrapperField, showGoalSectionHeadings);
         mapChildIdToCWRec = processJunctionObjReturnWrapper1.mapChildIdToCWRec;
         setIdsChildsParentRec = processJunctionObjReturnWrapper1.setIdsChildsParentRec;
         system.debug('mapChildIdToCWRec = >'+mapChildIdToCWRec);
         
         List<caresp__Goal__c> listGoals = new List<caresp__Goal__c>();
         Map<String, caresp__Goal__c> mapGoalIdToGoalRec = new Map<String, caresp__Goal__c>();
-        String mdtQuery = 'select Id, caresp__Plan__c, Name, caresp__Description__c, caresp__Start_Date__c, caresp__Target_Date__c, caresp__Status__c, caresp__Goal_Type__c, caresp__Domain__c , ' + planObjConfig.caresp__Goal_s_Filter_Field_API_Name__c + ' from caresp__Goal__c where caresp__Plan__c = :escapedPlanId AND ' + planObjConfig.caresp__Goal_s_Filter_Field_API_Name__c + ' IN :setIdsChildsParentRecTemp WITH SECURITY_ENFORCED ORDER By CreatedDate';
+
+        List<PlanTempWrapper.PicklistWrapper> goalBlueprintCols = new List<PlanTempWrapper.PicklistWrapper>();
+        if (planId != null) {
+            try {
+                goalBlueprintCols = PlanTemplateUtil.getGoalBlueprintFieldsInOrderForPlan(planId);
+            } catch (Exception exBp) {
+                System.debug('Goal blueprint fields not applied to goal query: ' + exBp.getMessage());
+                goalBlueprintCols = new List<PlanTempWrapper.PicklistWrapper>();
+            }
+        }
+
+        List<PlanTempWrapper.PicklistWrapper> stepBlueprintCols = new List<PlanTempWrapper.PicklistWrapper>();
+        if (planId != null) {
+            try {
+                stepBlueprintCols = PlanTemplateUtil.getStepBlueprintFieldsInOrderForPlan(planId);
+            } catch (Exception exStepBp) {
+                System.debug('Step blueprint fields not applied to step query: ' + exStepBp.getMessage());
+                stepBlueprintCols = new List<PlanTempWrapper.PicklistWrapper>();
+            }
+        }
+
+        Map<String, Schema.SObjectField> goalFieldDescribeMap =
+            Schema.getGlobalDescribe().get('caresp__Goal__c').getDescribe().fields.getMap();
+        Set<String> goalSelectLower = new Set<String>{
+            'id', 'caresp__plan__c', 'name', 'caresp__description__c', 'caresp__start_date__c',
+            'caresp__target_date__c', 'caresp__status__c', 'caresp__goal_type__c', 'caresp__domain__c'
+        };
+        if (String.isNotBlank(planObjConfig.caresp__Goal_s_Filter_Field_API_Name__c)) {
+            goalSelectLower.add(planObjConfig.caresp__Goal_s_Filter_Field_API_Name__c.toLowerCase());
+        }
+        List<String> extraGoalSelectFields = new List<String>();
+        for (PlanTempWrapper.PicklistWrapper pw : goalBlueprintCols) {
+            if (pw == null || String.isBlank(pw.value)) {
+                continue;
+            }
+            Schema.SObjectField fToken = resolveGoalFieldToken(goalFieldDescribeMap, pw.value);
+            if (fToken == null || !fToken.getDescribe().isAccessible()) {
+                continue;
+            }
+            String schemaApi = fToken.getDescribe().getName();
+            if (goalSelectLower.contains(schemaApi.toLowerCase())) {
+                continue;
+            }
+            extraGoalSelectFields.add(schemaApi);
+            goalSelectLower.add(schemaApi.toLowerCase());
+        }
+
+        String goalSelectCore =
+            'select Id, caresp__Plan__c, Name, caresp__Description__c, caresp__Start_Date__c, caresp__Target_Date__c, caresp__Status__c, caresp__Goal_Type__c, caresp__Domain__c , '
+            + planObjConfig.caresp__Goal_s_Filter_Field_API_Name__c;
+        if (!extraGoalSelectFields.isEmpty()) {
+            goalSelectCore += ', ' + String.join(extraGoalSelectFields, ', ');
+        }
+        String mdtQuery =
+            goalSelectCore
+            + ' from caresp__Goal__c where caresp__Plan__c = :escapedPlanId AND '
+            + planObjConfig.caresp__Goal_s_Filter_Field_API_Name__c
+            + ' IN :setIdsChildsParentRecTemp WITH SECURITY_ENFORCED ORDER By CreatedDate';
         String escapedPlanId = String.escapeSingleQuotes(planId);
         String formattedIds = '(';
         for (String id : setIdsChildsParentRec) {
@@ -276,7 +353,13 @@ public with sharing class PlanWizController
         System.debug('setIdsChildsParentRec>>> ' + (mdtQuery.replace(':escapedPlanId','\'' + escapedPlanId + '\'')).replace(':setIdsChildsParentRecTemp', formattedIds));
         listGoals = Database.query((mdtQuery.replace(':escapedPlanId','\'' + escapedPlanId + '\'')).replace(':setIdsChildsParentRecTemp', formattedIds));
         
-        ProcessGoalsReturnWrapper processGoalsReturnWrapper = processGoalsDynamic(mapChildIdToGoals, planObjConfig, listGoals, setGoalId);
+        ProcessGoalsReturnWrapper processGoalsReturnWrapper = processGoalsDynamic(
+            mapChildIdToGoals,
+            planObjConfig,
+            listGoals,
+            setGoalId,
+            goalBlueprintCols
+        );
         mapChildIdToGoals = processGoalsReturnWrapper.mapChildIdToGoals;
         mapGoalIdToGoalRec = processGoalsReturnWrapper.mapGoalIdToGoalRec;   
         setGoalId = processGoalsReturnWrapper.setGoalId;     
@@ -290,8 +373,36 @@ public with sharing class PlanWizController
         
         //Get Steps
         List<caresp__Step__c> listSteps = new List<caresp__Step__c>();
-        listSteps = Database.query('select Id, Name, caresp__Type_of_Action__c, caresp__Step_Type__c, caresp__Goal__c, caresp__Description__c, caresp__Start_Date__c, caresp__Target_Date__c, caresp__Assigned_To__c, caresp__Status__c, caresp__Step_Num__c from caresp__Step__c where caresp__Goal__c IN :setGoalId WITH SECURITY_ENFORCED ORDER By caresp__Step_Num__c');
-        mapGoalIdSteps = processStepsDynamic(mapGoalIdSteps, listSteps, planObjConfig, mapGoalIdToGoalRec);
+        Map<String, Schema.SObjectField> stepFieldDescribeMap =
+            Schema.getGlobalDescribe().get('caresp__Step__c').getDescribe().fields.getMap();
+        Set<String> stepSelectLower = new Set<String>{
+            'id', 'name', 'caresp__type_of_action__c', 'caresp__step_type__c', 'caresp__goal__c',
+            'caresp__description__c', 'caresp__start_date__c', 'caresp__target_date__c',
+            'caresp__assigned_to__c', 'caresp__status__c', 'caresp__step_num__c'
+        };
+        List<String> extraStepSelectFields = new List<String>();
+        for (PlanTempWrapper.PicklistWrapper pw : stepBlueprintCols) {
+            if (pw == null || String.isBlank(pw.value)) {
+                continue;
+            }
+            Schema.SObjectField fToken = resolveStepFieldToken(stepFieldDescribeMap, pw.value);
+            if (fToken == null || !fToken.getDescribe().isAccessible()) {
+                continue;
+            }
+            String schemaApi = fToken.getDescribe().getName();
+            if (stepSelectLower.contains(schemaApi.toLowerCase())) {
+                continue;
+            }
+            extraStepSelectFields.add(schemaApi);
+            stepSelectLower.add(schemaApi.toLowerCase());
+        }
+        String stepSelectCore =
+            'select Id, Name, caresp__Type_of_Action__c, caresp__Step_Type__c, caresp__Goal__c, caresp__Description__c, caresp__Start_Date__c, caresp__Target_Date__c, caresp__Assigned_To__c, caresp__Status__c, caresp__Step_Num__c';
+        if (!extraStepSelectFields.isEmpty()) {
+            stepSelectCore += ', ' + String.join(extraStepSelectFields, ', ');
+        }
+        listSteps = Database.query(stepSelectCore + ' from caresp__Step__c where caresp__Goal__c IN :setGoalId WITH SECURITY_ENFORCED ORDER By caresp__Step_Num__c');
+        mapGoalIdSteps = processStepsDynamic(mapGoalIdSteps, listSteps, planObjConfig, mapGoalIdToGoalRec, stepBlueprintCols);
         
         mapChildIdToCWRec = updateMapChildIdToCWRecWithStepList(mapChildIdToCWRec, mapChildIdToGoals, mapGoalIdSteps, listSteps);
         System.debug('mapChildIdToCWRec>>>' + mapChildIdToCWRec);
@@ -299,7 +410,7 @@ public with sharing class PlanWizController
     }
     
     
-    Private static ProcessJunctionObjReturnWrapper prepareMapChildIdToCWRec(List<sObject> finalFetchedDataChild,List<String> lstWrapperFieldName, List<String> lstFieldToDisplay, Dynamic_Plan_Parent_Obj_Configuration__mdt planObjConfig,  List<String> lstObjFieldForWrapperField)
+    Private static ProcessJunctionObjReturnWrapper prepareMapChildIdToCWRec(List<sObject> finalFetchedDataChild,List<String> lstWrapperFieldName, List<String> lstFieldToDisplay, Dynamic_Plan_Parent_Obj_Configuration__mdt planObjConfig,  List<String> lstObjFieldForWrapperField, Boolean showGoalSectionHeadings)
     {
         Set<Id> setIdsChildsParentRec = new Set<Id>();
         Map<String, ServicePlanWizClientsWrapper> mapChildIdToCWRec = new Map<String, ServicePlanWizClientsWrapper>();
@@ -330,7 +441,14 @@ public with sharing class PlanWizController
                     
                 }
                 servicePlanWizClientsWrapper.put('cDisplayName', String.Join(listDisplayVal, '-'));
-                servicePlanWizClientsWrapper.put('isDischarged', true);
+                servicePlanWizClientsWrapper.put('showGoalSectionHeadings', showGoalSectionHeadings);
+                if (showGoalSectionHeadings && lstFieldToDisplay != null && !lstFieldToDisplay.isEmpty()) {
+                    servicePlanWizClientsWrapper.put('goalSectionHeadingLabels', String.join(lstFieldToDisplay, ' | '));
+                } else {
+                    servicePlanWizClientsWrapper.put('goalSectionHeadingLabels', '');
+                }
+                // Reserved for future client-level discharge gating; must not hard-disable wizard actions.
+                servicePlanWizClientsWrapper.put('isDischarged', false);
                 servicePlanWizClientsWrapper.put('Id', String.valueOf(childRec.get('Id')));
                 servicePlanWizClientsWrapper.put('goalFilterField', planObjConfig.Goal_s_Filter_Field_API_Name__c);
                 servicePlanWizClientsWrapper.put('style', 'slds-box slds-m-top_x-small blueBackground');
@@ -415,7 +533,7 @@ public with sharing class PlanWizController
     Private class ProcessGoalsReturnWrapper
     {
         Private Map<String, List<ServicePlanWizClientsWrapper.Goals>> mapChildIdToGoals;
-        private  Map<String, Goal__c> mapGoalIdToGoalRec;
+        private Map<String, caresp__Goal__c> mapGoalIdToGoalRec;
         Private Set<Id> setGoalId;
     }
     
@@ -426,43 +544,193 @@ public with sharing class PlanWizController
         Private Map<String, ServicePlanWizClientsWrapper> mapChildIdToCWRec;
     }
     
-    Private static ProcessGoalsReturnWrapper processGoalsDynamic(Map<String, List<ServicePlanWizClientsWrapper.Goals>> mapChildIdToGoals, Dynamic_Plan_Parent_Obj_Configuration__mdt planObjConfig, List<caresp__Goal__c> listGoals, Set<Id> setGoalId)
-    {
-        Map<String, Goal__c> mapGoalIdToGoalRec = new Map<String, Goal__c>();
-        for (Goal__c goalItem : listGoals)
-        {
+    Private static ProcessGoalsReturnWrapper processGoalsDynamic(
+        Map<String, List<ServicePlanWizClientsWrapper.Goals>> mapChildIdToGoals,
+        Dynamic_Plan_Parent_Obj_Configuration__mdt planObjConfig,
+        List<caresp__Goal__c> listGoals,
+        Set<Id> setGoalId,
+        List<PlanTempWrapper.PicklistWrapper> goalBlueprintCols
+    ) {
+        Map<String, Schema.SObjectField> goalFieldMap =
+            Schema.getGlobalDescribe().get('caresp__Goal__c').getDescribe().fields.getMap();
+        List<PlanTempWrapper.PicklistWrapper> blueprintSafe =
+            goalBlueprintCols == null ? new List<PlanTempWrapper.PicklistWrapper>() : goalBlueprintCols;
+
+        Map<String, caresp__Goal__c> mapGoalIdToGoalRec = new Map<String, caresp__Goal__c>();
+        for (caresp__Goal__c goalItem : listGoals) {
             ServicePlanWizClientsWrapper.Goals goal = new ServicePlanWizClientsWrapper.Goals();
-            List<ServicePlanWizClientsWrapper.Goals> listGoalForMap = mapChildIdToGoals.containsKey(String.valueOf(goalItem.get(planObjConfig.Goal_s_Filter_Field_API_Name__c))) ? mapChildIdToGoals.get(String.valueOf(goalItem.get(planObjConfig.Goal_s_Filter_Field_API_Name__c))) : new List<ServicePlanWizClientsWrapper.Goals>();
-            setGoalId.add(String.valueOf(goalItem.Id));
+            List<ServicePlanWizClientsWrapper.Goals> listGoalForMap = mapChildIdToGoals.containsKey(
+                    String.valueOf(goalItem.get(planObjConfig.Goal_s_Filter_Field_API_Name__c))
+                )
+                ? mapChildIdToGoals.get(String.valueOf(goalItem.get(planObjConfig.Goal_s_Filter_Field_API_Name__c)))
+                : new List<ServicePlanWizClientsWrapper.Goals>();
+            setGoalId.add(goalItem.Id);
             goal.goalId = goalItem.Id;
-            // goal.clientId = goalItem.Client__c;
             goal.planId = goalItem.caresp__Plan__c;
             goal.goalName = goalItem.Name;
             goal.description = goalItem.caresp__Description__c;
-            goal.startDate = (goalItem.caresp__Start_Date__c !=  null) ? goalItem.caresp__Start_Date__c.format() : null;
+            goal.startDate = (goalItem.caresp__Start_Date__c != null) ? goalItem.caresp__Start_Date__c.format() : null;
             goal.targetDate = (goalItem.caresp__Target_Date__c != null) ? goalItem.caresp__Target_Date__c.format() : null;
             goal.status = goalItem.caresp__Status__c;
             goal.goalType = goalItem.caresp__Goal_Type__c;
             goal.domain = goalItem.caresp__Domain__c;
             goal.isDeleteGoal = false;
             goal.clientGoalId = goalItem.get(planObjConfig.Goal_s_Filter_Field_API_Name__c) + '#' + goalItem.Id;
+            goal.goalListColumns = buildGoalListColumns(goalItem, blueprintSafe, goalFieldMap);
             listGoalForMap.add(goal);
             mapGoalIdToGoalRec.put(goalItem.Id, goalItem);
             mapChildIdToGoals.put(String.valueOf(goalItem.get(planObjConfig.Goal_s_Filter_Field_API_Name__c)), listGoalForMap);
         }
-        
+
         ProcessGoalsReturnWrapper processGoalsReturnWrapper = new ProcessGoalsReturnWrapper();
         processGoalsReturnWrapper.mapChildIdToGoals = mapChildIdToGoals;
         processGoalsReturnWrapper.mapGoalIdToGoalRec = mapGoalIdToGoalRec;
         processGoalsReturnWrapper.setGoalId = setGoalId;
         return processGoalsReturnWrapper;
-        
     }
-    
-    
-    
-    Private static Map<Id, List<ServicePlanWizClientsWrapper.Steps>> processStepsDynamic(Map<Id, List<ServicePlanWizClientsWrapper.Steps>> mapGoalIdSteps, List<caresp__Step__c> listSteps, Dynamic_Plan_Parent_Obj_Configuration__mdt planObjConfig,  Map<String, Goal__c> mapGoalIdToGoalRec)
+
+    private static Schema.SObjectField resolveGoalFieldToken(
+        Map<String, Schema.SObjectField> goalFieldMap,
+        String apiFromBlueprint
+    ) {
+        if (goalFieldMap == null || String.isBlank(apiFromBlueprint)) {
+            return null;
+        }
+        if (goalFieldMap.containsKey(apiFromBlueprint)) {
+            return goalFieldMap.get(apiFromBlueprint);
+        }
+        String target = apiFromBlueprint.toLowerCase();
+        for (String key : goalFieldMap.keySet()) {
+            if (key != null && key.toLowerCase() == target) {
+                return goalFieldMap.get(key);
+            }
+        }
+        return null;
+    }
+
+    private static Schema.SObjectField resolveStepFieldToken(
+        Map<String, Schema.SObjectField> stepFieldMap,
+        String apiFromBlueprint
+    ) {
+        if (stepFieldMap == null || String.isBlank(apiFromBlueprint)) {
+            return null;
+        }
+        if (stepFieldMap.containsKey(apiFromBlueprint)) {
+            return stepFieldMap.get(apiFromBlueprint);
+        }
+        String target = apiFromBlueprint.toLowerCase();
+        for (String key : stepFieldMap.keySet()) {
+            if (key != null && key.toLowerCase() == target) {
+                return stepFieldMap.get(key);
+            }
+        }
+        return null;
+    }
+
+    private static String shortenBlueprintFieldLabel(String raw) {
+        if (String.isBlank(raw)) {
+            return '';
+        }
+        String t = raw.trim();
+        Integer idx = t.lastIndexOf('(');
+        if (idx > 0 && t.endsWith(')')) {
+            return t.substring(0, idx).trim();
+        }
+        return t;
+    }
+
+    private static String formatGoalFieldForList(Object rawVal, Schema.DescribeFieldResult dfr) {
+        if (rawVal == null) {
+            return '';
+        }
+        Schema.DisplayType dt = dfr.getType();
+        if (dt == Schema.DisplayType.DATE && rawVal instanceof Date) {
+            return ((Date) rawVal).format();
+        }
+        if (dt == Schema.DisplayType.DATETIME && rawVal instanceof Datetime) {
+            return ((Datetime) rawVal).format();
+        }
+        return String.valueOf(rawVal);
+    }
+
+    private static List<ServicePlanWizClientsWrapper.GoalListColumn> buildGoalListColumns(
+        SObject goalItem,
+        List<PlanTempWrapper.PicklistWrapper> blueprintCols,
+        Map<String, Schema.SObjectField> goalFieldMap
+    ) {
+        List<ServicePlanWizClientsWrapper.GoalListColumn> cols = new List<ServicePlanWizClientsWrapper.GoalListColumn>();
+        if (goalItem == null || blueprintCols == null || blueprintCols.isEmpty() || goalFieldMap == null) {
+            return cols;
+        }
+        for (PlanTempWrapper.PicklistWrapper pw : blueprintCols) {
+            if (pw == null || String.isBlank(pw.value)) {
+                continue;
+            }
+            ServicePlanWizClientsWrapper.GoalListColumn col = new ServicePlanWizClientsWrapper.GoalListColumn();
+            col.columnApi = pw.value;
+            col.columnLabel = shortenBlueprintFieldLabel(pw.label);
+            Schema.SObjectField fTok = resolveGoalFieldToken(goalFieldMap, pw.value);
+            if (fTok == null || !fTok.getDescribe().isAccessible()) {
+                col.columnValue = '';
+            } else {
+                Schema.DescribeFieldResult dfr = fTok.getDescribe();
+                try {
+                    col.columnValue = formatGoalFieldForList(goalItem.get(dfr.getName()), dfr);
+                } catch (Exception ex) {
+                    System.debug('Goal list column read failed for ' + dfr.getName() + ': ' + ex.getMessage());
+                    col.columnValue = '';
+                }
+            }
+            cols.add(col);
+        }
+        return cols;
+    }
+
+    private static List<ServicePlanWizClientsWrapper.StepListColumn> buildStepListColumns(
+        SObject stepItem,
+        List<PlanTempWrapper.PicklistWrapper> blueprintCols,
+        Map<String, Schema.SObjectField> stepFieldMap
+    ) {
+        List<ServicePlanWizClientsWrapper.StepListColumn> cols = new List<ServicePlanWizClientsWrapper.StepListColumn>();
+        if (stepItem == null || blueprintCols == null || blueprintCols.isEmpty() || stepFieldMap == null) {
+            return cols;
+        }
+        for (PlanTempWrapper.PicklistWrapper pw : blueprintCols) {
+            if (pw == null || String.isBlank(pw.value)) {
+                continue;
+            }
+            ServicePlanWizClientsWrapper.StepListColumn col = new ServicePlanWizClientsWrapper.StepListColumn();
+            col.columnApi = pw.value;
+            col.columnLabel = shortenBlueprintFieldLabel(pw.label);
+            Schema.SObjectField fTok = resolveStepFieldToken(stepFieldMap, pw.value);
+            if (fTok == null || !fTok.getDescribe().isAccessible()) {
+                col.columnValue = '';
+            } else {
+                Schema.DescribeFieldResult dfr = fTok.getDescribe();
+                try {
+                    col.columnValue = formatGoalFieldForList(stepItem.get(dfr.getName()), dfr);
+                } catch (Exception ex) {
+                    System.debug('Step list column read failed for ' + dfr.getName() + ': ' + ex.getMessage());
+                    col.columnValue = '';
+                }
+            }
+            cols.add(col);
+        }
+        return cols;
+    }
+
+    Private static Map<Id, List<ServicePlanWizClientsWrapper.Steps>> processStepsDynamic(
+        Map<Id, List<ServicePlanWizClientsWrapper.Steps>> mapGoalIdSteps,
+        List<caresp__Step__c> listSteps,
+        Dynamic_Plan_Parent_Obj_Configuration__mdt planObjConfig,
+        Map<String, caresp__Goal__c> mapGoalIdToGoalRec,
+        List<PlanTempWrapper.PicklistWrapper> stepBlueprintCols
+    )
     {
+        Map<String, Schema.SObjectField> stepFieldMap =
+            Schema.getGlobalDescribe().get('caresp__Step__c').getDescribe().fields.getMap();
+        List<PlanTempWrapper.PicklistWrapper> stepBlueprintSafe =
+            stepBlueprintCols == null ? new List<PlanTempWrapper.PicklistWrapper>() : stepBlueprintCols;
         //Get Steps
         for (Step__c stepItem : listSteps)
         {
@@ -484,6 +752,7 @@ public with sharing class PlanWizController
             }
             
             step.isActionableStep = step.typeOfAction !='Step' ? true : false;
+            step.stepListColumns = buildStepListColumns(stepItem, stepBlueprintSafe, stepFieldMap);
             
             step.clientGoalStepId = ((String)(mapGoalIdToGoalRec.get(stepItem.caresp__Goal__c)).get(planObjConfig.caresp__Goal_s_Filter_Field_API_Name__c) )+ '#' + stepItem.caresp__Goal__c + '#' + stepItem.Id;
             listStepForMap.add(step);
@@ -654,7 +923,26 @@ public with sharing class PlanWizController
         goal.put('caresp__Stuck_Reason__c', String.valueOf(saveGoalData.get('reason')));
         goal.put('caresp__Target_Date__c',saveGoalData.get('targetDate') != null ? Date.valueOf(((String)saveGoalData.get('targetDate')).trim()): null) ;
         goal.put('caresp__Description__c', String.valueOf(saveGoalData.get('description')));
-        goal.put('caresp__Goal_Type__c', 'Household'); 
+        goal.put('caresp__Goal_Type__c', 'Household');
+
+        // Apply any additional blueprint-driven fields passed from the UI.
+        // Keys that are Salesforce API field names (containing '__c' or standard names with capital letters)
+        // are applied dynamically; meta-keys used for routing are skipped.
+        final Set<String> RESERVED_KEYS = new Set<String>{
+            'goalId', 'goalFilterFieldName', 'childId', 'planId', 'cName',
+            'status', 'startDate', 'domain', 'reason', 'targetDate', 'description',
+            'isHH', 'goalType'
+        };
+        Schema.DescribeSObjectResult goalDescribe = Schema.getGlobalDescribe().get('caresp__Goal__c').getDescribe();
+        Map<String, Schema.SObjectField> goalFieldsMap = goalDescribe.fields.getMap();
+        for (String key : saveGoalData.keySet()) {
+            if (!RESERVED_KEYS.contains(key) && goalFieldsMap.containsKey(key.toLowerCase())) {
+                Schema.DescribeFieldResult dfr = goalFieldsMap.get(key.toLowerCase()).getDescribe();
+                if (dfr.isUpdateable() || dfr.isCreateable()) {
+                    goal.put(key, saveGoalData.get(key));
+                }
+            }
+        }
         
         
         System.debug('goal>>>'+goal);
@@ -709,8 +997,12 @@ public with sharing class PlanWizController
             
         } catch (Exception ex) {
             System.debug('## ex: ' + ex.getMessage());
+            throw new AuraHandledException('Error saving Goal: ' + ex.getMessage());
         }
         //}
+        if (listGoalIds.isEmpty()) {
+            throw new AuraHandledException('Goal was not saved. Ensure the active Goal Template Blueprint includes all required Goal fields and values.');
+        }
         
         return listGoalIds;
     }
@@ -847,36 +1139,34 @@ public with sharing class PlanWizController
             {
                 for (caresp__Step__c step : listSteps)
                 {
-                    if( Schema.sObjectType.caresp__Step__c.isCreateable () && Schema.sObjectType.caresp__Step__c.fields.caresp__Goal__c.isCreateable () && 
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Description__c.isCreateable () && Schema.sObjectType.caresp__Step__c.fields.caresp__Start_Date__c.isCreateable () && 
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Target_Date__c.isCreateable  () && Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Num__c.isCreateable  () && 
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Assessment__c.isCreateable  () && Schema.sObjectType.caresp__Step__c.fields.caresp__Document_Type__c.isCreateable  () && 
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Type__c.isCreateable  () && Schema.sObjectType.caresp__Step__c.fields.caresp__Type_of_Action__c.isCreateable  () &&
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Status__c.isCreateable  () && Schema.sObjectType.caresp__Step__c.fields.caresp__Assigned_To__c.isCreateable  () ){
-                           caresp__Step__c s = new caresp__Step__c();
-                           if (step.Id != null)    //Old Step
-                           {
-                               s.Id = step.Id;
-                           }
-                           else    //New Step
-                           {
-                               s.caresp__Goal__c = gId;
-                           }
-                           // Apply FLS checks before assigning values
-                           s.caresp__Description__c = step.caresp__Description__c;
-                           s.caresp__Start_Date__c = step.caresp__Start_Date__c;
-                           s.caresp__Target_Date__c = step.caresp__Target_Date__c;
-                           s.caresp__Step_Num__c = step.caresp__Step_Num__c;
-                           s.caresp__Assessment__c = step.caresp__Assessment__c;
-                           s.caresp__Document_Type__c = step.caresp__Document_Type__c;
-                           s.caresp__Step_Type__c = step.caresp__Step_Type__c;
-                           s.caresp__Type_of_Action__c = step.caresp__Type_of_Action__c;
-                           s.caresp__Status__c = step.caresp__Status__c;
-                           s.caresp__Assigned_To__c = String.isNotBlank(step.caresp__Assigned_To__c) 
-                               ? step.caresp__Assigned_To__c 
-                               : OwnerName;
-                           listStepsToSave.add(s);
-                       }                    
+                    if (step.Id != null && !Schema.sObjectType.caresp__Step__c.isUpdateable()) {
+                        continue;
+                    }
+                    if (step.Id == null && !Schema.sObjectType.caresp__Step__c.isCreateable()) {
+                        continue;
+                    }
+                    caresp__Step__c s = new caresp__Step__c();
+                    if (step.Id != null)    //Old Step
+                    {
+                        s.Id = step.Id;
+                    }
+                    else    //New Step
+                    {
+                        s.caresp__Goal__c = gId;
+                    }
+                    s.caresp__Description__c = step.caresp__Description__c;
+                    s.caresp__Start_Date__c = step.caresp__Start_Date__c;
+                    s.caresp__Target_Date__c = step.caresp__Target_Date__c;
+                    s.caresp__Step_Num__c = step.caresp__Step_Num__c;
+                    s.caresp__Assessment__c = step.caresp__Assessment__c;
+                    s.caresp__Document_Type__c = step.caresp__Document_Type__c;
+                    s.caresp__Step_Type__c = step.caresp__Step_Type__c;
+                    s.caresp__Type_of_Action__c = step.caresp__Type_of_Action__c;
+                    s.caresp__Status__c = step.caresp__Status__c;
+                    s.caresp__Assigned_To__c = String.isNotBlank(step.caresp__Assigned_To__c) 
+                        ? step.caresp__Assigned_To__c 
+                        : OwnerName;
+                    listStepsToSave.add(s);
                 }
             }
             
@@ -898,12 +1188,7 @@ public with sharing class PlanWizController
                 // Handle existing records - UPDATABLE
                 if(!existingRecords.isEmpty()) {
                     List<SObject> updatableRecords = Security.stripInaccessible(AccessType.UPDATABLE, existingRecords).getRecords();
-                    if( Schema.sObjectType.caresp__Step__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Goal__c.isUpdateable() && 
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Description__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Start_Date__c.isUpdateable() && 
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Target_Date__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Num__c.isUpdateable() && 
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Assessment__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Document_Type__c.isUpdateable() && 
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Type__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Type_of_Action__c.isUpdateable() &&
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Status__c.isUpdateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Assigned_To__c.isUpdateable() && !updatableRecords.isEmpty()) {                   
+                    if( Schema.sObjectType.caresp__Step__c.isUpdateable() && !updatableRecords.isEmpty()) {                   
                            update as user updatableRecords;
                            accessibleGoals.addAll(updatableRecords);
                        }
@@ -913,12 +1198,7 @@ public with sharing class PlanWizController
                 // Handle new records - CREATABLE
                 if(!newRecords.isEmpty()) {
                     List<SObject> creatableRecords = Security.stripInaccessible( AccessType.CREATABLE,  newRecords).getRecords();
-                    if(Schema.sObjectType.caresp__Step__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Goal__c.isCreateable() &&
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Description__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Start_Date__c.isCreateable() &&
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Target_Date__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Num__c.isCreateable() &&
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Assessment__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Document_Type__c.isCreateable() &&
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Step_Type__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Type_of_Action__c.isCreateable() &&
-                       Schema.sObjectType.caresp__Step__c.fields.caresp__Status__c.isCreateable() && Schema.sObjectType.caresp__Step__c.fields.caresp__Assigned_To__c.isCreateable() && !creatableRecords.isEmpty()) {
+                    if(Schema.sObjectType.caresp__Step__c.isCreateable() && !creatableRecords.isEmpty()) {
                            insert as user creatableRecords;
                            accessibleGoals.addAll(creatableRecords);
                        }

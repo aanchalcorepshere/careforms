@@ -41,6 +41,20 @@ public with sharing class ServicePlanWizClientsWrapper {
         @AuraEnabled public Map<String, Object> attributes;
     }
 
+    /** One column in the plan wizard goal list when a goal field blueprint is configured */
+    public class GoalListColumn {
+        @AuraEnabled public String columnApi { get; set; }
+        @AuraEnabled public String columnLabel { get; set; }
+        @AuraEnabled public String columnValue { get; set; }
+    }
+
+    /** One column in the plan wizard step list when a step field blueprint is configured */
+    public class StepListColumn {
+        @AuraEnabled public String columnApi { get; set; }
+        @AuraEnabled public String columnLabel { get; set; }
+        @AuraEnabled public String columnValue { get; set; }
+    }
+
     // Class representing an individual goal assigned to the client
     public class Goals {
         @AuraEnabled public String goalId { get; set; }
@@ -56,6 +70,8 @@ public with sharing class ServicePlanWizClientsWrapper {
         @AuraEnabled public Boolean isDeleteGoal { get; set; }
         @AuraEnabled public String clientGoalId { get; set; }
         @AuraEnabled public List<Steps> listSteps { get; set; }
+        /** Populated from Goal Template Field Blueprint order when configured; drives dynamic list columns */
+        @AuraEnabled public List<GoalListColumn> goalListColumns { get; set; }
     }
 
     // Class representing an individual step under a goal
@@ -72,6 +88,8 @@ public with sharing class ServicePlanWizClientsWrapper {
         @AuraEnabled public Boolean isActionableStep { get; set; }
         @AuraEnabled public String clientGoalStepId { get; set; }
         @AuraEnabled public String typeOfAction { get; set; } // Added By Anubhav
+        /** Populated from Step Template Field Blueprint order when configured; drives dynamic list columns */
+        @AuraEnabled public List<StepListColumn> stepListColumns { get; set; }
     }
 
     // Adds a key-value pair to the attributes map and returns the wrapper instance (Fluent API).

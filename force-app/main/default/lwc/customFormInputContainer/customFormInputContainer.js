@@ -200,6 +200,14 @@ export default class CustomFormInputContainer extends LightningElement {
         this.requiresTextOnSignaturePage = result.data.requiresTextOnSignaturePage;
         this.signaturePageText = result.data.signaturePageText;
         this.needPDF = result.data.generatePDF;
+        const configuredZoomPercent = parseInt(result.data.defaultZoomPercent, 10);
+        if (
+            !Number.isNaN(configuredZoomPercent) &&
+            configuredZoomPercent >= this.zoomMin * 100 &&
+            configuredZoomPercent <= this.zoomMax * 100
+        ) {
+            this.zoomLevel = configuredZoomPercent / 100;
+        }
         if (!this.isDependentForm) {
             this.isPDFOnly = result.data.pdfOnly;
         }

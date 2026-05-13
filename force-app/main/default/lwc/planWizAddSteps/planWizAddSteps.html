@@ -15,6 +15,12 @@
             </div>
         </template>
         <lightning-messages></lightning-messages>
+        <template if:false={hasStepBlueprints}>
+            <div class="slds-box slds-theme_warning slds-m-bottom_small">
+                No active Step Template Field Blueprint is configured for this plan template.
+            </div>
+        </template>
+        <template if:true={showLegacyStepFields}>
         <!-- Added By Anubhav -->
         <template if:true={selectActionRadio}>
         <!-- <div class="horizontal-radio-group" >
@@ -237,5 +243,31 @@
             </div>
         </template>
         <!-- End -->
+        </template>
+
+        <!-- Step Fields — Blueprint-Configured (dynamic, from Step_Template_Field_Blueprint__c) -->
+        <template if:true={hasStepBlueprints}>
+            <template for:each={stepFieldBlueprints} for:item="section">
+                <div key={section.sectionName} class="slds-m-top_x-small">
+                    <div class="slds-box slds-box_xx-small slds-text-title_caps slds-m-bottom_xx-small" style="background:#f3f3f3; font-size:0.8rem; padding:4px 8px;">
+                        {section.sectionName}
+                    </div>
+                    <div class="slds-grid slds-gutters slds-wrap">
+                        <template for:each={section.fieldBlueprints} for:item="field">
+                            <div key={field.value} class="slds-col slds-size_2-of-12">
+                                <lightning-input-field
+                                    field-name={field.value}
+                                    data-field={field.value}
+                                    variant="label-stacked"
+                                    required={field.isMandatory}
+                                    disabled={field.isReadOnly}>
+                                </lightning-input-field>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </template>
+
     </lightning-record-edit-form>
 </template>

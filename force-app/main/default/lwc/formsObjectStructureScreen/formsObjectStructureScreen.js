@@ -25,6 +25,7 @@ export default class FormsObjectStructureScreen extends LightningElement {
     showSummary;
     createPDFOnly;
     generatePDF;
+    defaultZoomPercent = '130';
     prefillFields; //story UST-00423
     primaryObjectForPrefillFields; //story UST-00423
     formTypeValue;
@@ -45,6 +46,7 @@ export default class FormsObjectStructureScreen extends LightningElement {
     @api existingCreatePdfOnly;
     @api existingGeneratePdf;
     @api existingPrefillFields;
+    @api existingDefaultZoomPercent;
     isRecordTypeModalOpen = false;
     @track recordTypeOptions;
     currentLevel;
@@ -76,6 +78,7 @@ export default class FormsObjectStructureScreen extends LightningElement {
             this.signaturePageText = this.existingSignaturePageText;
             this.requiresDocUpload = this.existingRequiresDocUpload;
             this.generatePDF = this.existingGeneratePdf;
+            this.defaultZoomPercent = this.existingDefaultZoomPercent || '130';
         }else{
             // else initiating the base JSON structure
             this.objectStructure = {
@@ -120,6 +123,24 @@ export default class FormsObjectStructureScreen extends LightningElement {
         return [
             { label: 'Prefill Fields?', value: 'prefillFields' },
             { label: 'Regular', value: 'regularForm' },
+        ];
+    }
+
+    get zoomOptions() {
+        return [
+            { label: '80%', value: '80' },
+            { label: '90%', value: '90' },
+            { label: '100%', value: '100' },
+            { label: '110%', value: '110' },
+            { label: '120%', value: '120' },
+            { label: '130%', value: '130' },
+            { label: '140%', value: '140' },
+            { label: '150%', value: '150' },
+            { label: '160%', value: '160' },
+            { label: '170%', value: '170' },
+            { label: '180%', value: '180' },
+            { label: '190%', value: '190' },
+            { label: '200%', value: '200' }
         ];
     }
 
@@ -304,6 +325,8 @@ export default class FormsObjectStructureScreen extends LightningElement {
             this.generatePDF = targetChecked;
         }else if (targetName == 'createpdfonly'){
             this.createPDFOnly = targetChecked;
+        }else if (targetName == 'defaultzoompercent'){
+            this.defaultZoomPercent = targetVal;
         }else if(targetName == 'formType'){
             this.prefillFields = targetVal == 'prefillFields'?true:false;
             this.openPrefillFieldsModal = false;
@@ -611,7 +634,7 @@ export default class FormsObjectStructureScreen extends LightningElement {
     sendDataToContainer() {
         this.dispatchEvent(new CustomEvent('objectstructure', 
         { 
-            detail: [this.formName, this.objectStructure, this.confirmationMessage, this.requiresSignature, this.requiresTextOnSignaturePage, this.signaturePageText, this.requiresDocUpload, this.showSummary, this.generatePDF, this.prefillFields, this.createPDFOnly]
+            detail: [this.formName, this.objectStructure, this.confirmationMessage, this.requiresSignature, this.requiresTextOnSignaturePage, this.signaturePageText, this.requiresDocUpload, this.showSummary, this.generatePDF, this.prefillFields, this.createPDFOnly, this.defaultZoomPercent]
         }));
     }
 }

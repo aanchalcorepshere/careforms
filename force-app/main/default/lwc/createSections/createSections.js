@@ -12,6 +12,7 @@ export default class CreateSections extends LightningElement {
             id: 0,
             serial : 1,
             secName : '',
+            secText : '',
             showDelete : false
         }
     ];
@@ -31,13 +32,18 @@ export default class CreateSections extends LightningElement {
         if(value){
             //console.log("this.previousData >> ",JSON.stringify(value));
             this.sectionList = JSON.parse(JSON.stringify(value));
+            this.sectionList.forEach((section) => {
+                if (section.secText === undefined || section.secText === null) {
+                    section.secText = '';
+                }
+            });
         }
     }
 
     addRow() {
         ++this.keyIndex;
         this.order = this.sectionList.length+1;
-        var newItem = [{ id: this.keyIndex, serial : this.order, secName : '', showDelete : true }];
+        var newItem = [{ id: this.keyIndex, serial : this.order, secName : '', secText : '', showDelete : true }];
         this.sectionList = this.sectionList.concat(newItem);
         this.dispatchEvent(new CustomEvent('sectiondetails', {
             detail: this.sectionList
@@ -69,6 +75,19 @@ export default class CreateSections extends LightningElement {
     handleInput(event){
         let serial = event.target.dataset.secSerial;
         this.sectionList[serial-1].secName = event.target.value;
+        this.dispatchEvent(new CustomEvent('sectiondetails', {
+            detail: this.sectionList
+        }));
+    }
+
+    handleSecTextInput(event) {
+        const serial = event.currentTarget.dataset.secSerial;
+        const idx = Number(serial) - 1;
+        if (idx < 0 || idx >= this.sectionList.length) {
+            return;
+        }
+        this.sectionList[idx].secText = event.detail.value || '';
+        this.sectionList = [...this.sectionList];
         this.dispatchEvent(new CustomEvent('sectiondetails', {
             detail: this.sectionList
         }));

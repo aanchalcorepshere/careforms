@@ -74,13 +74,38 @@
 					<div class="slds-grid slds-wrap" key={item.sectionName}>
 						<template for:each={item.fieldBlueprints} for:item="field">
 							<div class='slds-col slds-size--1-of-3 custom-style' key={field.value}>
+								<template if:true={field.isStaticDisplayField}>
+									<div class="parent-link-container">
+										<label class="slds-form-element__label">{field.label}</label>
+										<div class="slds-form-element__control slds-p-top_xx-small">
+											<template if:true={field.isAssociatedRecordField}>
+												<a href={parentRecordUrl} target="_blank">{parentRecordLinkLabel}</a>
+											</template>
+											<template if:true={field.isServiceNameField}>
+												<span>{serviceNameDisplayValue}</span>
+											</template>
+										</div>
+									</div>
+								</template>
+								<template if:false={field.isStaticDisplayField}>
 								<template if:false={field.isHyperLink}>
 								<lightning-input-field field-name={field.value} variant="label-stacked"
 									disabled={field.isReadOnly} required={field.isMandatory}  onchange={handleInputFieldChange} value = {field.defaultVal}>
 								</lightning-input-field>
 								</template>
 								<template if:true={field.isHyperLink}>
-								<lightning-output-field field-name="caresp__Parent_Plan_F__c" variant="label-stacked"></lightning-output-field>
+								<template if:true={planExists}>
+									<lightning-output-field field-name={field.value} variant="label-stacked"></lightning-output-field>
+								</template>
+								<template if:false={planExists}>
+									<div class="parent-link-container">
+										<label class="slds-form-element__label">{field.label}</label>
+										<div class="slds-form-element__control slds-p-top_xx-small">
+											<a href={parentRecordUrl} target="_blank">{parentRecordLinkLabel}</a>
+										</div>
+									</div>
+								</template>
+								</template>
 								</template>
 								<!--commented for later purpose-->
 								<!--template if:true={field.isSignDateField}>
@@ -112,8 +137,10 @@
 				<c-plan-wiz-show-clients record-id={recordId} plan-id={planRecordId}
 					object-api-name={objectApiName} plan-active={isActive} plan-start-date={planStartDate}
 					for-print={forPrint} profile-name={profileName} onrefreshplanfields={refreshPlanFields}
-					plan-temp-id={selectedPlanTypeId} default-date-values = {defaultDateValues}>
-				</c-plan-wiz-show-clients> 
+					plan-temp-id={selectedPlanTypeId} default-date-values={defaultDateValues}
+					goal-field-blueprints={goalFieldBlueprints}
+					step-field-blueprints={stepFieldBlueprints}>
+				</c-plan-wiz-show-clients>
 			</template>
 			<br/><br/><br/><br/>
 

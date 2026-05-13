@@ -12,10 +12,22 @@ import { NavigationMixin } from 'lightning/navigation'; // Added By Anubhav
 //export default class ServicePlanWizShowClients extends LightningElement {
 export default class PlanWizShowClients extends NavigationMixin(LightningElement) {
 
-    @api recordId; @api planId; @api planActive; @api planStartDate; @api objectApiName
+    @api recordId; @api planId; @api planActive; @api planStartDate; @api objectApiName;
     @api childId;
     @api planTempId;
     @api defaultDateValues;
+
+    /**
+     * @description Goal field blueprint sections to pass to planWizAddGoals.
+     * @type {Array}
+     */
+    @api goalFieldBlueprints;
+
+    /**
+     * @description Step field blueprint sections to pass through planWizAddGoals to planWizAddSteps.
+     * @type {Array}
+     */
+    @api stepFieldBlueprints;
     error;
     isGoalNStepTempCreated = false;
     @track listClients = []; getClientsResult;
@@ -73,14 +85,36 @@ export default class PlanWizShowClients extends NavigationMixin(LightningElement
         console.log('## planId: ' + JSON.stringify(result));
         this.getClientsResult = result;
         if (result.data) {
-            console.log('## clients: ' + JSON.stringify(result.data));
-            this.listClients = result.data;
+            // Wire payloads are read-only proxies; never mutate result.data / nested goals in place.
+            const data = JSON.parse(JSON.stringify(result.data));
+            console.log('## clients: ' + JSON.stringify(data));
+            const expandedSectionNames = [];
+            data.forEach((rec) => {
+                // Use attributes (Apex put) for discharge; avoid relying on top-level isDischarged after JSON clone.
+                rec._clientActionsDisabled = !!(rec.attributes && rec.attributes.isDischarged);
+                if (rec.attributes && rec.attributes.clientName) {
+                    expandedSectionNames.push(rec.attributes.clientName);
+                }
+                const goals = rec.attributes && rec.attributes.listGoals;
+                if (Array.isArray(goals)) {
+                    goals.forEach((g) => {
+                        g._showDynamicGoalColumns =
+                            Array.isArray(g.goalListColumns) && g.goalListColumns.length > 0;
+                        if (Array.isArray(g.listSteps)) {
+                            g.listSteps.forEach((s) => {
+                                s._showDynamicStepColumns =
+                                    Array.isArray(s.stepListColumns) && s.stepListColumns.length > 0;
+                            });
+                        }
+                    });
+                }
+            });
+            // Expand all client goal sections by default whenever clients are loaded.
+            this.activeSections = [...new Set(expandedSectionNames)];
+            this.listClients = data;
             console.log('clients for print>>' + this.listClients);
             if (this.forPrint && !this.profileName.includes('Read Only')) {
                 console.log('this.forPrint for print>>' + this.forPrint);
-                result.data.forEach(rec => {
-                    this.activeSections.push(rec.attributes.clientName);
-                });
                /* setTimeout(() => {
                     window.print();
                 }, 1000);*/
@@ -93,10 +127,13 @@ export default class PlanWizShowClients extends NavigationMixin(LightningElement
             console.log('## wiredGetClients error: ' + JSON.stringify(result.error));
         }
         }
-        catch(error)
-        {
-            console.error('Error occurred in wiredGetClients of planWizShowClients :: ' + JSON.stringify(error));
-
+        catch (error) {
+            console.error(
+                'Error occurred in wiredGetClients of planWizShowClients',
+                error && error.message,
+                error && error.stack,
+                error
+            );
         }
     }
     //Added By Anubhav

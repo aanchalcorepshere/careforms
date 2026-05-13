@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Goal_Template__c</fullName>
+    <label>Goal Template</label>
+    <referenceTo>Goal_Template__c</referenceTo>
+    <relationshipLabel>Goal Template Field Blueprints</relationshipLabel>
+    <relationshipName>Goal_Template_Field_Blueprints</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

@@ -677,4 +677,11 @@ private class FormsHelperTest {
         System.assertEquals('Label', emailWrapper.label);
         System.assertEquals('Picklist', picklistWrapper.label);
     }
+
+    @IsTest
+    static void testSaveObjectStructure_blankParams_returnsValidationMessage() {
+        FormsHelper.InsertResult result = FormsHelper.saveObjectStructure('');
+        System.assert(String.isNotBlank(result.errorMessage));
+        System.assertNotEquals(true, result.isSuccess);
+    }
 }

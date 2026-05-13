@@ -63,4 +63,56 @@ private class FileUploadMultiControllerTest {
         }
         Test.stopTest();
     }
+
+    @isTest
+    static void testUploadFiles_additionalValidationPaths() {
+        Question_Bank__c qb = TestFactory.createQuestionBank('QB validation', null, true);
+        String validFile =
+            '[{"fileCategory":"Cat","notes":"n","expiration":"2030-01-01","fileContent":"VGhpcyBpcyBhIHRlc3QgY29udGVudC4=",'
+            + '"fileUploadName":"Doc.txt","fileTypeIcon":"doctype:txt","index":1}]';
+
+        Boolean invalidIdFormatFailed = false;
+        try {
+            FileUploadMultiController.uploadFiles('001XXXXXXXXXXXXXXX', validFile);
+        } catch (AuraHandledException e) {
+            invalidIdFormatFailed = true;
+        }
+
+        Boolean emptyFileListFailed = false;
+        try {
+            FileUploadMultiController.uploadFiles(qb.Id, '[]');
+        } catch (AuraHandledException e) {
+            emptyFileListFailed = true;
+        }
+
+        Boolean badExtensionFailed = false;
+        String badExt =
+            '[{"fileCategory":"Cat","notes":"n","fileContent":"VGhpcyBpcyBhIHRlc3QgY29udGVudC4=",'
+            + '"fileUploadName":"virus.exe"}]';
+        try {
+            FileUploadMultiController.uploadFiles(qb.Id, badExt);
+        } catch (AuraHandledException e) {
+            badExtensionFailed = true;
+        }
+
+        Boolean tooManyFailed = false;
+        List<Map<String, Object>> many = new List<Map<String, Object>>();
+        for (Integer i = 0; i < 101; i++) {
+            many.add(
+                new Map<String, Object>{
+                    'fileCategory' => 'Cat',
+                    'notes' => 'n',
+                    'fileContent' => 'VGhpcyBpcyBhIHRlc3QgY29udGVudC4=',
+                    'fileUploadName' => 'f' + i + '.txt'
+                }
+            );
+        }
+        try {
+            FileUploadMultiController.uploadFiles(qb.Id, JSON.serialize(many));
+        } catch (AuraHandledException e) {
+            tooManyFailed = true;
+        }
+
+        System.assert(invalidIdFormatFailed && emptyFileListFailed && badExtensionFailed && tooManyFailed);
+    }
 }

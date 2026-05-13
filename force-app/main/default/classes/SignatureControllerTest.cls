@@ -28,4 +28,36 @@ private class SignatureControllerTest {
         ];
         System.assertEquals(1, contentDocLinkCount, 'Expected one ContentDocumentLink to be created');
     }
+
+    @isTest
+    static void testSaveSignature_validationFailures() {
+        Question_Bank__c qb = testFactory.createQuestionBank('Sig validation', null, true);
+
+        Boolean missingParams = false;
+        try {
+            SignatureController.saveSignature('', qb.Id, 'Title');
+        } catch (AuraHandledException e) {
+            missingParams = true;
+        }
+
+        Boolean badBase64 = false;
+        try {
+            SignatureController.saveSignature('%%%not-base64%%%', qb.Id, 'Title');
+        } catch (AuraHandledException e) {
+            badBase64 = true;
+        }
+
+        Boolean badRecordId = false;
+        try {
+            SignatureController.saveSignature(
+                EncodingUtil.base64Encode(Blob.valueOf('x')),
+                'bad-id-format',
+                'Title'
+            );
+        } catch (AuraHandledException e) {
+            badRecordId = true;
+        }
+
+        System.assert(missingParams && badBase64 && badRecordId);
+    }
 }

@@ -152,7 +152,7 @@ public with sharing class FormsErrorUtil {
         String codeStr = String.valueOf(code);
         if (rawMessage.length() > codeStr.length() + 1 && rawMessage.substring(0, codeStr.length()).equalsIgnoreCase(codeStr)) {
             String sep = rawMessage.substring(codeStr.length(), codeStr.length() + 1);
-            if (sep == ':' || sep == ',') {
+            if (':'.equals(sep) || ','.equals(sep)) {
                 return rawMessage.substring(codeStr.length() + 1).trim();
             }
         }
@@ -223,5 +223,18 @@ public with sharing class FormsErrorUtil {
         }
         String s = api.replace('__c', '').replace('__r', '');
         return s.replace('_', ' ');
+    }
+
+    /**
+     * @description Test-only entry to exercise user-facing message mapping; not used in production.
+     */
+    @TestVisible
+    static String testOnly_buildUserMessage(
+        System.StatusCode code,
+        List<String> fields,
+        String rawMessage,
+        String objectApiName
+    ) {
+        return buildUserMessage(code, fields, rawMessage, objectApiName);
     }
 }

@@ -30,55 +30,60 @@
             </template>
             <lightning-messages></lightning-messages>
     
-            <!-- Goal Fields -->
-            <div class="slds-grid slds-wrap">
-                <div class="slds-col slds-size--1-of-3">
-                    <lightning-input-field field-name='{metadataInformation.goalFilterFieldName}' name="clientName" variant="label-stacked" disabled value={childIdGoalModal}>
-                    </lightning-input-field>
+            <!-- Goal Fields — No fallback: require active Goal blueprint configuration -->
+            <template if:false={hasGoalBlueprints}>
+                <div class="slds-box slds-theme_warning slds-m-bottom_medium">
+                    No active Goal Template Field Blueprint is configured for this plan template. Please activate/configure a Goal Template blueprint and try again.
                 </div>
-                <div class="slds-col slds-size--1-of-3">
-                    <lightning-input-field field-name="caresp__Status__c" name="status" disabled={disableGoalStatus} variant="label-stacked" value={statusVal}>
-                    </lightning-input-field>
-                </div>
-                <div class="slds-col slds-size--1-of-3">
-                    <lightning-input-field field-name="caresp__Start_Date__c" name="startDate" variant="label-stacked" value={startDateVal}>
-                    </lightning-input-field>
-                </div>
-                <div class="slds-col slds-size--1-of-3">
-                    <lightning-input-field field-name="caresp__Domain__c" name="domain" required variant="label-stacked" value={domainVal}>
-                    </lightning-input-field>
-                </div>
-                <div class="slds-col slds-size--1-of-3">
-                    <lightning-input-field field-name="caresp__Stuck_Reason__c" name="reason" variant="label-stacked" value={reasonVal}>
-                    </lightning-input-field>
-                </div>
-                <div class="slds-col slds-size--1-of-3">
-                    <lightning-input-field field-name="caresp__Target_Date__c" name="targetDate" variant="label-stacked" value={targetDateVal}>
-                    </lightning-input-field>
-                </div>
-                <div class="slds-col slds-size--1-of-1">
-                    <lightning-input-field field-name="caresp__Description__c" name="description" required variant="label-stacked" value={descriptionVal}>
-                    </lightning-input-field>
-                </div>
-            </div>
+            </template>
+
+            <!-- Goal Fields — Blueprint-Configured (dynamic, from Goal_Template_Field_Blueprint__c) -->
+            <template if:true={hasGoalBlueprints}>
+                <template for:each={goalFieldBlueprints} for:item="section">
+                    <div key={section.sectionName}>
+                        <div class="slds-box slds-box_xx-small sectionHeader slds-text-title_bold slds-m-top_medium slds-m-bottom_x-small slds-align_absolute-center">
+                            {section.sectionName}
+                        </div>
+                        <div class="slds-grid slds-wrap">
+                            <template for:each={section.fieldBlueprints} for:item="field">
+                                <div key={field.value} class="slds-col slds-size--1-of-3">
+                                    <lightning-input-field
+                                        field-name={field.value}
+                                        variant="label-stacked"
+                                        required={field.isMandatory}
+                                        disabled={field.isReadOnly}>
+                                    </lightning-input-field>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </template>
     
-            <br/>
-            <div class="slds-grid slds-gutters">
-                <div class="slds-col slds-size--7-of-8">
-                    <div class="slds-box slds-box_xx-small sectionHeader slds-text-title_bold slds-m-bottom_medium slds-align_absolute-center">
-                        {stepType} Steps (Optional)
+            <template if:true={hasGoalBlueprints}>
+                <br/>
+                <div class="slds-grid slds-gutters">
+                    <div class="slds-col slds-size--7-of-8">
+                        <div class="slds-box slds-box_xx-small sectionHeader slds-text-title_bold slds-m-bottom_medium slds-align_absolute-center">
+                            {stepType} Steps (Optional)
+                        </div>
+                    </div>
+                    <div class="slds-col">
+                    <lightning-button variant="brand" label="+ Add Step" onclick={handleAddStep} disabled={isAddStepDisabled} style="margin-left: 1rem;"></lightning-button>
                     </div>
                 </div>
-                <div class="slds-col">
-                    <lightning-button variant="brand" label="+ Add Step" onclick={handleAddStep} disabled={disableAddStep} style="margin-left: 1rem;"></lightning-button>
+            <template if:false={hasStepBlueprints}>
+                <div class="slds-box slds-theme_warning slds-m-bottom_small">
+                    No active Step Template Field Blueprint is configured for this plan template. Step fields are hidden until a Step blueprint is active.
                 </div>
-            </div>
+            </template>
 
-            <!-- Steps -->
-            <template for:each={listSteps} for:item="step">
-                <div class="slds-box slds-m-bottom_xx-small" key={step.stepId}>
-                    <c-plan-wiz-add-steps key={step.Id} client-name={clientName} record-id={recordId} goal-id={goalId} step-id={step.Id} num-val={step.caresp__Step_Num__c} start-date-val={step.caresp__Start_Date__c} assigned-to-val={step.caresp__Assigned_To__c} step-record={step} object-api-name={objectApiName} ></c-plan-wiz-add-steps>
-                </div>
+                <!-- Steps -->
+                <template for:each={listSteps} for:item="step">
+                    <div class="slds-box slds-m-bottom_xx-small" key={step.stepId}>
+                        <c-plan-wiz-add-steps key={step.Id} client-name={clientName} record-id={recordId} goal-id={goalId} step-id={step.Id} num-val={step.caresp__Step_Num__c} start-date-val={step.caresp__Start_Date__c} assigned-to-val={step.caresp__Assigned_To__c} step-record={step} object-api-name={objectApiName} step-field-blueprints={stepFieldBlueprints}></c-plan-wiz-add-steps>
+                    </div>
+                </template>
             </template>
 
 
@@ -86,8 +91,10 @@
             <br/>
             <div class="slds-align_absolute-center">
                 <lightning-button variant="neutral" label="Cancel" onclick={closeGoalsModal} style="margin-right: 1rem;"></lightning-button>
-                <lightning-button variant="brand" label="Save & New" onclick={saveAndNew} style="margin-right: 1rem;"></lightning-button>
-                <lightning-button variant="brand" label="Save" type="submit" ></lightning-button>
+                <template if:true={hasGoalBlueprints}>
+                    <lightning-button variant="brand" label="Save & New" onclick={saveAndNew} style="margin-right: 1rem;"></lightning-button>
+                    <lightning-button variant="brand" label="Save" type="submit" ></lightning-button>
+                </template>
             </div>
         </lightning-record-edit-form>
     </template>

@@ -3,7 +3,14 @@ import getAssignedWorker from '@salesforce/apex/PlanWizController.getAssignedWor
 //import saveStep from '@salesforce/apex/ServicePlanWizController.saveStep';
 
 export default class PlanWizAddSteps extends LightningElement {
-    @api stepId = ''; @api recordId; @api clientName; @api goalId; @api stepRecord;@api objectApiName;
+    @api stepId = ''; @api recordId; @api clientName; @api goalId; @api stepRecord; @api objectApiName;
+
+    /**
+     * @description Step field blueprint sections from Step_Template_Field_Blueprint__c.
+     *              When provided, additional configurable fields are rendered in the Step form.
+     * @type {Array}
+     */
+    @api stepFieldBlueprints;
     message; error;
     allGood = true; allFieldsEmpty = true;
     @track assignedToOptions = [];
@@ -29,6 +36,28 @@ export default class PlanWizAddSteps extends LightningElement {
     assessmentSelected=false;
     selectActionRadio=true;
    //End
+
+    /** Returns true when step field blueprints have been configured for this template. */
+    get hasStepBlueprints() {
+        return Array.isArray(this.stepFieldBlueprints) && this.stepFieldBlueprints.length > 0;
+    }
+
+    /** Flattened list of all blueprint fields across all step sections. */
+    get flatStepBlueprintFields() {
+        if (!this.hasStepBlueprints) return [];
+        return this.stepFieldBlueprints.reduce((acc, section) => {
+            if (section && Array.isArray(section.fieldBlueprints)) {
+                acc.push(...section.fieldBlueprints);
+            }
+            return acc;
+        }, []);
+    }
+
+    /** Legacy step field templates are disabled; step forms are blueprint-only. */
+    get showLegacyStepFields() {
+        return false;
+    }
+
    connectedCallback(){
     //console.log('selectActionRadio =>'+selectActionRadio);
     //console.log('actionableSelected =>'+actionableSelected);
@@ -58,6 +87,11 @@ export default class PlanWizAddSteps extends LightningElement {
     }
 
     @api submitFromParent (listGoalIds) {
+        if (!this.hasStepBlueprints) {
+            this.allGood = false;
+            this.message = 'No active Step Template Field Blueprint is configured for this plan template.';
+            return { "Message": "Empty" };
+        }
         var returnArray = {"Message" : "Good"};
         this.allFieldsEmpty = true;
 
@@ -157,6 +191,16 @@ export default class PlanWizAddSteps extends LightningElement {
                 } else {
                     fields["caresp__Type_of_Action__c"] = this.typeaction;
                 }
+
+                // Capture blueprint-driven step field values from the DOM
+                this.flatStepBlueprintFields.forEach(bp => {
+                    if (bp && bp.value) {
+                        const inputEl = this.template.querySelector(`lightning-input-field[data-field="${bp.value}"]`);
+                        if (inputEl && inputEl.value !== undefined) {
+                            fields[bp.value] = inputEl.value;
+                        }
+                    }
+                });
 
                 returnArray = {
                     "Message" : "Good",

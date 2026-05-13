@@ -46,6 +46,13 @@
                <lightning-input type="checkbox" variant="standard" name="requiresdocupload" label="Requires Documents Upload?" onchange={handleConfiguration} checked={requiresDocUpload}></lightning-input>
                <lightning-input type="checkbox" variant="standard" name="showsummary" label="Show Summary?" onchange={handleConfiguration} checked={showSummary}></lightning-input>
                <lightning-input type="checkbox" variant="standard" name="createpdfonly" label="Create PDF Only?" onchange={handleConfiguration} checked={createPDFOnly}></lightning-input>
+               <lightning-combobox
+                  name="defaultzoompercent"
+                  label="Default Zoom (%)"
+                  options={zoomOptions}
+                  value={defaultZoomPercent}
+                  onchange={handleConfiguration}
+               ></lightning-combobox>
             </div>
             <!-- Form configuration end -->
             <!-- Object relationship legend start -->

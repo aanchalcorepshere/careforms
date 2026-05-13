@@ -40,6 +40,10 @@ export default class CustomMultiselectPicklist extends LightningElement {
 
 
     handleDragStart(event) {
+        if (event.target && event.target.dataset && event.target.dataset.locked === 'true') {
+            event.preventDefault();
+            return;
+        }
         event.dataTransfer.setData('text', event.target.dataset.value);
     }
 
@@ -51,6 +55,9 @@ export default class CustomMultiselectPicklist extends LightningElement {
         event.preventDefault();
         const value = event.dataTransfer.getData('text');
         const selectedOption = this.selectedOptions.find(option => option.value === value);
+        if (!selectedOption || selectedOption.isLocked) {
+            return;
+        }
         let newSelectedOption = { label: selectedOption.label, 
         value: selectedOption.value, 
         isMandatory: selectedOption.isMandatory, 
@@ -58,7 +65,8 @@ export default class CustomMultiselectPicklist extends LightningElement {
         dataType: selectedOption.dataType, 
         isFormulaField : selectedOption.isFormulaField,
         isEditDisabled: selectedOption.isEditDisabled,
-        isReqDisabled: selectedOption.isReqDisabled};
+        isReqDisabled: selectedOption.isReqDisabled,
+        isLocked: selectedOption.isLocked};
 
         if (newSelectedOption) {
             this.selectedOptions = this.selectedOptions.filter(option => option.value !== value);

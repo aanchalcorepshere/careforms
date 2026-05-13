@@ -546,6 +546,34 @@
     return respList;
   }
 
+  /**
+   * @description Maps a UI string (e.g. LWC combobox) to a valid Default_Zoom_Percent__c API value (80-200, step 10).
+   * @param raw Raw percent string; may be null or blank
+   * @return Picklist API value, or null to omit the field on DML so the schema default or existing value applies
+   */
+  private static String normalizeDefaultZoomPercentForPicklist(String raw) {
+    if (String.isBlank(raw)) {
+      return null;
+    }
+    try {
+      Integer v = Decimal.valueOf(raw.trim()).intValue();
+      if (v < 80) {
+        v = 80;
+      } else if (v > 200) {
+        v = 200;
+      }
+      v = ((v + 5) / 10) * 10;
+      if (v < 80) {
+        v = 80;
+      } else if (v > 200) {
+        v = 200;
+      }
+      return String.valueOf(v);
+    } catch (Exception ex) {
+      return null;
+    }
+  }
+
   /*
       # Author      : Ankit Chowhan
       # Date        : 24th Feb, 2022
@@ -557,7 +585,7 @@
       # Change Log  : 
   */
      @AuraEnabled
-    public static String createFormRecord(String formName, Boolean isEdit, String recordId, String confirmationMessage, Boolean requiresSignature, Boolean requiresTextOnSignaturePage, String signaturePageText, Boolean requiresDocUpload, Boolean showSummary, Boolean generatePDF, Boolean prefillFields, String primaryObjectForPrefillForm, Boolean isPDFOnly) {
+    public static String createFormRecord(String formName, Boolean isEdit, String recordId, String confirmationMessage, Boolean requiresSignature, Boolean requiresTextOnSignaturePage, String signaturePageText, Boolean requiresDocUpload, Boolean showSummary, Boolean generatePDF, Boolean prefillFields, String primaryObjectForPrefillForm, Boolean isPDFOnly, String defaultZoomPercent) {
         FormsFeatureUtil.assertFormsAvailable();
         System.debug(LoggingLevel.Error ,'isEdit >> ' + isEdit);
         System.debug(LoggingLevel.Error ,'recordId >> ' + recordId);
@@ -582,6 +610,10 @@
         form.caresp__Prefill_Fields__c = prefillFields == null ? false : prefillFields;
         form.caresp__Create_PDF_Only__c = isPDFOnly == null ? false : isPDFOnly;
         form.caresp__Object_Name_for_Prefill_Fields__c = String.isNotBlank(primaryObjectForPrefillForm) ? primaryObjectForPrefillForm : '';
+        String zoomApi = normalizeDefaultZoomPercentForPicklist(defaultZoomPercent);
+        if (String.isNotBlank(zoomApi)) {
+            form.caresp__Default_Zoom_Percent__c = zoomApi;
+        }
     
         // If in edit mode, assign the recordId
         if (isEdit == true) form.Id = recordId;
@@ -768,7 +800,8 @@
             Requires_Document_Upload__c,
             Show_Summary__c,
             Prefill_Fields__c,
-            Create_PDF_Only__c
+            Create_PDF_Only__c,
+            Default_Zoom_Percent__c
           FROM Form__c 
           WHERE Id = :formId WITH USER_MODE
         ];
@@ -787,6 +820,7 @@
         formDataWrap.hasSummary = formList[0].caresp__Show_Summary__c;
         formDataWrap.prefillFields = formList[0].caresp__Prefill_Fields__c;
         formDataWrap.pdfOnly = formList[0].caresp__Create_PDF_Only__c;
+        formDataWrap.defaultZoomPercent = formList[0].caresp__Default_Zoom_Percent__c;
         List<ContentDocumentLink> cDocLinkList = [
           SELECT Id, ContentDocumentId
           FROM ContentDocumentLink
@@ -1175,6 +1209,8 @@ public static List<caresp__Form__c> getFormsList() {
     public Boolean prefillFields { get; set; }
     @AuraEnabled
     public Boolean pdfOnly { get; set; }
+    @AuraEnabled
+    public String defaultZoomPercent { get; set; }
     @AuraEnabled
     public string objectStructure { get; set; }
     @AuraEnabled

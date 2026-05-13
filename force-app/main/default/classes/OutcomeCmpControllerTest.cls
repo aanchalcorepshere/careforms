@@ -41,6 +41,46 @@ public with sharing class OutcomeCmpControllerTest {
         outcomeRefTestData.Status__c='Complete';
 
         update outcomeRefTestData;
+
+        Response__c resposeTestData4 = TestFactory.createResponse(
+            null,
+            assessmentTestData.Id,
+            outcomeRefTestData.Id,
+            false
+        );
+        resposeTestData4.Assessment_Question__c = ansQuesTestData.Id;
+        resposeTestData4.Sequence__c = '10-20';
+        insert resposeTestData4;
+
+        Response__c resposeTestData5 = TestFactory.createResponse(
+            null,
+            assessmentTestData.Id,
+            outcomeRefTestData.Id,
+            false
+        );
+        resposeTestData5.Assessment_Question__c = ansQuesTestData.Id;
+        resposeTestData5.Sequence__c = '10-20-300';
+        insert resposeTestData5;
+
+        Account ocRefAccount = new Account(Name = 'OutcomeCmp Record Id Target');
+        insert ocRefAccount;
+        List<Outcome__c> outcomesForRecordId = [SELECT Id, Record_Id__c FROM Outcome__c];
+        for (Outcome__c o : outcomesForRecordId) {
+            o.Record_Id__c = ocRefAccount.Id;
+        }
+        update outcomesForRecordId;
+
+        try {
+            caresp__Outcome__c assignedSvc = [
+                SELECT Id
+                FROM caresp__Outcome__c
+                WHERE Name = 'Test Outcome Assigned Service'
+                LIMIT 1
+            ];
+            assignedSvc.put('caresp__Associated_Record__c', ocRefAccount.Id);
+            update assignedSvc;
+        } catch (Exception ignore) {
+        }
     }
 
     static testMethod void testGetOutcomes()
@@ -76,5 +116,79 @@ public with sharing class OutcomeCmpControllerTest {
         List<OutcomeCmpController.QuestionsWrapper> result = OutcomeCmpController.getResponses(outcomeRefTest.Id);
         System.assertNotEquals(null, result, 'The response list should not be null');
         
+    }
+
+    static testMethod void testOutcomeController_inputValidation() {
+        Boolean blankOutcomes = false;
+        try {
+            OutcomeCmpController.getOutcomes('');
+        } catch (AuraHandledException e) {
+            blankOutcomes = true;
+        }
+
+        Boolean badOutcomesId = false;
+        try {
+            OutcomeCmpController.getOutcomes('001XXXXXXXXXXXXXXX');
+        } catch (AuraHandledException e) {
+            badOutcomesId = true;
+        }
+
+        Boolean blankDetails = false;
+        try {
+            OutcomeCmpController.getOutcomeDetails('', 'Account');
+        } catch (AuraHandledException e) {
+            blankDetails = true;
+        }
+
+        System.assert(blankOutcomes && badOutcomesId && blankDetails);
+    }
+
+    static testMethod void testGetOutcomeDetails_invalidIdFormat() {
+        Boolean threw = false;
+        try {
+            OutcomeCmpController.getOutcomeDetails('001XXXXXXXXXXXXXXX', 'Account');
+        } catch (AuraHandledException e) {
+            threw = true;
+        }
+        System.assert(threw);
+    }
+
+    static testMethod void testGetOutcomeDetails_suffixObjectNameAndCompleteOutcome() {
+        Outcome__c referral = [
+            SELECT Id
+            FROM Outcome__c
+            WHERE Name = 'Test Outcome Referral'
+            LIMIT 1
+        ];
+        OutcomeCmpController.OutcomeDetailsWrapper refWrap =
+            OutcomeCmpController.getOutcomeDetails(referral.Id, 'caresp__Assessment__c');
+        System.assertNotEquals(null, refWrap);
+    }
+
+    static testMethod void testGetResponses_validationPaths() {
+        Boolean blankResp = false;
+        try {
+            OutcomeCmpController.getResponses('');
+        } catch (AuraHandledException e) {
+            blankResp = true;
+        }
+        Boolean badResp = false;
+        try {
+            OutcomeCmpController.getResponses('001XXXXXXXXXXXXXXX');
+        } catch (AuraHandledException e) {
+            badResp = true;
+        }
+        System.assert(blankResp && badResp);
+
+        Outcome__c referral = [
+            SELECT Id
+            FROM Outcome__c
+            WHERE Name = 'Test Outcome Referral'
+            LIMIT 1
+        ];
+        List<OutcomeCmpController.QuestionsWrapper> rows =
+            OutcomeCmpController.getResponses(referral.Id);
+        System.assertNotEquals(null, rows);
+        System.assert(rows.size() >= 3);
     }
 }

@@ -1167,6 +1167,20 @@ public with sharing class AssessmentQuestionnaireController {
         saveAdditionalLookupAssociation(outcomeId, clientId, objectName);
     }
 
+    @TestVisible
+    private static List<caresp__Assessment__c> testOnly_filterAssessmentsDefault(
+        List<caresp__Assessment__c> assessmentList,
+        String recordId,
+        String objectName
+    ) {
+        return filterAssessmentsDefault(assessmentList, recordId, objectName);
+    }
+
+    @TestVisible
+    private static String testOnly_getAdditionalLookupOptionsDefault(Id recordId, String objectName) {
+        return getAdditionalLookupOptionsDefault(recordId, objectName);
+    }
+
     // Saves complete assessment responses, creates outcome and response records, calculates scores
     @AuraEnabled
     public static String saveResponses(String recordId, String objName, String assessmentId, String assessmentName, 

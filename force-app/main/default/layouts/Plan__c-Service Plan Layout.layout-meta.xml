@@ -23,6 +23,10 @@
                 <behavior>Readonly</behavior>
                 <field>Parent_Plan_F__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Account__c</field>
+            </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>

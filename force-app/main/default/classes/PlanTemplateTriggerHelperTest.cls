@@ -42,6 +42,10 @@ public class PlanTemplateTriggerHelperTest {
             blueprints[0].Section_Name__c,
             'The section name should be "Plan Details"'
         );
+        System.assert(
+            blueprints[0].Plan_Field_List__c.contains('__associated_record_link__'),
+            'Default blueprint should include Associated Record field'
+        );
 
         // Verify the JSON structure
      /*   List<Map<String, String>> fieldList = (List<Map<String, String>>) JSON.deserializeUntyped(blueprints[0].Plan_Field_List__c);
@@ -74,5 +78,9 @@ public class PlanTemplateTriggerHelperTest {
 
         System.assertNotEquals(null, blueprint, 'Blueprint record should be created');
         System.assert(blueprint.Plan_Field_List__c.contains('caresp__Plan_Start_Date__c'), 'Field list should include Plan Start Date');
+        System.assert(
+            blueprint.Plan_Field_List__c.contains('__associated_record_link__'),
+            'Default section should include Associated Record field'
+        );
     }
 }

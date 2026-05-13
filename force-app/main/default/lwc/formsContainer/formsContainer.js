@@ -30,6 +30,7 @@ export default class FormsContainer extends LightningElement {
     requiresDocUpload = false;
     showSummary = false;
     createPDFOnly = false;
+    defaultZoomPercent = '130';
     generatePDF;
     prefillFields = false;
     formSaved = false;
@@ -39,6 +40,7 @@ export default class FormsContainer extends LightningElement {
     featureGateReady = false;
     formsFeatureGate;
     editDataLoaded = false;
+    isEditDataLoading = false;
 
     //get all the objects from salesforce org.
     @wire(getObjectsList)
@@ -83,6 +85,7 @@ export default class FormsContainer extends LightningElement {
         }
 
         this.editDataLoaded = true;
+        this.isEditDataLoading = true;
         fetchFormData({formId:this.editFormId})
             .then(result => {
                 this.formName = result.formName;
@@ -93,14 +96,17 @@ export default class FormsContainer extends LightningElement {
                 this.requiresDocUpload = result.requiresDocUpload;
                 this.showSummary = result.hasSummary;
                 this.createPDFOnly = result.pdfOnly;
+                this.defaultZoomPercent = result.defaultZoomPercent || '130';
                 this.generatePDF = result.generatePDF;
                 this.prefillFields = result.prefillFields;
                 this.objectStructureData = JSON.parse(result.objectStructure);
                 this.pageData = JSON.parse(result.pageData);
                 this.rules = result.rules?JSON.parse(result.rules):undefined;
+                this.isEditDataLoading = false;
             })
             .catch(error => {
                 this.editDataLoaded = false;
+                this.isEditDataLoading = false;
             });
     }
 
@@ -139,7 +145,15 @@ export default class FormsContainer extends LightningElement {
     }
 
     get dataLoading(){
-        return !this.objectListAll;
+        return !this.objectListAll || this.isEditDataLoading;
+    }
+
+    get showObjectStructureScreen() {
+        return (
+            this.objectListAll &&
+            (!this.isEdit || this.editDataLoaded) &&
+            !this.isEditDataLoading
+        );
     }
 
     //handle navigation forward
@@ -187,7 +201,7 @@ export default class FormsContainer extends LightningElement {
 
     //capture object struture on next
     handleObjectStructure(event){
-        [this.formName, this.objectStructureData, this.confirmationMessage, this.requiresSignature, this.requiresTextOnSignaturePage, this.signaturePageText, this.requiresDocUpload, this.showSummary, this.generatePDF, this.prefillFields, this.createPDFOnly] = [event.detail[0], event.detail[1], event.detail[2], event.detail[3], event.detail[4], event.detail[5], event.detail[6], event.detail[7], event.detail[8], event.detail[9], event.detail[10]];
+        [this.formName, this.objectStructureData, this.confirmationMessage, this.requiresSignature, this.requiresTextOnSignaturePage, this.signaturePageText, this.requiresDocUpload, this.showSummary, this.generatePDF, this.prefillFields, this.createPDFOnly, this.defaultZoomPercent] = [event.detail[0], event.detail[1], event.detail[2], event.detail[3], event.detail[4], event.detail[5], event.detail[6], event.detail[7], event.detail[8], event.detail[9], event.detail[10], event.detail[11]];
     }
 
     //capture form struture on next
@@ -220,7 +234,7 @@ export default class FormsContainer extends LightningElement {
                     })
                 }
             })
-            createFormRecord({formName:this.formName,isEdit:this.isEdit,recordId:this.editFormId, confirmationMessage:this.confirmationMessage, requiresSignature:this.requiresSignature, requiresTextOnSignaturePage:this.requiresTextOnSignaturePage, signaturePageText:this.signaturePageText, requiresDocUpload:this.requiresDocUpload, showSummary:this.showSummary, generatePDF:this.generatePDF, prefillFields:this.prefillFields, primaryObjectForPrefillForm:this.objectStructureData.selectedValue, isPDFOnly: this.createPDFOnly})
+            createFormRecord({formName:this.formName,isEdit:this.isEdit,recordId:this.editFormId, confirmationMessage:this.confirmationMessage, requiresSignature:this.requiresSignature, requiresTextOnSignaturePage:this.requiresTextOnSignaturePage, signaturePageText:this.signaturePageText, requiresDocUpload:this.requiresDocUpload, showSummary:this.showSummary, generatePDF:this.generatePDF, prefillFields:this.prefillFields, primaryObjectForPrefillForm:this.objectStructureData.selectedValue, isPDFOnly: this.createPDFOnly, defaultZoomPercent: this.defaultZoomPercent})
             .then(result => {
                 this.formId = result;
                 console.log('form id >> '+this.formId);

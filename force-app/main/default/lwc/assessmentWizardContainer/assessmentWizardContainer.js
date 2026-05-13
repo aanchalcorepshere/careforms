@@ -73,6 +73,43 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
         Promise.all([loadStyle(this, this.progressStyle)]);
     }
 
+    /**
+     * Backfill secText on each section row from caresp__Section_Text_JSON__c when
+     * older assessments only stored guidance in the slim JSON field.
+     */
+    mergeSectionTextIntoSections(sections, editRecord) {
+        if (!sections || !Array.isArray(sections) || !editRecord) {
+            return;
+        }
+        const rawJson =
+            editRecord.caresp__Section_Text_JSON__c ?? editRecord.Section_Text_JSON__c;
+        let byName = {};
+        if (rawJson) {
+            try {
+                const arr = JSON.parse(rawJson);
+                if (Array.isArray(arr)) {
+                    arr.forEach((row) => {
+                        if (row && Object.prototype.hasOwnProperty.call(row, 'secName')) {
+                            byName[String(row.secName)] = row.secText != null ? row.secText : '';
+                        }
+                    });
+                }
+            } catch (e) {
+                /* ignore invalid JSON */
+            }
+        }
+        sections.forEach((s) => {
+            const mapped = byName[s.secName];
+            const empty = s.secText === undefined || s.secText === null || s.secText === '';
+            if (empty && mapped !== undefined) {
+                s.secText = mapped;
+            }
+            if (s.secText === undefined || s.secText === null) {
+                s.secText = '';
+            }
+        });
+    }
+
     handleClose(){
         let confirmation = confirm('Are you sure you want to close? All unsaved changes will be lost.');
         if(confirmation){
@@ -96,9 +133,16 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
                     if(this.editAssessmentData.Field_Update_JSON__c){
                         this.completionFieldData = JSON.parse(this.editAssessmentData.Field_Update_JSON__c);
                     }
-                    this.questionsList = JSON.parse(this.editAssessmentData.Questions_JSON__c);
-                    if(this.editAssessmentData.Section_JSON__c){
-                        this.sections = JSON.parse(this.editAssessmentData.Section_JSON__c);
+                    const questionsJson =
+                        this.editAssessmentData.caresp__Questions_JSON__c ??
+                        this.editAssessmentData.Questions_JSON__c;
+                    this.questionsList = JSON.parse(questionsJson);
+                    const sectionJson =
+                        this.editAssessmentData.caresp__Section_JSON__c ??
+                        this.editAssessmentData.Section_JSON__c;
+                    if (sectionJson) {
+                        this.sections = JSON.parse(sectionJson);
+                        this.mergeSectionTextIntoSections(this.sections, this.editAssessmentData);
                     }
                     if(this.editAssessmentData.Scoring_JSON__c){
                         this.scoringData = JSON.parse(this.editAssessmentData.Scoring_JSON__c);
@@ -125,10 +169,17 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
                 if(this.editAssessmentData.Field_Update_JSON__c){
                     this.completionFieldData = JSON.parse(this.editAssessmentData.Field_Update_JSON__c);
                 }
-                this.questionsList = JSON.parse(this.editAssessmentData.Questions_JSON__c);
+                const questionsJsonCb =
+                    this.editAssessmentData.caresp__Questions_JSON__c ??
+                    this.editAssessmentData.Questions_JSON__c;
+                this.questionsList = JSON.parse(questionsJsonCb);
                 console.log('this.questionsList >> ',JSON.stringify(this.questionsList));
-                if(this.editAssessmentData.Section_JSON__c){
-                    this.sections = JSON.parse(this.editAssessmentData.Section_JSON__c);
+                const sectionJsonCb =
+                    this.editAssessmentData.caresp__Section_JSON__c ??
+                    this.editAssessmentData.Section_JSON__c;
+                if (sectionJsonCb) {
+                    this.sections = JSON.parse(sectionJsonCb);
+                    this.mergeSectionTextIntoSections(this.sections, this.editAssessmentData);
                     console.log("sections >> ",JSON.stringify(this.sections));
                 }
                 if(this.editAssessmentData.Scoring_JSON__c){
@@ -474,6 +525,18 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
     handleSubmit(){
         let confirmation = confirm("Are you sure you want to submit?");
         if(confirmation == true){
+            if (this.assessmentDetails.needSections && this.sections && this.sections.length) {
+                const sectionTextPayload = this.sections.map((s) => ({
+                    secName: s.secName,
+                    secText: s.secText || ''
+                }));
+                const sectionTextJsonStr = JSON.stringify(sectionTextPayload);
+                if (sectionTextJsonStr.length > 130000) {
+                    this.error =
+                        'Total Section Text exceeds storage limit. Please shorten one or more sections.';
+                    return;
+                }
+            }
             console.log("this.editAssessmentId >> ",this.editAssessmentId);
             createAssessmentRecord({assessmentName : this.assessmentDetails.assessmentName, description : this.assessmentDetails.assessmentDescription, active : this.assessmentDetails.active, editAssessmentId : this.editAssessmentId, objName:this.assessmentDetails.objectName})
             .then(result => {
@@ -543,6 +606,11 @@ export default class AssessmentWizardContainer extends NavigationMixin(Lightning
                         }
                         if(this.sections){
                             assessRec.caresp__Section_JSON__c = JSON.stringify(this.sections);
+                            const sectionTextPayload = this.sections.map((s) => ({
+                                secName: s.secName,
+                                secText: s.secText || ''
+                            }));
+                            assessRec.caresp__Section_Text_JSON__c = JSON.stringify(sectionTextPayload);
                         }
                         console.log("assessRec >> ",JSON.stringify(assessRec));
                         assessmentList.push(assessRec);

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>PT_Fields_To_Show__c</fullName>
+    <description>Subscriber-editable plan template field API names to show (comma separated).</description>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>Plan template fields to show from plan object (add &apos;,&apos; seperated field API name)</inlineHelpText>
+    <label>Plan Template Fields To Show</label>
+    <length>32768</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

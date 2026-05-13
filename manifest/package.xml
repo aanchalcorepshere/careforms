@@ -59,6 +59,7 @@
     <members>TriggerDispatcher</members>
     <members>IAssessmentAdditionalLookupProvider</members>
     <members>FormsErrorUtil</members>
+    <members>RequestSignatureForPlanController</members>
     <name>ApexClass</name>
   </types>
   <types>
@@ -93,6 +94,8 @@
     <members>PlanPrint</members>
     <members>PlanPrintCmp</members>
     <members>PlanTempModalCmp</members>
+    <members>GoalTempModalCmp</members>
+    <members>StepTempModalCmp</members>
     <name>AuraDefinitionBundle</name>
   </types>
   <types>
@@ -133,6 +136,7 @@
     <members>Assessment__c.Questions_JSON__c</members>
     <members>Assessment__c.Scoring_JSON__c</members>
     <members>Assessment__c.Section_JSON__c</members>
+    <members>Assessment__c.Section_Text_JSON__c</members>
     <members>Assessment__c.Total_Max_Score__c</members>
     <members>Assessment_Question__c.Assessment__c</members>
     <members>Assessment_Question__c.Dependent_Sequence__c</members>
@@ -188,6 +192,7 @@
     <members>Form__c.Requires_Text_for_Signature_Page__c</members>
     <members>Form__c.Show_Summary__c</members>
     <members>Form__c.Signature_Page_Text__c</members>
+    <members>Form__c.Default_Zoom_Percent__c</members>
     <members>Forms_Setting__mdt.Restricted_Object_List__c</members>
     <members>Goal__c.Account__c</members>
     <members>Goal__c.Client_DOB__c</members>
@@ -363,6 +368,7 @@
     <members>caresp__Assessment_Object_Mapping__mdt.caresp__Parent_Lookup_Field_API_Subscriber__c</members>
     <members>caresp__Assessment_Object_Mapping__mdt.caresp__Parent_Object_API_Subscriber__c</members>
     <members>caresp__Assessment_Object_Mapping__mdt.caresp__Related_Field_API_Subscriber__c</members>
+    <members>Dynamic_Plans_Restriction_Setttings__mdt.caresp__PT_Fields_To_Show__c</members>
 
     <!-- New fields which are subscriber editable END-->
     <name>CustomField</name>
@@ -404,6 +410,8 @@
     <members>Step_Template_Record_Page</members>
     <members>Caresphere_Plus_Forms_UtilityBar</members>
     <members>Caresphere_Plus_Plans_UtilityBar</members>
+    <members>Goal_Template_Record_Page</members>
+    <members>Step_Template_Record_Page</members>
     <name>FlexiPage</name>
   </types>
   <types>
@@ -447,6 +455,8 @@
     <members>Step__c</members>
     <members>Step_Template__c</members>
     <members>Trigger_Setting__mdt</members>
+    <members>Goal_Template_Field_Blueprint__c</members>
+    <members>Step_Template_Field_Blueprint__c</members>
     <name>CustomObject</name>
   </types>
   <types>
@@ -514,6 +524,8 @@
     <members>signatureCmpForForms</members>
     <members>formsUnavailablePanel</members>
     <members>formsErrorUtils</members>
+    <members>createGoalTempFieldBlueprint</members>
+    <members>createStepTempFieldBlueprint</members>
     <name>LightningComponentBundle</name>
   </types>
   <types>
@@ -535,6 +547,8 @@
     <members>caresp__Form__c.Launch_Form</members>
     <members>caresp__Outcome__c.PDF_View</members>
     <members>caresp__Plan_Template__c.Create_Field_Blueprint</members>
+    <members>Goal_Template__c.Create_Goal_Field_Blueprints</members>
+    <members>Step_Template__c.Create_Step_Field_Blueprints</members>
     <name>QuickAction</name>
   </types>
   <types>
@@ -588,6 +602,8 @@
     <members>caresp__Assessment_Object_Mapping__mdt-Assessment Object Mapping Layout</members>
     <members>caresp__Assessment_Filter_Config__mdt-Assessment Filter Config Layout</members>
     <members>caresp__Assessment_Additional_Lookup_Config__mdt-Assessment Additional Lookup Config Layout</members>
+    <members>Goal_Template_Field_Blueprint__c-Goal Template Field Blueprint Layout</members>
+    <members>Step_Template_Field_Blueprint__c-Step Template Field Blueprint Layout</members>
     <name>Layout</name>
   </types>
   <version>61.0</version>

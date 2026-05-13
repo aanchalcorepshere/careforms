@@ -47,5 +47,17 @@ public with sharing class AnswerTriggerHandlerTest {
             delete ans2;
             undelete ans2;
         }
-    }     
+    }
+
+    @isTest
+    static void testHandler_interfaceHooks_executeWithoutError() {
+        AnswerTriggerHandler handlerInstance = new AnswerTriggerHandler();
+        Test.startTest();
+        handlerInstance.BeforeInsert(new List<SObject>());
+        handlerInstance.AfterInsert(new Map<Id, SObject>());
+        handlerInstance.AfterUpdate(new Map<Id, SObject>(), new Map<Id, SObject>());
+        handlerInstance.AfterDelete(new Map<Id, SObject>());
+        handlerInstance.AfterUndelete(new Map<Id, SObject>());
+        Test.stopTest();
+    }
 }

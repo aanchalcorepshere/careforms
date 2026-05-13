@@ -1,0 +1,22 @@
+.section-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.section-table .col-number {
+    width: 8rem;
+    min-width: 8rem;
+    max-width: 8rem;
+}
+
+.section-table .col-action {
+    width: 10rem;
+    min-width: 10rem;
+    max-width: 10rem;
+}
+
+.section-table .col-name {
+    width: 32rem;
+    min-width: 32rem;
+    max-width: 32rem;
+}

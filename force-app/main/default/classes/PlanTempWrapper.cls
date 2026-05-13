@@ -1,18 +1,31 @@
-// Wrapper class used to represent a plan template structure,
-// including its name, associated sections, and configuration settings.
+/**
+ * @description Wrapper representing a Plan Template structure, including plan field sections,
+ *              goal field blueprints, and step field blueprints for the wizard UI.
+ * @author Team Standard
+ * @lastModified May 2026
+ */
 public with sharing class PlanTempWrapper {
 
     @AuraEnabled
-    Public String templateName {get; set;}
-    
-    @AuraEnabled 
-    Public List<SectionInformation> sectionInformations {get; set;}
-    
+    public String templateName {get; set;}
+
+    /** Plan-level field sections from Plan_Template_Field_Blueprint__c */
     @AuraEnabled
-    Public String parentDateField {get; set;}
-    
+    public List<SectionInformation> sectionInformations {get; set;}
+
+    /** Goal-level field sections from Goal_Template_Field_Blueprint__c */
     @AuraEnabled
-    Public Decimal noOfDaysToAdd {get; set;}
+    public List<SectionInformation> goalSectionInformations {get; set;}
+
+    /** Step-level field sections from Step_Template_Field_Blueprint__c */
+    @AuraEnabled
+    public List<SectionInformation> stepSectionInformations {get; set;}
+
+    @AuraEnabled
+    public String parentDateField {get; set;}
+
+    @AuraEnabled
+    public Decimal noOfDaysToAdd {get; set;}
     
     // Inner class to hold section-specific information, including fields and section name.
     Public Class SectionInformation {

@@ -2,6 +2,9 @@
 // Implements ITriggerHandler to standardize trigger handling methods.
 public with sharing class PlanTemplateTriggerHelper implements ITriggerHandler 
 {
+    private static final String ASSOCIATED_RECORD_FIELD_KEY = '__associated_record_link__';
+    private static final String SERVICE_NAME_FIELD_KEY = '__service_name_display__';
+
     // Executes before inserting new records.
     public void BeforeInsert(List<SObject> newItems) {}
 
@@ -81,6 +84,10 @@ public with sharing class PlanTemplateTriggerHelper implements ITriggerHandler
                         jsonDefault.add(newField);
                     }
                 }
+                jsonDefault.add(buildDefaultDisplayField('Associated Record', ASSOCIATED_RECORD_FIELD_KEY, 'REFERENCE'));
+                if (isAssignedServiceParent(parentObjName, parentChildRelation, metadataInfo)) {
+                    jsonDefault.add(buildDefaultDisplayField('Service Name', SERVICE_NAME_FIELD_KEY, 'TEXT'));
+                }
 
                 // Create blueprint record with proper security (High fix - removed redundant FLS checks)
                 if (!jsonDefault.isEmpty()) {
@@ -105,5 +112,29 @@ public with sharing class PlanTemplateTriggerHelper implements ITriggerHandler
             System.debug(LoggingLevel.ERROR, 'Error in createDefaultSection: ' + ex.getMessage());
             // Don't throw exception in trigger context, just log the error
         }
+    }
+
+    private static Boolean isAssignedServiceParent(String parentObjName, String parentChildRelation, PlanWizController.MetadataInfoWrapper metadataInfo) {
+        String parentObjNameLower = parentObjName == null ? '' : parentObjName.toLowerCase();
+        String parentChildLower = parentChildRelation == null ? '' : parentChildRelation.toLowerCase();
+        String planFilterLower = (metadataInfo == null || metadataInfo.planFilterFieldName == null) ? '' : metadataInfo.planFilterFieldName.toLowerCase();
+        return parentObjNameLower.contains('client_service')
+            || parentObjNameLower.contains('assigned_service')
+            || parentChildLower.contains('assigned service')
+            || parentChildLower.contains('assigned_service')
+            || planFilterLower.contains('assigned_service');
+    }
+
+    private static Map<String, String> buildDefaultDisplayField(String label, String value, String dataType) {
+        Map<String, String> newField = new Map<String, String>();
+        newField.put('label', label);
+        newField.put('value', value);
+        newField.put('dataType', dataType);
+        newField.put('isMandatory', 'false');
+        newField.put('isEditable', 'false');
+        newField.put('isFormulaField', 'false');
+        newField.put('isEditDisabled', 'true');
+        newField.put('isReqDisabled', 'true');
+        return newField;
     }
 }

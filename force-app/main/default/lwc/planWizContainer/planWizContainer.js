@@ -26,6 +26,8 @@ import SIGNATUREDATE_FIELD from "@salesforce/schema/Plan__c.Plan_Signed_Date__c"
 //import updateRequestSignatureDetails from "@salesforce/apex/RequestSignatureForPlanController.updateRequestSignatureDetails";
 import getPlanDraft from '@salesforce/apex/PlanWizController.getPlanDraft';
 
+const ASSOCIATED_RECORD_FIELD_KEY = '__associated_record_link__';
+const SERVICE_NAME_DISPLAY_FIELD_KEY = '__service_name_display__';
 
 
 export default class PlanWizContainer extends NavigationMixin(LightningElement) {
@@ -33,6 +35,8 @@ export default class PlanWizContainer extends NavigationMixin(LightningElement) 
     @api forPrint = false; showStatus = true;
     @track metadataInformation = {};
     @track planTemplateData = {};
+    @track goalFieldBlueprints = [];
+    @track stepFieldBlueprints = [];
     @track planJSONToStore = {};
     isLoading = false;
     selectedPlanType;
@@ -65,6 +69,9 @@ export default class PlanWizContainer extends NavigationMixin(LightningElement) 
     @track optionsPlanType = [];
     isService = false; isCase = false;
     optionsPlanDraft = [];
+    associatedParentRecordData;
+    associatedServiceRecordData;
+    resolvedServiceRecordData;
     isPermanencyPlan = false;
     isSafetyPlan = false;
     clientENoticesOptOut = false;
@@ -96,7 +103,28 @@ export default class PlanWizContainer extends NavigationMixin(LightningElement) 
 
     }
 
-
+    /**
+     * Match loaded Plan type text to the combobox options so goal/step blueprints apply when
+     * opening a saved Plan (no combobox selection) or when templates load after the Plan wire.
+     */
+    applyGoalStepBlueprintsForCurrentPlanType() {
+        try {
+            if (!this.planType || !this.optionsPlanType || this.optionsPlanType.length === 0) {
+                return;
+            }
+            const normalized = (this.planType || '').trim().toLowerCase();
+            const match = this.optionsPlanType.find(
+                (opt) => ((opt.label || '').trim().toLowerCase() === normalized)
+            );
+            if (match) {
+                this.goalFieldBlueprints = match.goalSectionInformations || [];
+                this.stepFieldBlueprints = match.stepSectionInformations || [];
+                this.selectedPlanTypeId = match.value;
+            }
+        } catch (e) {
+            console.error('applyGoalStepBlueprintsForCurrentPlanType', e);
+        }
+    }
 
     getPlanTemplates() {
         this.isLoading = true;
@@ -108,10 +136,19 @@ export default class PlanWizContainer extends NavigationMixin(LightningElement) 
                 console.log('in  getPlanTemplates data' + JSON.stringify(data));
                 let planTypes = [];
                 for (let [key, value] of Object.entries(data)) {
-                    planTypes.push({ label: value.templateName, value: key, parentDateField: value.parentDateField, noOfDaysToAdd: value.noOfDaysToAdd, sectionInformations: value.sectionInformations });
+                    planTypes.push({
+                        label: value.templateName,
+                        value: key,
+                        parentDateField: value.parentDateField,
+                        noOfDaysToAdd: value.noOfDaysToAdd,
+                        sectionInformations: value.sectionInformations,
+                        goalSectionInformations: value.goalSectionInformations || [],
+                        stepSectionInformations: value.stepSectionInformations || []
+                    });
                 }
                 this.optionsPlanType = [...planTypes];
                 console.log('optionsPlanType>>>' + JSON.stringify(this.optionsPlanType));
+                this.applyGoalStepBlueprintsForCurrentPlanType();
                 this.isLoading = false;
             })
             .catch(error => {
@@ -130,6 +167,8 @@ export default class PlanWizContainer extends NavigationMixin(LightningElement) 
             .then(result => {
                 this.parentRecordData = result;
                 console.log('Record Data:', JSON.stringify(this.parentRecordData));
+                this.fetchAssociatedParentRecordData();
+                this.fetchAssignedServiceRecordData();
                 this.isLoading = false;
             })
             .catch(error => {
@@ -149,6 +188,8 @@ export default class PlanWizContainer extends NavigationMixin(LightningElement) 
             const parentDateField = selectedPlanTempData.parentDateField;
             const noOfDaysToAdd = selectedPlanTempData.noOfDaysToAdd || 0;
             this.planTemplateData = selectedPlanTempData.sectionInformations;
+            this.goalFieldBlueprints = selectedPlanTempData.goalSectionInformations || [];
+            this.stepFieldBlueprints = selectedPlanTempData.stepSectionInformations || [];
             if (this.planTemplateData) {
                 this.planJSONToStore = this.planTemplateData;
                 this.isPlanTemDataFound = true;
@@ -219,6 +260,7 @@ export default class PlanWizContainer extends NavigationMixin(LightningElement) 
                 this.planFilterField = data.planFilterFieldName;
                 this.metadataInformation.label = data.label;
                 this.parentChildRelName = data.label;
+                this.fetchAssociatedParentRecordData();
                 this.getPlanTemplates();
                 this.isLoading = false;
 
@@ -282,6 +324,7 @@ export default class PlanWizContainer extends NavigationMixin(LightningElement) 
                 this.planStartDate = result.data.caresp__Plan_Start_Date__c;
                 this.isSignDateFilled = !(result.data.caresp__Plan_Signed_Date__c == null || result.data.caresp__Plan_Signed_Date__c == undefined || result.data.caresp__Plan_Signed_Date__c == "");
                 this.prepareJSONUIRender(result.data.caresp__Plan_Status__c);
+                this.applyGoalStepBlueprintsForCurrentPlanType();
             }
 
 
@@ -311,9 +354,28 @@ export default class PlanWizContainer extends NavigationMixin(LightningElement) 
     prepareJSONUIRender(status) {
         console.log('this.isSignDateFilled in prepare json >>>' + this.isSignDateFilled);
         try {
-            let updatedPlanTemplateData = this.planTemplateData.map(section => {
+            let sourcePlanTemplateData = JSON.parse(JSON.stringify(this.planTemplateData || []));
+            sourcePlanTemplateData = this.ensureDefaultPlanContextFields(sourcePlanTemplateData);
+            let updatedPlanTemplateData = sourcePlanTemplateData.map(section => {
                 let updatedFieldBlueprints = section.fieldBlueprints.map(field => {
                     let updatedField = { ...field };
+
+                    if (updatedField.value === ASSOCIATED_RECORD_FIELD_KEY) {
+                        updatedField.label = 'Associated Record';
+                        updatedField.isAssociatedRecordField = true;
+                        updatedField.isStaticDisplayField = true;
+                        updatedField.isReadOnly = true;
+                        updatedField.isMandatory = false;
+                        updatedField.isHyperLink = true;
+                    }
+                    if (updatedField.value === SERVICE_NAME_DISPLAY_FIELD_KEY) {
+                        updatedField.label = 'Service Name';
+                        updatedField.isServiceNameField = true;
+                        updatedField.isStaticDisplayField = true;
+                        updatedField.isReadOnly = true;
+                        updatedField.isMandatory = false;
+                        updatedField.isHyperLink = false;
+                    }
 
                     if (updatedField.value == 'caresp__Plan_Version_F__c' || updatedField.value == 'caresp__Parent_Plan_F__c') {
                         if (!this.planExists) {
@@ -369,6 +431,272 @@ export default class PlanWizContainer extends NavigationMixin(LightningElement) 
         } catch (error) {
             console.error('error occurred in prepareJSONUIRender>>> ' + error);
         }
+    }
+
+    ensureDefaultPlanContextFields(planTemplateData) {
+        if (!Array.isArray(planTemplateData) || planTemplateData.length === 0) {
+            return planTemplateData;
+        }
+
+        const defaultSection = planTemplateData[0];
+        if (!defaultSection) {
+            return planTemplateData;
+        }
+
+        if (!Array.isArray(defaultSection.fieldBlueprints)) {
+            defaultSection.fieldBlueprints = [];
+        }
+
+        defaultSection.fieldBlueprints = defaultSection.fieldBlueprints.filter(
+            (field) => field?.value !== ASSOCIATED_RECORD_FIELD_KEY && field?.value !== SERVICE_NAME_DISPLAY_FIELD_KEY
+        );
+
+        const associatedRecordField = {
+            label: 'Associated Record',
+            value: ASSOCIATED_RECORD_FIELD_KEY,
+            dataType: 'REFERENCE',
+            isMandatory: false,
+            isEditable: false,
+            isReadOnly: true,
+            isHyperLink: true,
+            isEditDisabled: true,
+            isReqDisabled: true,
+            isFormulaField: false,
+            isAssociatedRecordField: true,
+            isStaticDisplayField: true
+        };
+
+        // Keep this in the third visual row when possible (3-column layout => index 6).
+        const associatedInsertIndex = Math.min(6, defaultSection.fieldBlueprints.length);
+        defaultSection.fieldBlueprints.splice(associatedInsertIndex, 0, associatedRecordField);
+
+        if (this.isAssignedServiceContext()) {
+            defaultSection.fieldBlueprints.splice(Math.min(associatedInsertIndex + 1, defaultSection.fieldBlueprints.length), 0, {
+                label: 'Service Name',
+                value: SERVICE_NAME_DISPLAY_FIELD_KEY,
+                dataType: 'TEXT',
+                isMandatory: false,
+                isEditable: false,
+                isReadOnly: true,
+                isHyperLink: false,
+                isEditDisabled: true,
+                isReqDisabled: true,
+                isFormulaField: false,
+                isServiceNameField: true,
+                isStaticDisplayField: true
+            });
+        }
+
+        return planTemplateData;
+    }
+
+    getParentFieldDisplayLabel() {
+        const relLabel = this.metadataInformation?.label;
+        if (relLabel && relLabel.includes('-')) {
+            return relLabel.split('-')[0].trim();
+        }
+        if (this.objectApiName && this.objectApiName !== 'caresp__Plan__c') {
+            return this.formatObjectApiAsLabel(this.objectApiName);
+        }
+        return 'Parent';
+    }
+
+    formatObjectApiAsLabel(apiName) {
+        if (!apiName) return '';
+        const noNs = String(apiName).replace(/^[a-zA-Z0-9]+__/, '');
+        const noSuffix = noNs.replace(/__c$/i, '').replace(/_/g, ' ');
+        return noSuffix.charAt(0).toUpperCase() + noSuffix.slice(1);
+    }
+
+    normalizeFieldApi(apiName) {
+        if (!apiName) return '';
+        const trimmed = String(apiName).trim();
+        return trimmed.replace(/^[a-zA-Z0-9]+__/, '').toLowerCase();
+    }
+
+    areFieldApisEquivalent(fieldA, fieldB) {
+        if (!fieldA || !fieldB) return false;
+        const a = String(fieldA).trim().toLowerCase();
+        const b = String(fieldB).trim().toLowerCase();
+        return a === b || this.normalizeFieldApi(a) === this.normalizeFieldApi(b);
+    }
+
+    getRecordFieldValue(record, fieldApiName) {
+        if (!record || !fieldApiName) {
+            return null;
+        }
+        if (record[fieldApiName] !== undefined) {
+            return record[fieldApiName];
+        }
+
+        const normalizedTarget = this.normalizeFieldApi(fieldApiName);
+        const recKeys = Object.keys(record);
+        for (const key of recKeys) {
+            if (this.normalizeFieldApi(key) === normalizedTarget) {
+                return record[key];
+            }
+        }
+        return null;
+    }
+
+    get parentObjectApiNameForContext() {
+        const relLabel = this.metadataInformation?.label;
+        if (relLabel && relLabel.includes('-')) {
+            return relLabel.split('-')[0].trim();
+        }
+        return this.objectApiName;
+    }
+
+    isAssignedServiceContext() {
+        const parentObj = (this.parentObjectApiNameForContext || this.objectApiName || '').toLowerCase();
+        const planFilterApi = (this.metadataInformation?.planFilterFieldName || '').toLowerCase();
+        return parentObj.includes('client_service')
+            || parentObj.includes('assigned_service')
+            || planFilterApi.includes('assigned_service');
+    }
+
+    fetchAssociatedParentRecordData() {
+        const parentObjApiName = this.parentObjectApiNameForContext;
+        const associatedId = this.associatedRecordId;
+        if (!this.fromPlan || !parentObjApiName || !associatedId) {
+            return;
+        }
+        getParentObjRec({ parentObjName: parentObjApiName, recordId: associatedId })
+            .then(result => {
+                this.associatedParentRecordData = result;
+                this.fetchAssignedServiceRecordData();
+            })
+            .catch(error => {
+                console.error('error occured in fetchAssociatedParentRecordData>>> ' + JSON.stringify(error));
+            });
+    }
+
+    fetchAssignedServiceRecordData() {
+        this.associatedServiceRecordData = null;
+        this.resolvedServiceRecordData = null;
+        if (!this.isAssignedServiceContext()) {
+            return;
+        }
+        const source = this.fromPlan ? (this.associatedParentRecordData || this.parentRecordData) : this.parentRecordData;
+        const assignedServiceId = this.getAssignedServiceLookupId(source);
+        if (!assignedServiceId) {
+            this.fetchServiceRecordFromSource(source);
+            return;
+        }
+        const objectCandidates = this.getAssignedServiceObjectCandidates();
+        this.tryFetchAssignedServiceRecord(objectCandidates, assignedServiceId, 0);
+    }
+
+    getAssignedServiceObjectCandidates() {
+        const candidates = [];
+        const addCandidate = (apiName) => {
+            if (!apiName) {
+                return;
+            }
+            const trimmed = String(apiName).trim();
+            if (trimmed && !candidates.includes(trimmed)) {
+                candidates.push(trimmed);
+            }
+        };
+
+        const normalizedFilter = this.normalizeFieldApi(this.metadataInformation?.planFilterFieldName);
+        if (normalizedFilter === 'assigned_service__c') {
+            addCandidate(this.metadataInformation?.planFilterFieldName);
+            addCandidate('caresp__Assigned_Service__c');
+            addCandidate('Assigned_Service__c');
+        }
+        addCandidate('caresp__Service__c');
+        addCandidate('Service__c');
+        return candidates;
+    }
+
+    tryFetchAssignedServiceRecord(objectCandidates, recordId, index) {
+        if (!Array.isArray(objectCandidates) || index >= objectCandidates.length) {
+            const source = this.fromPlan ? (this.associatedParentRecordData || this.parentRecordData) : this.parentRecordData;
+            this.fetchServiceRecordFromSource(source);
+            return;
+        }
+        getParentObjRec({ parentObjName: objectCandidates[index], recordId })
+            .then(result => {
+                this.associatedServiceRecordData = result;
+                this.fetchServiceRecordFromSource(result);
+            })
+            .catch(() => {
+                this.tryFetchAssignedServiceRecord(objectCandidates, recordId, index + 1);
+            });
+    }
+
+    getAssignedServiceLookupId(sourceRecord) {
+        if (!sourceRecord) {
+            return null;
+        }
+        return this.getRecordFieldValue(sourceRecord, this.metadataInformation?.planFilterFieldName)
+            || this.getRecordFieldValue(sourceRecord, 'caresp__Assigned_Service__c')
+            || this.getRecordFieldValue(sourceRecord, 'Assigned_Service__c');
+    }
+
+    fetchServiceRecordFromSource(sourceRecord) {
+        this.resolvedServiceRecordData = null;
+        const serviceLookupId = this.getRecordFieldValue(sourceRecord, 'caresp__Service__c')
+            || this.getRecordFieldValue(sourceRecord, 'Service__c');
+        if (!serviceLookupId) {
+            return;
+        }
+        this.tryFetchServiceRecord(serviceLookupId, ['Service', 'caresp__Service__c'], 0);
+    }
+
+    tryFetchServiceRecord(recordId, objectCandidates, index) {
+        if (!recordId || !Array.isArray(objectCandidates) || index >= objectCandidates.length) {
+            return;
+        }
+        getParentObjRec({ parentObjName: objectCandidates[index], recordId })
+            .then(result => {
+                this.resolvedServiceRecordData = result;
+            })
+            .catch(() => {
+                this.tryFetchServiceRecord(recordId, objectCandidates, index + 1);
+            });
+    }
+
+    get associatedRecordId() {
+        if (!this.fromPlan) {
+            return this.recordId;
+        }
+        const parentFieldApi = this.metadataInformation?.planFilterFieldName;
+        if (!parentFieldApi) {
+            return null;
+        }
+        return this.getRecordFieldValue(this.parentRecordData, parentFieldApi);
+    }
+
+    get associatedRecordDisplayName() {
+        const source = this.fromPlan ? (this.associatedParentRecordData || this.parentRecordData) : this.parentRecordData;
+        if (!source) {
+            return null;
+        }
+        return this.getRecordFieldValue(source, 'Name')
+            || this.getRecordFieldValue(source, 'caresp__Plan_Name__c')
+            || null;
+    }
+
+    get serviceNameDisplayValue() {
+        const source = this.fromPlan ? (this.associatedParentRecordData || this.parentRecordData) : this.parentRecordData;
+        const serviceSource = this.associatedServiceRecordData || source;
+        return this.getRecordFieldValue(serviceSource, 'caresp__Service_Name__c')
+            || this.getRecordFieldValue(serviceSource, 'Service_Name__c')
+            || this.getRecordFieldValue(this.resolvedServiceRecordData, 'Name')
+            || this.getRecordFieldValue(source, 'caresp__Service_Name__c')
+            || this.getRecordFieldValue(source, 'Service_Name__c')
+            || '';
+    }
+
+    get parentRecordLinkLabel() {
+        return this.associatedRecordDisplayName || this.associatedRecordId;
+    }
+
+    get parentRecordUrl() {
+        const assocId = this.associatedRecordId;
+        return assocId ? '/' + assocId : null;
     }
 
 

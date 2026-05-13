@@ -1,6 +1,10 @@
 import { LightningElement, track, wire, api } from 'lwc';
 import getResponses from '@salesforce/apex/OutcomeCmpController.getResponses';
 
+/**
+ * Outcome Q&A view is built from Response records only.
+ * Assessment section guidance (Section Text) is intentionally not shown here or on Outcome/PDF flows.
+ */
 export default class OutcomeQuestionnaire extends LightningElement {
     isSubmit = true;
     @api outcomeId;

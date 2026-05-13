@@ -87,6 +87,7 @@ public with sharing class AssessmentWizardControllerTest {
         AssessmentWizardController.getCompatibleFieldsBoolPick(new List<String>{'caresp__Assessment__c'});
         AssessmentWizardController.getFieldTypeAndValues('Contact|LeadSource');
         AssessmentWizardController.getQuestionsForSelection(true);
+        AssessmentWizardController.getQuestionsForSelection(false);
         String jsonStr = '[{"level":"level1","parent":"none","grandparent":"none","quesId":"'+quesList[0].Id+'","quesText":"Poor appetite or overeating?", "dataType":"Radio Box","quesAnsOptions":"Not at all|Several Days|More than half the days|Nearly every day","sequence":1,"sfSeq":1,"score":[],"section":"Default Section","sectionSequence":"1","unique":"Default Section_level1_'+quesList[0].Id+'_1","dependentAllowed":true,"dependentQuesData":[{"ansOpId":"'+qaoList[0].Id+'","ansOpText":"Not at all","dependentQuesList":[{"level":"level2","parent":"'+quesList[0].Id+'","sequence":1,"sfSeq":"A","dependentAllowed":true,"ansOpId":"'+qaoList[0].Id+'","quesId":"'+quesList[1].Id+'","quesText":"Feeling tired or having little","dataType":"Picklist","quesAnsOptions":"Not at all|Several Days|More than half the days|Nearly every day","unique":"Default Section_level2_'+quesList[1].Id+'_A","dependentQuesData":[{"ansOpText":"Not at all","ansOpId":"'+qaoList[4].Id+'","dependentQuesList":[{"level":"level3","parent":"'+quesList[1].Id+'","grandparent":"'+quesList[0].Id+'","sequence":1,"sfSeq":"i","dependentAllowed":true,"ansOpId":"'+qaoList[4].Id+'","grandParentAnsOpId":"'+qaoList[0].Id+'","quesId":"'+quesList[2].Id+'","quesText":"What is your occupation?","dataType":"Text","quesAnsOptions":null,"unique":"Default Section_level3_'+quesList[2].Id+'_i","aqId":""}]},{"ansOpText":"Several Days","ansOpId":"'+qaoList[5].Id+'","dependentQuesList":[]},{"ansOpText":"More than half the days","ansOpId":"'+qaoList[6].Id+'","dependentQuesList":[]},{"ansOpText":"Nearly every day","ansOpId":"'+qaoList[7].Id+'","dependentQuesList":[]}],"aqId":""}],"score":"10"},{"ansOpId":"'+qaoList[1].Id+'","ansOpText":"Several Days","dependentQuesList":[],"score":"20"},{"ansOpId":"'+qaoList[2].Id+'","ansOpText":"More than half the days","dependentQuesList":[],"score":"30"},{"ansOpId":"'+qaoList[3].Id+'","ansOpText":"Nearly every day","dependentQuesList":[],"score":"40"}],"maxScore":40,"objectname":"Client_Service__c","fieldlist":[{"value":"notes__c","label":"Notes(Client_Service__c)"},{"value":"other_info__c","label":"Other Info(Client_Service__c)"},{"value":"test_field__c","label":"Test Field(Client_Service__c)"}],"fieldname":"test_field__c","scorelist":"'+qaoList[0].Id+'|10;'+qaoList[1].Id+'|20;'+qaoList[2].Id+'|30;'+qaoList[3].Id+'|40","aqId":""}]';
         System.debug('jsonStr >> '+jsonStr);
         System.debug('assessment >> '+assessment);
@@ -94,6 +95,27 @@ public with sharing class AssessmentWizardControllerTest {
         AssessmentWizardController.updateJsonData(assessmentList);
         AssessmentWizardController.updateCompletionFieldData(assessmentRec.Id,'','');
         AssessmentWizardController.getCompatibleFields('caresp__Assessment__c');
-       
+
+        caresp__Assessment__c editJsonRow = AssessmentWizardController.getEditJson(assessmentRec.Id);
+        System.assertNotEquals(null, editJsonRow);
+
+        List<caresp__Scoring__c> scoringRows = [
+            SELECT Id, caresp__Assessment__c FROM caresp__Scoring__c LIMIT 1
+        ];
+        if (!scoringRows.isEmpty()) {
+            AssessmentWizardController.createScoringRecords(
+                new List<caresp__Scoring__c>(),
+                scoringRows[0].caresp__Assessment__c
+            );
+        }
+
+        caresp__Assessment__c existing = [SELECT Id FROM caresp__Assessment__c LIMIT 1];
+        AssessmentWizardController.createAssessmentRecord(
+            'Renamed In Test ' + String.valueOf(System.now().getTime()),
+            'Updated via test',
+            true,
+            existing.Id,
+            'Account'
+        );
     }
 }

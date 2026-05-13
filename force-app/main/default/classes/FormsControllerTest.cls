@@ -125,20 +125,24 @@ private class FormsControllerTest {
     static void testCreateFormRecord() {
         Test.startTest();
         // Test creating a new form
-        String formId = FormsController.createFormRecord('Test Form', false, null, 'Test Confirmation', true, true, 'Sign here', true, true, true, false, null, false);
+        String formId = FormsController.createFormRecord('Test Form', false, null, 'Test Confirmation', true, true, 'Sign here', true, true, true, false, null, false, '160');
         
         // Test editing an existing form
-        String editedFormId = FormsController.createFormRecord('Edited Test Form', true, formId, 'Edited Confirmation', false, false, '', false, false, false, true, 'Account', true);
+        String editedFormId = FormsController.createFormRecord('Edited Test Form', true, formId, 'Edited Confirmation', false, false, '', false, false, false, true, 'Account', true, null);
         Test.stopTest();
 
         // Verify that Ids were returned
         System.assertNotEquals(null, formId, 'Should return the Id of the created form');
         System.assertEquals(formId, editedFormId, 'Should return the same Id when editing');
 
+        caresp__Form__c createdForm = [SELECT caresp__Default_Zoom_Percent__c FROM caresp__Form__c WHERE Id = :formId];
+        System.assertEquals('160', createdForm.caresp__Default_Zoom_Percent__c, 'Default zoom should persist on create');
+
         // Verify the edits
-        caresp__Form__c updatedForm = [SELECT Id, careSP__Form_Name__c, careSP__Prefill_Fields__c FROM careSP__Form__c WHERE Id = :editedFormId];
+        caresp__Form__c updatedForm = [SELECT Id, careSP__Form_Name__c, careSP__Prefill_Fields__c, caresp__Default_Zoom_Percent__c FROM careSP__Form__c WHERE Id = :editedFormId];
         System.assertEquals('Edited Test Form', updatedForm.careSP__Form_Name__c, 'Form name should be updated');
         System.assertEquals(true, updatedForm.careSP__Prefill_Fields__c, 'Prefill Fields should be updated');
+        System.assertEquals('160', updatedForm.caresp__Default_Zoom_Percent__c, 'Default zoom should be unchanged when not sent on edit');
     }
 
     // Test method for saveFormData
@@ -177,7 +181,8 @@ private class FormsControllerTest {
             caresp__Form_Name__c = 'Fetch Test',
             caresp__Confirmation_Message__c = 'Fetched!',
             caresp__Requires_Signature__c = true,
-            caresp__Generate_PDF__c = true
+            caresp__Generate_PDF__c = true,
+            caresp__Default_Zoom_Percent__c = '150'
         );
         insert testForm;
 
@@ -197,6 +202,7 @@ private class FormsControllerTest {
         System.assertEquals(pageDataJson, result.pageData, 'Should fetch the correct page data JSON');
         System.assertEquals(rulesJson, result.rules, 'Should fetch the correct rules JSON');
         System.assertEquals(true, result.requiresSignature, 'Should fetch the correct requires signature value');
+        System.assertEquals('150', result.defaultZoomPercent, 'Should fetch default zoom percent');
     }
 
     // Test method for getQuestionAnswerOptions

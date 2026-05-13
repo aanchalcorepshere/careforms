@@ -82,9 +82,16 @@
         <div class="slds-box slds-m-around_medium slds-scrollable" style="height: 380px;">
             <div class="bringtotop"></div>
             <template if:true={sections} for:each={sections} for:item="section" for:index="index">
-                <template if:true={section.flag}>
-                    <c-assessment-launcher key={section.sectionSequence} section={section.sectionName} onresponses={handleResponses} questions-from-section-handler={section.questionData}></c-assessment-launcher>
-                </template>
+                <div key={section.sectionSequence}>
+                    <template if:true={section.flag}>
+                        <template if:true={section.secText}>
+                            <div class="slds-box slds-theme_shade slds-m-bottom_small section-text" role="note">
+                                <lightning-formatted-rich-text value={section.secText}></lightning-formatted-rich-text>
+                            </div>
+                        </template>
+                        <c-assessment-launcher section={section.sectionName} onresponses={handleResponses} questions-from-section-handler={section.questionData}></c-assessment-launcher>
+                    </template>
+                </div>
             </template>
         </div>
         <div class="slds-align_absolute-center">

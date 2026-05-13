@@ -1,0 +1,25 @@
+.container {
+    padding: 1rem;
+}
+
+.head {
+    padding: 0.5rem 1rem;
+}
+
+.custom-input {
+    padding: 0.5rem 1rem;
+}
+
+.custom-multi-select-picklist {
+    padding: 0.5rem 1rem;
+}
+
+.field-label {
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.custom-buttons {
+    padding: 1rem;
+    gap: 0.5rem;
+}

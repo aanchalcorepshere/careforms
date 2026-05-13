@@ -60,9 +60,9 @@
         </div>
         <!-- OBJECT STRUCTURE COMPONENT STARTS -->
         <template if:true={isObjectStructure}>
-            <template if:true={objectListAll}>
+            <template if:true={showObjectStructureScreen}>
                 <div class="slds-m-top_medium">
-                    <c-forms-object-structure-screen primary-obj-list={objectListAll} onobjectstructure={handleObjectStructure} onformname={handleFormName} existing-data={objectStructureData} existing-form-name={formName} existing-confirmation-message={confirmationMessage} existing-requires-signature={requiresSignature} existing-requires-text-on-signature-page={requiresTextOnSignaturePage} existing-signature-page-text={signaturePageText} existing-requires-doc-upload={requiresDocUpload} existing-show-summary={showSummary} existing-generate-pdf={generatePDF} existing-prefill-fields={prefillFields} existing-create-pdf-only={createPDFOnly} is-edit={isEdit}></c-forms-object-structure-screen>
+                    <c-forms-object-structure-screen primary-obj-list={objectListAll} onobjectstructure={handleObjectStructure} onformname={handleFormName} existing-data={objectStructureData} existing-form-name={formName} existing-confirmation-message={confirmationMessage} existing-requires-signature={requiresSignature} existing-requires-text-on-signature-page={requiresTextOnSignaturePage} existing-signature-page-text={signaturePageText} existing-requires-doc-upload={requiresDocUpload} existing-show-summary={showSummary} existing-generate-pdf={generatePDF} existing-prefill-fields={prefillFields} existing-create-pdf-only={createPDFOnly} existing-default-zoom-percent={defaultZoomPercent} is-edit={isEdit}></c-forms-object-structure-screen>
                 </div>
             </template>
         </template>

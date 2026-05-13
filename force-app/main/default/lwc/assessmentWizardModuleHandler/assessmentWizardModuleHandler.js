@@ -53,7 +53,38 @@ export default class AssessmentWizardModuleHandler extends LightningElement {
         const fieldUpd  = this.localEditData.caresp__Field_Update_JSON__c ?? this.localEditData.Field_Update_JSON__c;
 
         if (detail)    { this.assessmentDetails = JSON.parse(detail); }
-        if (sections)  { this.sections = JSON.parse(sections); }
+        if (sections)  {
+            this.sections = JSON.parse(sections);
+            const textJson =
+                this.localEditData.caresp__Section_Text_JSON__c ??
+                this.localEditData.Section_Text_JSON__c;
+            if (textJson && this.sections && Array.isArray(this.sections)) {
+                let byName = {};
+                try {
+                    const arr = JSON.parse(textJson);
+                    if (Array.isArray(arr)) {
+                        arr.forEach((row) => {
+                            if (row && Object.prototype.hasOwnProperty.call(row, 'secName')) {
+                                byName[String(row.secName)] = row.secText != null ? row.secText : '';
+                            }
+                        });
+                    }
+                } catch (e) {
+                    /* ignore */
+                }
+                this.sections.forEach((s) => {
+                    const mapped = byName[s.secName];
+                    const empty =
+                        s.secText === undefined || s.secText === null || s.secText === '';
+                    if (empty && mapped !== undefined) {
+                        s.secText = mapped;
+                    }
+                    if (s.secText === undefined || s.secText === null) {
+                        s.secText = '';
+                    }
+                });
+            }
+        }
         if (questions) { this.sectionData = JSON.parse(questions); }
         if (scoring)   { this.scoringData = JSON.parse(scoring); }
         if (fieldUpd)  { this.fieldUpdate = JSON.parse(fieldUpd); }

@@ -335,8 +335,18 @@ public class PlanWizControllerTest {
         
         Contact con = new Contact(LastName = 'test', AccountId = testAccount.id);
         Insert con;
-        String jsonString = '{"childId":"003Hs00004qN79RIAS","description":"test","domain":"Child Care","goalFilterFieldName":"caresp__Contact__c","goalId":null,"isHH":false,"planId":"a0IHs00001dxGeJMAU","reason":null,"startDate":null,"status":"Not Started"}';
-        Map<String, Object> inputData = (Map<String, Object>) JSON.deserializeUntyped(jsonString);
+        Map<String, Object> inputData = new Map<String, Object>{
+            'childId'             => con.Id,
+            'description'         => 'test',
+            'domain'              => 'Child Care',
+            'goalFilterFieldName' => 'caresp__Contact__c',
+            'goalId'              => null,
+            'isHH'                => false,
+            'planId'              => plan.Id,
+            'reason'              => null,
+            'startDate'           => null,
+            'status'              => 'Not Started'
+        };
         
         
         
@@ -498,6 +508,45 @@ public class PlanWizControllerTest {
         System.assertEquals(1, createdSteps.size(), 'One step should be created');
         System.assertEquals('Actionable Task', createdSteps[0].caresp__Step_Type__c);
     }
-    
-    
+
+    @isTest
+    static void testPlanWiz_fieldMetadataHelpers() {
+        caresp__Plan__c plan = [SELECT Id FROM caresp__Plan__c LIMIT 1];
+
+        Test.startTest();
+        List<String> goalFields = PlanWizController.getFieldNames('caresp__Goal__c');
+        PlanWizController.MetadataInfoWrapper meta =
+            PlanWizController.getMetadataInfo('Account', plan.Id);
+        Test.stopTest();
+
+        System.assert(goalFields != null && goalFields.size() > 0);
+        System.assert(meta == null || meta.childObjName != null || meta.planFilterFieldName != null);
+
+        PlanWizController.createTaskForStep(new List<SObject>(), UserInfo.getUserId());
+    }
+
+    @isTest
+    static void testGetUserDetails_missingRecord_returnsNull() {
+        SObject missingUser = PlanWizController.getUserDetails('005000000000000AAA');
+        System.assertEquals(null, missingUser);
+    }
+
+    @isTest
+    static void testGetParentObjRec_missingAccount_throws() {
+        Boolean threw = false;
+        try {
+            PlanWizController.getParentObjRec('Account', '001000000000000AAA');
+        } catch (AuraHandledException e) {
+            threw = true;
+        }
+        System.assert(threw);
+    }
+
+    @isTest
+    static void testGetPlan_nonPlanId_returnsNull() {
+        Account acc = new Account(Name = 'PlanWiz coverage');
+        insert acc;
+        caresp__Plan__c badRef = PlanWizController.getPlan(null, true, acc.Id);
+        System.assertEquals(null, badRef);
+    }
 }

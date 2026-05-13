@@ -107,6 +107,54 @@ export default class AssessmentSectionHandler extends LightningElement {
         containerChoosen.scrollIntoView();
     }
 
+    getSectionTextMapFrom(assessmentRecord) {
+        const map = {};
+        if (!assessmentRecord) {
+            return map;
+        }
+        const raw =
+            assessmentRecord.caresp__Section_Text_JSON__c ??
+            assessmentRecord.Section_Text_JSON__c;
+        if (!raw) {
+            return map;
+        }
+        try {
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) {
+                arr.forEach((row) => {
+                    if (row && Object.prototype.hasOwnProperty.call(row, 'secName')) {
+                        map[String(row.secName)] = row.secText != null ? row.secText : '';
+                    }
+                });
+            }
+        } catch (e) {
+            /* ignore */
+        }
+        return map;
+    }
+
+    normalizeSectionGuidanceHtml(html) {
+        if (!html || typeof html !== 'string') {
+            return '';
+        }
+        const plain = html
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        return plain.length ? html : '';
+    }
+
+    applySectionGuidanceToSections(assessmentRecord) {
+        if (!this.sections || !this.sections.length) {
+            return;
+        }
+        const map = this.getSectionTextMapFrom(assessmentRecord);
+        this.sections.forEach((s) => {
+            s.secText = this.normalizeSectionGuidanceHtml(map[s.sectionName] || '');
+        });
+    }
+
     get isSubmit() {
         let activeIndex = this.sections.findIndex(x => x.class == 'active');
         if (activeIndex == this.sections.length - 1) {
@@ -219,6 +267,9 @@ export default class AssessmentSectionHandler extends LightningElement {
                             section.flag = false;
                         }
                     })
+                    if (this.hasSections) {
+                        this.applySectionGuidanceToSections(this.selectedDraftAssessment);
+                    }
                     this.isSelectAssessment = false;
                     this.isLaunchAssessment = true;
                     this.isAssessmentDetails = false;
@@ -252,6 +303,7 @@ export default class AssessmentSectionHandler extends LightningElement {
                     console.log("checkSections ", checkSections);
                     if (checkSections == -1) {
                         this.hasSections = true;
+                        this.sections = [];
                         this.questions.forEach(question => {
                             if (this.sections.findIndex(x => x.sectionName == question.section) == -1) {
                                 let temp = {};
@@ -282,6 +334,7 @@ export default class AssessmentSectionHandler extends LightningElement {
                                 }
                             })
                         })
+                        this.applySectionGuidanceToSections(this.selectedAssessment);
                         console.log("this.sections >> ", JSON.stringify(this.sections));
                     } else {
                         this.hasSections = false;
